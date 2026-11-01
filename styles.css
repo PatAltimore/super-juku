@@ -2027,6 +2027,35 @@ body {
   cursor: pointer;
 }
 
+.deck-review-btn-leech {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.deck-review-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.deck-review-btn-leech .mode-due {
+  position: static;
+  transform: none;
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  color: var(--text);
+}
+
+.deck-review-btn-leech .mode-due.has-due {
+  background: #3b9be0;
+  border-color: #3b9be0;
+  color: #fff;
+}
+
 .deck-review-btn:disabled {
   cursor: default;
   opacity: 0.6;

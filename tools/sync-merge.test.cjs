@@ -302,6 +302,18 @@ test("removed N2 kanji: the latest change per kanji wins on every device", () =>
   assert.deepEqual(mergeState(phone, empty()).kanjiRemovals, phone.kanjiRemovals);
 });
 
+test("leeches: the most recently changed entry per term wins", () => {
+  const entry = (at, leech) => ({ wrong: 2, right: leech ? 0 : 2, leech, at });
+  const phone = { ...empty(), leeches: { "n2|1": entry(5, true), "n2|2": entry(5, true) } };
+  const pc = { ...empty(), leeches: { "n2|1": entry(9, false), "n2|3": entry(4, true) } };
+  const a = mergeState(phone, pc);
+  assert.deepEqual(a.leeches, mergeState(pc, phone).leeches);
+  assert.equal(a.leeches["n2|1"].leech, false);
+  assert.equal(a.leeches["n2|2"].leech, true);
+  assert.equal(a.leeches["n2|3"].leech, true);
+  assert.deepEqual(mergeState(phone, empty()).leeches, phone.leeches);
+});
+
 (async () => {
   for (const { name, fn } of queue) {
     await fn();

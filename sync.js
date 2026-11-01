@@ -224,6 +224,20 @@
     return out;
   }
 
+  // Leech progress per term: the entry changed most recently wins.
+  function mergeLeeches(local, remote) {
+    const out = {};
+    const l = isObj(local) ? local : {};
+    const r = isObj(remote) ? remote : {};
+    new Set([...Object.keys(l), ...Object.keys(r)]).forEach((key) => {
+      const a = isObj(l[key]) ? l[key] : null;
+      const b = isObj(r[key]) ? r[key] : null;
+      const pick = b && (!a || num(b.at) > num(a.at)) ? b : a;
+      if (pick) out[key] = { wrong: num(pick.wrong), right: num(pick.right), leech: pick.leech === true, at: num(pick.at) };
+    });
+    return out;
+  }
+
   function mergeDeckPair(a, b) {
     const ua = a.updatedAt || "";
     const ub = b.updatedAt || "";
@@ -305,6 +319,7 @@
       customDecks: decks.decks,
       deletedDecks: decks.deleted,
       kanjiRemovals: mergeKanjiRemovals(local.kanjiRemovals, remote.kanjiRemovals),
+      leeches: mergeLeeches(local.leeches, remote.leeches),
     };
   }
 
@@ -992,6 +1007,7 @@
 
   const api = {
     mergeState,
+    mergeLeeches,
     mergeCounts,
     totalCounts,
     nearbyPairing,

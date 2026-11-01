@@ -182,7 +182,6 @@
     clearSelectionBtn: document.getElementById("clearSelectionBtn"),
     lessonResultNote: document.getElementById("lessonResultNote"),
     startReviewBtn: document.getElementById("startReviewBtn"),
-    lessonStatus: document.getElementById("lessonStatus"),
     // type answer
     screenType: document.getElementById("screen-type"),
     modeTypeBtn: document.getElementById("modeTypeBtn"),
@@ -425,6 +424,71 @@
   function setKanjiRemoved(num, removed) {
     kanjiRemovals[num] = { at: Date.now(), removed };
     saveKanjiRemovals();
+  }
+
+  // ---------- leeches ----------
+  // A term answered wrongly twice becomes a leech and is collected in its own
+  // review (復習 > リーチ), which is optional and not part of the due count.
+  // It leaves again once it has been answered correctly twice in an ordinary
+  // review. Keyed by deck and term: { wrong, right, leech, at }.
+  const LEECHES_KEY = "kanjiFlashN2.leeches.v1";
+  const LEECH_AFTER_WRONG = 2;
+  const LEECH_CLEARED_AFTER_RIGHT = 2;
+  let leeches = {};
+
+  function saveLeeches() {
+    saveJson(LEECHES_KEY, leeches);
+  }
+
+  function leechKey(item) {
+    return item.deckId ? `${item.deckId}|${item.front}` : `n2|${item.num}`;
+  }
+
+  // `inReview`: the answer came in a normal review (復習 or すべて復習), the
+  // only place a correct answer counts towards clearing a leech.
+  function noteLeechAnswer(key, correct, inReview) {
+    const entry = leeches[key] || { wrong: 0, right: 0, leech: false, at: 0 };
+    if (!correct) {
+      if (entry.leech) return;
+      entry.wrong++;
+      if (entry.wrong >= LEECH_AFTER_WRONG) {
+        entry.leech = true;
+        entry.right = 0;
+      }
+    } else {
+      if (!entry.leech || !inReview) return;
+      entry.right++;
+      if (entry.right >= LEECH_CLEARED_AFTER_RIGHT) {
+        entry.leech = false;
+        entry.wrong = 0;
+        entry.right = 0;
+      }
+    }
+    entry.at = Date.now();
+    leeches[key] = entry;
+    saveLeeches();
+  }
+
+  // The current leeches that still exist in their decks, as lesson items.
+  function getLeechItems() {
+    const items = [];
+    const customItems = new Map();
+    Object.keys(leeches).forEach((key) => {
+      if (!leeches[key].leech) return;
+      const sep = key.indexOf("|");
+      const owner = key.slice(0, sep);
+      const id = key.slice(sep + 1);
+      let item;
+      if (owner === "n2") {
+        item = visibleKanji().find((k) => String(k.num) === id);
+      } else {
+        const deck = customDeckById(owner);
+        if (deck && !customItems.has(owner)) customItems.set(owner, buildCustomItems(deck));
+        item = deck && customItems.get(owner).find((i) => i.front === id);
+      }
+      if (item) items.push(item);
+    });
+    return items;
   }
 
   const isKanjiRemoved = (num) => Boolean(kanjiRemovals[num] && kanjiRemovals[num].removed);
@@ -1412,6 +1476,22 @@
         <div class="custom-deck-header">${deckReviewButton("N2漢字", visibleKanji().length, getReviewCards(visibleKanji()).length)}
         </div>
       </div>`;
+    const leechCount = getLeechItems().length;
+    const leechRow = `
+      <div class="custom-deck-row" data-deck-id="leech">
+        <div class="custom-deck-header">
+          <button class="deck-review-btn deck-review-btn-leech" data-action="review" type="button"${leechCount ? "" : " disabled"}>
+            <span class="deck-review-text">
+              <span class="custom-deck-name">リーチ</span>
+              <span class="custom-deck-meta">${leechCount ? "苦手なカード（任意）" : "苦手なカードはありません"}</span>
+            </span>
+            <span class="mode-due${leechCount ? " has-due" : ""}">
+              <span class="mode-due-num">${leechCount}</span>
+              <span class="mode-due-label">リーチ待ち</span>
+            </span>
+          </button>
+        </div>
+      </div>`;
     els.customDecksList.innerHTML = n2Row + customDecks
       .map((deck) => {
         return `
@@ -1420,7 +1500,7 @@
         </div>
       </div>`;
       })
-      .join("");
+      .join("") + leechRow;
   }
 
   els.customDecksList.addEventListener("click", (event) => {
@@ -1428,6 +1508,11 @@
     if (!actionBtn) return;
     const row = actionBtn.closest(".custom-deck-row");
     const deckId = row && row.dataset.deckId;
+    if (deckId === "leech") {
+      const items = getLeechItems();
+      if (items.length) beginLesson(items.slice(0, settings.reviewQuestions), "leech");
+      return;
+    }
     if (deckId === KANJI_DECK_ID) {
       activateDeck(KANJI_DECK_ID);
       const cards = getReviewCards();
@@ -2170,11 +2255,13 @@
     if (!correct) {
       state.wrongs++;
       if (!state.graded) {
+        if (customTypeMode === "review") noteLeechAnswer(`${deck.id}|${card.front}`, false, false);
         gradeCustomTerm(deck, card, false);
         state.graded = "wrong";
       }
     }
     if (state.left === 0 && state.wrongs === 0 && !state.graded) {
+      if (customTypeMode === "review") noteLeechAnswer(`${deck.id}|${card.front}`, true, true);
       gradeCustomTerm(deck, card, true);
       state.graded = "right";
       if (customTypeMode === "quiz") customQuizKnown++;
@@ -2779,7 +2866,8 @@
       ? `すべての${deckNoun()}のレッスンが完了しました。復習で定着させましょう。`
       : activeCount
       ? `${visible.length}件を表示中（全${pending.length}件）。タップして選択してください。`
-      : `学習したい${deckNoun()}をタップして選択してください。`;
+      : "";
+    els.lessonSubtitle.hidden = !els.lessonSubtitle.textContent;
     els.termChart.innerHTML = visible.length
       ? visible
           .map((item) => {
@@ -2863,9 +2951,6 @@
     els.lessonCalendar.innerHTML = html;
     const reviewCount = getReviewCards().length;
     els.startReviewBtn.disabled = reviewCount === 0;
-    els.lessonStatus.textContent = reviewCount
-      ? `${reviewCount}枚の復習カードがあります。`
-      : "現在復習するカードはありません。お疲れさまです。";
   }
 
   // Lessons are typed: every kanji gets a question per available answer type
@@ -2915,19 +3000,22 @@
   // speeds up the schedule.
   function gradeLessonTerm(item, correct) {
     const state = lessonTermState.get(item.num);
-    const all = lessonSession.kind === "all";
-    const counts = !all || isItemStudied(item);
+    const kind = lessonSession.kind;
+    const all = kind === "all";
+    const counts = kind !== "leech" && (!all || isItemStudied(item));
     // In lessons and reviews a missed question stays in the session, so it is
     // not counted off.
     if (correct || all) state.left--;
     if (!correct) {
       state.wrongs++;
       if (!state.graded) {
+        if (kind === "review" || all) noteLeechAnswer(leechKey(item), false, false);
         if (counts) gradeItemSrs(item, false);
         state.graded = "wrong";
       }
     }
     if (state.left === 0 && state.wrongs === 0 && !state.graded) {
+      if (kind === "review" || all) noteLeechAnswer(leechKey(item), true, true);
       if (counts && (!all || isDue(srsOf(item), dateKey(new Date())))) gradeItemSrs(item, true);
       state.graded = "right";
     }
@@ -2970,11 +3058,11 @@
     const kind = lessonSession.kind;
     lessonResultsKind = kind;
     els.lessonResultTitle.textContent =
-      kind === "all" ? "すべて復習完了" : kind === "review" ? "復習完了" : "レッスン完了";
+      kind === "all" ? "すべて復習完了" : kind === "review" ? "復習完了" : kind === "leech" ? "リーチ復習完了" : "レッスン完了";
     els.lessonResultNote.hidden = true;
     els.lessonResultReport.hidden = kind !== "all";
     if (kind === "all") els.lessonResultReport.innerHTML = reportCardHtml(lessonSession.mistakes);
-    els.lessonResultsLessonsBtn.textContent = kind === "all" ? "ホームに戻る" : "レッスンに戻る";
+    els.lessonResultsLessonsBtn.textContent = kind === "all" ? "ホームに戻る" : kind === "leech" ? "復習に戻る" : "レッスンに戻る";
     els.lessonResultSeen.textContent = String(lessonSession.seen);
     els.lessonResultRight.textContent = String(lessonSession.right);
     els.lessonResultWrong.textContent = String(lessonSession.wrong);
@@ -3018,6 +3106,11 @@
   els.lessonResultsLessonsBtn.addEventListener("click", () => {
     if (lessonResultsKind === "all") {
       showScreen("home");
+      return;
+    }
+    if (lessonResultsKind === "leech") {
+      renderCustomDecksList();
+      showScreen("customDecks");
       return;
     }
     renderLessons();
@@ -3789,7 +3882,7 @@
         }
       }
       if (!all || isItemStudied(item)) recordItemResult(item, pendingTypeCorrect, false);
-      if (pendingTypeCorrect && (all || lessonSession.kind === "review")) addReviewPoint();
+      if (pendingTypeCorrect && (all || lessonSession.kind === "review" || lessonSession.kind === "leech")) addReviewPoint();
       gradeLessonTerm(item, pendingTypeCorrect);
       lessonSession.seen++;
       if (pendingTypeCorrect) lessonSession.right++;
@@ -3844,6 +3937,7 @@
       customAnswers,
       stats,
       lessons: lessonHistory,
+      leeches,
       deck: {
         queueNums: queue.map((item) => item.num),
         masteredCount,
@@ -3870,6 +3964,10 @@
     if (profile.stats) {
       stats = profile.stats;
       saveStats();
+    }
+    if (profile.leeches) {
+      leeches = KanjiFlashSync.mergeLeeches({}, profile.leeches);
+      saveLeeches();
     }
     if (profile.lessons) {
       lessonHistory = normalizeLessonHistory(profile.lessons);
@@ -4026,6 +4124,7 @@
       customAnswers: customAnswersMerged,
       stats: { daily, perCard },
       lessons: { completed, epoch, placement, today },
+      leeches: KanjiFlashSync.mergeLeeches(local.leeches, incoming.leeches),
       settings: incoming.settings || local.settings,
       deck: incoming.deck || local.deck,
     };
@@ -4311,6 +4410,7 @@
       customDecks,
       deletedDecks: loadJson(DECK_TOMBSTONES_KEY, {}),
       kanjiRemovals,
+      leeches,
     };
   }
 
@@ -4370,6 +4470,8 @@
     saveJson(DECK_TOMBSTONES_KEY, merged.deletedDecks);
     kanjiRemovals = merged.kanjiRemovals || {};
     saveKanjiRemovals();
+    leeches = merged.leeches || {};
+    saveLeeches();
     const group = loadSyncGroup();
     if (group) {
       group.members = merged.members;
@@ -4583,6 +4685,7 @@
   saveCustomAnswers();
   customDecks = loadCustomDecks();
   kanjiRemovals = loadJson(KANJI_REMOVALS_KEY, {}) || {};
+  leeches = loadJson(LEECHES_KEY, {}) || {};
   applySettings();
   dailyMinutes = settings.defaultDailyMinutes;
 

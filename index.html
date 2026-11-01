@@ -117,7 +117,7 @@
       <div class="lesson-heading">
         <div class="lesson-kicker" id="lessonMonthLabel">今月</div>
         <h1 id="lessonTitle">今日のレッスン</h1>
-        <p id="lessonSubtitle">学習したい項目をタップして選択してください。</p>
+        <p id="lessonSubtitle" hidden></p>
         <button class="deck-chip" id="lessonDeckBtn" type="button">デッキ: N2漢字</button>
         <div class="filter-bar" id="lessonFilterBar" hidden>
           <button class="deck-chip" id="lessonFilterBtn" type="button">絞り込み</button>
@@ -134,7 +134,6 @@
         <button class="secondary-btn" id="clearSelectionBtn" type="button">選択を解除</button>
         <button class="secondary-btn" id="startReviewBtn" type="button">復習するカード</button>
       </div>
-      <div class="lesson-status" id="lessonStatus"></div>
     </main>
   </section>
 
@@ -336,7 +335,6 @@
       <input type="file" id="csvFileInput" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" hidden>
       <div class="custom-decks-list" id="customDecksList"></div>
       <div class="custom-decks-empty" id="customDecksEmpty" hidden>
-        <p>デッキはまだありません。ホーム画面の「デッキ追加」からCSVまたはExcelファイルをアップロードして始めましょう。</p>
         <button class="secondary-btn" id="downloadTemplateBtn" type="button">サンプルCSVをダウンロード</button>
       </div>
     </div>
