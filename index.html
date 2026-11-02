@@ -74,6 +74,7 @@
         <span class="legend-item"><i class="status-dot status-r6"></i>復習6</span>
       </div>
       <div class="deck-edit-toolbar" id="deckEditToolbar" hidden>
+        <button class="secondary-btn" data-action="add-term" type="button">用語を追加</button>
         <button class="secondary-btn" data-action="download" type="button">ダウンロード</button>
         <button class="secondary-btn" data-action="replace" type="button">置き換え</button>
         <button class="danger-btn" data-action="delete-deck" type="button">デッキを削除</button>
@@ -96,6 +97,20 @@
     </header>
     <div class="deck-pick-body" id="deckPickList"></div>
   </section>
+
+  <!-- ADD TERM (search JMdict) -->
+  <div class="modal" id="termSearchModal" role="dialog" aria-modal="true" aria-labelledby="termSearchTitle" hidden>
+    <div class="modal-card term-search-card">
+      <div class="modal-title" id="termSearchTitle">用語を追加</div>
+      <form class="term-search-form" id="termSearchForm" autocomplete="off">
+        <input class="term-search-input" id="termSearchInput" type="search" placeholder="日本語 / English" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
+        <button class="primary-btn" type="submit">検索</button>
+      </form>
+      <div class="term-search-results" id="termSearchResults"></div>
+      <div class="modal-note">辞書: JMdict (EDRDG) · 検索: Jotoba</div>
+      <button class="primary-btn" id="termSearchClose" type="button">閉じる</button>
+    </div>
+  </div>
 
   <!-- RANK POPUP -->
   <div class="modal" id="rankModal" role="dialog" aria-modal="true" aria-labelledby="rankModalTitle" hidden>

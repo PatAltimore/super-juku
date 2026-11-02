@@ -2668,6 +2668,77 @@ button.edit-row {
   white-space: nowrap;
 }
 
+.term-search-card {
+  max-width: 460px;
+  max-height: 100%;
+}
+
+.term-search-form {
+  display: flex;
+  gap: 8px;
+}
+
+.term-search-input {
+  flex: 1;
+  min-width: 0;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  color: var(--text);
+  font-size: 1rem;
+  padding: 10px 14px;
+  border-radius: 12px;
+}
+
+.term-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.term-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.term-result-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.term-result-front {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.term-result-reading {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.term-result-meaning {
+  font-size: 0.85rem;
+}
+
+.term-result-add {
+  flex-shrink: 0;
+}
+
+.term-search-status {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  padding: 8px;
+}
+
 .modal-note {
   text-align: center;
   font-size: 0.78rem;

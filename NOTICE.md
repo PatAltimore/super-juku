@@ -46,3 +46,18 @@ npm i wanakana@5.3.1
 node tools/build-kanji-data.mjs n2_kanji.csv kanjidic2.xml.gz > data/n2-kanji.json
 node tools/build-kanji-words.mjs data/n2-kanji.json jmdict-eng.json > words.json && mv words.json data/n2-kanji.json
 ```
+
+Words added to a custom deck with 用語を追加 are also JMdict entries, looked up live
+through the [Jotoba](https://jotoba.de) search API; the same copyright and licence apply
+to the readings and meanings saved to the deck.
+
+## JLPT vocabulary levels
+
+The JLPT level shown for words added with 用語を追加 (`data/jlpt-vocab.json`) comes from
+[Jonathan Waller's JLPT Resources](http://www.tanos.co.uk/jlpt/) word lists, used under the
+[Creative Commons BY](https://creativecommons.org/licenses/by/4.0/) licence, as prepared by
+Stephen Kraus in [yomitan-jlpt-vocab](https://github.com/stephenmk/yomitan-jlpt-vocab)
+(CC BY-SA 4.0; its `original_data/n1.csv` to `n5.csv`). Each entry is the written form and
+reading of a word, grouped by level (a word on several lists keeps its easiest level). There
+is no official JLPT vocabulary list, so these levels are an estimate, and words not on the
+lists have no level.

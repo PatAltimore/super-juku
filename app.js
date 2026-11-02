@@ -152,6 +152,11 @@
     customDecksDue: document.getElementById("customDecksDue"),
     streak: document.getElementById("streak"),
     rank: document.getElementById("rank"),
+    termSearchModal: document.getElementById("termSearchModal"),
+    termSearchForm: document.getElementById("termSearchForm"),
+    termSearchInput: document.getElementById("termSearchInput"),
+    termSearchResults: document.getElementById("termSearchResults"),
+    termSearchClose: document.getElementById("termSearchClose"),
     rankModal: document.getElementById("rankModal"),
     rankModalTitle: document.getElementById("rankModalTitle"),
     rankModalBody: document.getElementById("rankModalBody"),
@@ -1703,6 +1708,176 @@
     renderDeckEdit();
   });
 
+  // ---------- add terms from JMdict ----------
+  // Searches Jotoba (a JMdict front end that allows requests from the
+  // browser) by Japanese or English and adds the picked word to the deck being
+  // edited as a card: the written form on the front, with its reading and
+  // meaning as the card's sections.
+
+  const TERM_SEARCH_URL = "https://jotoba.de/api/search/words";
+  const READING_LABEL_PATTERN = /読み|よみ|reading|kana|ふりがな/i;
+  const MEANING_LABEL_PATTERN = /意味|いみ|meaning|definition|english/i;
+  const MAX_TERM_RESULTS = 10;
+  const MAX_ADDED_GLOSSES = 4;
+  let termSearchResultsList = [];
+  let termSearchToken = 0;
+
+  // JLPT level (1-5) of a word, from data/jlpt-vocab.json: Jonathan Waller's
+  // lists (the ones Jisho uses), keyed "written form|reading" per level. It is
+  // loaded the first time a search needs it; if it can't be, words just have
+  // no level.
+  let jlptLevels = null;
+  async function loadJlptLevels() {
+    if (jlptLevels) return jlptLevels;
+    const levels = new Map();
+    try {
+      const data = await fetch("data/jlpt-vocab.json").then((res) => res.json());
+      Object.keys(data).forEach((level) => data[level].forEach((key) => levels.set(key, Number(level))));
+      jlptLevels = levels;
+    } catch (err) {
+      return levels;
+    }
+    return jlptLevels;
+  }
+
+  const wordJlpt = (word) => (jlptLevels && jlptLevels.get(`${wordFront(word)}|${word.reading.kana}`)) || null;
+
+  function termSearchMessage(text) {
+    els.termSearchResults.innerHTML = `<div class="term-search-status">${escapeHtml(text)}</div>`;
+  }
+
+  function wordFront(word) {
+    return word.reading.kanji || word.reading.kana;
+  }
+
+  // The first few glosses of the first two senses, e.g. "to eat, to live on".
+  function wordMeaning(word) {
+    const glosses = [];
+    word.senses.slice(0, 2).forEach((sense) => {
+      sense.glosses.forEach((g) => {
+        if (glosses.length < MAX_ADDED_GLOSSES && !glosses.includes(g)) glosses.push(g);
+      });
+    });
+    return glosses.join(", ");
+  }
+
+  // "verb, noun" from Jotoba's [{ Verb: "Ichidan" }, "Noun"] part-of-speech list.
+  function wordPos(word) {
+    const found = [];
+    word.senses.forEach((sense) =>
+      (sense.pos || []).forEach((p) => {
+        const name = (typeof p === "string" ? p : Object.keys(p)[0] || "").toLowerCase();
+        if (name && !found.includes(name)) found.push(name);
+      })
+    );
+    return found.join(", ");
+  }
+
+  function renderTermResults() {
+    const deck = customDeckById(editingDeckId);
+    if (!deck) return;
+    if (!termSearchResultsList.length) {
+      termSearchMessage("見つかりませんでした");
+      return;
+    }
+    els.termSearchResults.innerHTML = termSearchResultsList
+      .map((word, index) => {
+        const front = wordFront(word);
+        const added = deck.cards.some((c) => c.front === front);
+        const reading = word.reading.kanji ? word.reading.kana : "";
+        return `
+        <div class="term-result">
+          <span class="term-result-text">
+            <span class="term-result-front">${escapeHtml(front)}</span>
+            ${reading ? `<span class="term-result-reading">${escapeHtml(reading)}</span>` : ""}
+            <span class="term-result-meaning">${escapeHtml(wordMeaning(word))}</span>
+            <span class="edit-tags">${termTagsHtml({ common: Boolean(word.common), jlpt: wordJlpt(word), pos: wordPos(word) })}</span>
+          </span>
+          <button class="secondary-btn term-result-add" type="button" data-index="${index}"${added ? " disabled" : ""}>${added ? "追加済み" : "追加"}</button>
+        </div>`;
+      })
+      .join("");
+  }
+
+  async function searchTerms(query) {
+    const token = ++termSearchToken;
+    termSearchMessage("検索中…");
+    try {
+      const res = await fetch(TERM_SEARCH_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query, language: "English", no_english: false }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      await loadJlptLevels();
+      if (token !== termSearchToken) return;
+      termSearchResultsList = (data.words || [])
+        .filter((w) => w && w.reading && w.reading.kana && Array.isArray(w.senses) && w.senses.length)
+        .slice(0, MAX_TERM_RESULTS);
+      renderTermResults();
+    } catch (err) {
+      if (token !== termSearchToken) return;
+      termSearchMessage("検索できませんでした。ネットワークを確認してください。");
+    }
+  }
+
+  function addWordToDeck(deck, word) {
+    const front = wordFront(word);
+    if (deck.cards.some((c) => c.front === front)) return;
+    const columns = Array.isArray(deck.columns) ? deck.columns : (deck.columns = deckColumns(deck).slice());
+    const labelFor = (pattern, fallback) => {
+      const found = columns.find((c) => pattern.test(c));
+      if (found) return found;
+      columns.push(fallback);
+      return fallback;
+    };
+    const sections = [];
+    if (word.reading.kanji) sections.push({ label: labelFor(READING_LABEL_PATTERN, "読み"), value: word.reading.kana });
+    const meaning = wordMeaning(word);
+    if (meaning) sections.push({ label: labelFor(MEANING_LABEL_PATTERN, "意味"), value: meaning });
+    const pos = wordPos(word);
+    deck.cards.push({ front, sections, tags: { common: Boolean(word.common), jlpt: wordJlpt(word), pos: pos || null } });
+    deck.updatedAt = new Date().toISOString();
+    saveCustomDecks();
+    renderDeckEdit();
+  }
+
+  function openTermSearch() {
+    termSearchResultsList = [];
+    termSearchToken++;
+    els.termSearchInput.value = "";
+    els.termSearchResults.innerHTML = "";
+    els.termSearchModal.hidden = false;
+    els.termSearchInput.focus();
+  }
+
+  function closeTermSearch() {
+    termSearchToken++;
+    els.termSearchModal.hidden = true;
+  }
+
+  els.termSearchForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const query = els.termSearchInput.value.trim();
+    if (query) searchTerms(query);
+  });
+
+  els.termSearchResults.addEventListener("click", (event) => {
+    const btn = event.target.closest(".term-result-add");
+    const deck = customDeckById(editingDeckId);
+    if (!btn || !deck || btn.disabled) return;
+    const word = termSearchResultsList[Number(btn.dataset.index)];
+    if (!word) return;
+    addWordToDeck(deck, word);
+    renderTermResults();
+  });
+
+  els.termSearchClose.addEventListener("click", closeTermSearch);
+  els.termSearchModal.addEventListener("click", (event) => {
+    if (event.target === els.termSearchModal) closeTermSearch();
+  });
+
   els.deckEditToolbar.addEventListener("click", (event) => {
     const btn = event.target.closest("[data-action]");
     if (btn && btn.dataset.action === "restore-kanji" && editingDeckId === KANJI_DECK_ID) {
@@ -1716,7 +1891,9 @@
     const deck = btn && editingDeckId && customDeckById(editingDeckId);
     if (!deck) return;
     const action = btn.dataset.action;
-    if (action === "download") {
+    if (action === "add-term") {
+      openTermSearch();
+    } else if (action === "download") {
       downloadTextFile(`${sanitizeFilename(deck.name)}.csv`, deckToCsvText(deck), "text/csv;charset=utf-8");
     } else if (action === "replace") {
       pendingReplaceId = deck.id;

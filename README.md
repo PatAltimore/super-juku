@@ -7,6 +7,7 @@ A dependency-free, mobile-friendly flashcard app for studying the 367 kanji in t
 - **Rank**: every correct answer in 復習 or すべて復習 counts as a review. Ranks follow sumo: 前相撲, 序ノ口, 序二段, 三段目, 幕下, 十両, 前頭, 小結, 関脇, 大関, 横綱, each with 5 levels. A level takes 100 reviews in 前相撲, 200 in 序ノ口, 300 in 序二段 and so on up to 1100 in 横綱. The rank sits next to the daily streak on the home screen.
 - **Labels on terms**: an uploaded deck can include a `Common` column (`Common word` or `Uncommon`) and a `JLPT` column (`N3`), as exported by cave-story-assist. A `Part of speech` column is read the same way. They are shown as Jisho-style badges on the lesson buttons and in 編集, are not asked as questions, and the lesson chart can be filtered by them (common word, JLPT level, part of speech).
 - **Leeches (リーチ)**: a term answered wrongly twice in 復習 or すべて復習 becomes a leech and is collected in its own optional deck at the bottom of 復習, across all decks. The deck shows its own リーチ待ち count; leeches also stay in the normal review queue. A leech leaves the deck once it has been answered correctly twice in a normal 復習 or すべて復習; answers in the leech review itself don't count towards that and don't change the review schedule.
+- **Add terms (編集 > deck > 用語を追加)**: search JMdict by Japanese or English and add a word to a custom deck with its reading, meaning, common flag, JLPT level (from a bundled word list, where the word is on one) and part of speech. Searches go to [Jotoba](https://jotoba.de) (a JMdict front end), so this needs a connection; the rest of the app works offline.
 - **Review All (すべて復習)**: pick a deck and answer every reading and meaning question for every term in it once, typed; a report card at the end lists what was wrong, with your answer and the right one.
 - **Daily Challenge**: review as many cards as possible before the selected time limit expires.
 - **Type Answer**: enter an onyomi reading or English meaning and receive immediate feedback.
@@ -35,6 +36,7 @@ Open <http://localhost:8000> in a browser. Do not open `index.html` directly fro
 |- styles.css                     Responsive visual design
 |- app.js                         Flashcard behavior and browser persistence
 |- data/n2-kanji.json             JLPT N2 kanji deck (generated)
+|- data/jlpt-vocab.json           JLPT level of ~8,300 words, for 用語を追加
 |- tools/build-kanji-data.mjs     Script that generates the deck from open sources
 |- tools/build-kanji-words.mjs    Adds each kanji's verb/adjective (from JMdict) to the deck
 |- LICENSE                        MIT license (code)
