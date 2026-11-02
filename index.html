@@ -277,15 +277,20 @@
 
         <div class="type-feedback" id="typeFeedback" hidden>
           <div class="type-feedback-result" id="typeFeedbackResult"></div>
-          <button class="grade-btn add-answer-btn" id="addAnswerBtn" type="button" hidden>
-            <span class="grade-icon">+</span><span class="grade-text" id="addAnswerBtnText">答えを追加</span>
-          </button>
+          <div class="add-answer-row" id="addAnswerRow" hidden>
+            <button class="grade-btn add-answer-btn" id="addAnswerBtn" type="button" hidden>
+              <span class="grade-icon">+</span><span class="grade-text" id="addAnswerBtnText">答えを追加</span>
+            </button>
+            <button class="grade-btn add-answer-btn" id="typoBtn" type="button">
+              <span class="grade-icon">✓</span><span class="grade-text">タイプミス</span>
+            </button>
+          </div>
           <div class="rows-wrap" id="typeLegacyRows">
-            <div class="reading-block">
+            <div class="reading-block" id="typeOnyomiBlock">
               <div class="reading-label">音読み</div>
               <div class="reading-value" id="typeOnyomi">—</div>
             </div>
-            <div class="reading-block">
+            <div class="reading-block" id="typeKunyomiBlock">
               <div class="reading-label">訓読み</div>
               <div class="reading-value" id="typeKunyomi">—</div>
             </div>
@@ -412,9 +417,14 @@
 
         <div class="type-feedback" id="customTypeFeedback" hidden>
           <div class="type-feedback-result" id="customTypeFeedbackResult"></div>
-          <button class="grade-btn add-answer-btn" id="customAddAnswerBtn" type="button" hidden>
-            <span class="grade-icon">+</span><span class="grade-text" id="customAddAnswerBtnText">答えを追加</span>
-          </button>
+          <div class="add-answer-row" id="customAddAnswerRow" hidden>
+            <button class="grade-btn add-answer-btn" id="customAddAnswerBtn" type="button" hidden>
+              <span class="grade-icon">+</span><span class="grade-text" id="customAddAnswerBtnText">答えを追加</span>
+            </button>
+            <button class="grade-btn add-answer-btn" id="customTypoBtn" type="button">
+              <span class="grade-icon">✓</span><span class="grade-text">タイプミス</span>
+            </button>
+          </div>
           <div class="custom-study-sections" id="customTypeSections"></div>
         </div>
       </div>

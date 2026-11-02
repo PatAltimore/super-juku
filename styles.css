@@ -462,6 +462,18 @@ body {
   font-style: italic;
 }
 
+.add-answer-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.add-answer-row .add-answer-btn {
+  width: 8.5em;
+  justify-content: center;
+}
+
 .add-answer-btn {
   color: var(--gold-soft);
   border-color: var(--gold-soft);
@@ -2027,7 +2039,7 @@ body {
   cursor: pointer;
 }
 
-.deck-review-btn-leech {
+.deck-review-btn-chip {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
@@ -2041,7 +2053,10 @@ body {
   min-width: 0;
 }
 
-.deck-review-btn-leech .mode-due {
+.deck-review-btn-chip .mode-due {
+  min-width: 68px;
+  padding: 13px 16px;
+  font-size: 1.2rem;
   position: static;
   transform: none;
   flex-shrink: 0;
@@ -2050,10 +2065,27 @@ body {
   color: var(--text);
 }
 
-.deck-review-btn-leech .mode-due.has-due {
-  background: #3b9be0;
-  border-color: #3b9be0;
+.deck-review-btn-chip .mode-due-num {
+  font-size: 2em;
+}
+
+.deck-review-btn-chip .mode-due.has-due,
+[data-theme="dark"] .deck-review-btn-chip .mode-due.has-due {
+  background: var(--tier, #3b9be0);
+  border-color: var(--tier, #3b9be0);
   color: #fff;
+}
+
+.deck-review-btn-chip .due-tier-0 { --tier: #3b9be0; }
+.deck-review-btn-chip .due-tier-1 { --tier: #2aa9a0; }
+.deck-review-btn-chip .due-tier-2 { --tier: #5aac3f; }
+.deck-review-btn-chip .due-tier-3 { --tier: #e0a81c; }
+.deck-review-btn-chip .due-tier-4 { --tier: #e8761f; }
+.deck-review-btn-chip .due-tier-5 { --tier: #d6332b; }
+
+.deck-review-btn-chip .mode-due.has-due.due-tier-3,
+[data-theme="dark"] .deck-review-btn-chip .mode-due.has-due.due-tier-3 {
+  color: #1c1c1c;
 }
 
 .deck-review-btn:disabled {

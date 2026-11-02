@@ -195,6 +195,8 @@
     typeFeedback: document.getElementById("typeFeedback"),
     typeFeedbackResult: document.getElementById("typeFeedbackResult"),
     typeOnyomi: document.getElementById("typeOnyomi"),
+    typeOnyomiBlock: document.getElementById("typeOnyomiBlock"),
+    typeKunyomiBlock: document.getElementById("typeKunyomiBlock"),
     typeKunyomi: document.getElementById("typeKunyomi"),
     typeMeaning: document.getElementById("typeMeaning"),
     typeCongratsMsg: document.getElementById("typeCongratsMsg"),
@@ -202,6 +204,8 @@
     typeCardStats: document.getElementById("typeCardStats"),
     typeCardStatsRight: document.getElementById("typeCardStatsRight"),
     typeCardStatsWrong: document.getElementById("typeCardStatsWrong"),
+    addAnswerRow: document.getElementById("addAnswerRow"),
+    typoBtn: document.getElementById("typoBtn"),
     addAnswerBtn: document.getElementById("addAnswerBtn"),
     addAnswerBtnText: document.getElementById("addAnswerBtnText"),
     typeCustomAnswers: document.getElementById("typeCustomAnswers"),
@@ -243,6 +247,8 @@
     customTypeSubmitBtn: document.getElementById("customTypeSubmitBtn"),
     customTypeFeedback: document.getElementById("customTypeFeedback"),
     customTypeFeedbackResult: document.getElementById("customTypeFeedbackResult"),
+    customAddAnswerRow: document.getElementById("customAddAnswerRow"),
+    customTypoBtn: document.getElementById("customTypoBtn"),
     customAddAnswerBtn: document.getElementById("customAddAnswerBtn"),
     customAddAnswerBtnText: document.getElementById("customAddAnswerBtnText"),
     customTypeSections: document.getElementById("customTypeSections"),
@@ -1461,11 +1467,15 @@
   }
 
   // One button per deck: tapping it starts that deck's review right away.
-  function deckReviewButton(name, count, dueCount) {
+  // The bubble gets warmer for every 25 reviews waiting (cool blue up to red).
+  function deckReviewButton(name, meta, dueCount) {
     return `
-          <button class="deck-review-btn" data-action="review" type="button"${dueCount ? "" : " disabled"}>
-            <span class="custom-deck-name">${escapeHtml(name)}</span>
-            <span class="custom-deck-meta">${count}枚 · ${dueCount ? `復習 ${dueCount}` : "復習するカードはありません"}</span>
+          <button class="deck-review-btn deck-review-btn-chip" data-action="review" type="button"${dueCount ? "" : " disabled"}>
+            <span class="deck-review-text">
+              <span class="custom-deck-name">${escapeHtml(name)}</span>
+              <span class="custom-deck-meta">${escapeHtml(meta)}</span>
+            </span>
+            <span class="mode-due${dueCount ? ` has-due due-tier-${Math.min(5, Math.floor(dueCount / 25))}` : ""}"><span class="mode-due-num">${dueCount}</span></span>
           </button>`;
   }
 
@@ -1473,30 +1483,20 @@
     els.customDecksEmpty.hidden = customDecks.length > 0;
     const n2Row = `
       <div class="custom-deck-row" data-deck-id="${KANJI_DECK_ID}">
-        <div class="custom-deck-header">${deckReviewButton("N2漢字", visibleKanji().length, getReviewCards(visibleKanji()).length)}
+        <div class="custom-deck-header">${deckReviewButton("N2漢字", `${visibleKanji().length}枚`, getReviewCards(visibleKanji()).length)}
         </div>
       </div>`;
     const leechCount = getLeechItems().length;
     const leechRow = `
       <div class="custom-deck-row" data-deck-id="leech">
-        <div class="custom-deck-header">
-          <button class="deck-review-btn deck-review-btn-leech" data-action="review" type="button"${leechCount ? "" : " disabled"}>
-            <span class="deck-review-text">
-              <span class="custom-deck-name">リーチ</span>
-              <span class="custom-deck-meta">${leechCount ? "苦手なカード（任意）" : "苦手なカードはありません"}</span>
-            </span>
-            <span class="mode-due${leechCount ? " has-due" : ""}">
-              <span class="mode-due-num">${leechCount}</span>
-              <span class="mode-due-label">リーチ待ち</span>
-            </span>
-          </button>
+        <div class="custom-deck-header">${deckReviewButton("リーチ", leechCount ? "苦手なカード（任意）" : "苦手なカードはありません", leechCount)}
         </div>
       </div>`;
     els.customDecksList.innerHTML = n2Row + customDecks
       .map((deck) => {
         return `
       <div class="custom-deck-row" data-deck-id="${escapeHtml(deck.id)}">
-        <div class="custom-deck-header">${deckReviewButton(deck.name, deck.cards.length, getDueCustomCards(deck).length)}
+        <div class="custom-deck-header">${deckReviewButton(deck.name, `${deck.cards.length}枚`, getDueCustomCards(deck).length)}
         </div>
       </div>`;
       })
@@ -2207,7 +2207,7 @@
     els.customTypeInput.value = "";
     els.customTypeFeedback.hidden = true;
     els.customTypeSubmitBtn.textContent = "確認";
-    els.customTypeBadge.textContent = customTypeCurrentSection.label;
+    els.customTypeBadge.textContent = displayLabel(customTypeCurrentSection.label, customTypeCurrentSection.value);
     const badgeClass = badgeClassForLabel(customTypeCurrentSection.label);
     els.customTypeBadge.className = "question-type-badge" + (badgeClass ? ` ${badgeClass}` : "");
     els.customTypeFront.textContent = card.front;
@@ -2236,8 +2236,9 @@
   function updateCustomAddAnswerButton() {
     const canAdd = !pendingCustomTypeCorrect && Boolean(pendingCustomTypeRawAnswer);
     els.customAddAnswerBtn.hidden = !canAdd;
+    els.customAddAnswerRow.hidden = !canAdd;
     if (canAdd) {
-      els.customAddAnswerBtnText.textContent = `「${pendingCustomTypeRawAnswer}」を${customTypeCurrentSection.label}として追加`;
+      els.customAddAnswerBtnText.textContent = "答えを追加";
     }
   }
 
@@ -2255,7 +2256,13 @@
     if (!correct) {
       state.wrongs++;
       if (!state.graded) {
-        if (customTypeMode === "review") noteLeechAnswer(`${deck.id}|${card.front}`, false, false);
+        // Kept so the miss can be taken back if it is ruled a typo.
+        const key = `${deck.id}|${card.front}`;
+        state.undo = {
+          srs: deck.srs && deck.srs[card.front] ? { ...deck.srs[card.front] } : null,
+          leech: leeches[key] ? { ...leeches[key] } : null,
+        };
+        if (customTypeMode === "review") noteLeechAnswer(key, false, false);
         gradeCustomTerm(deck, card, false);
         state.graded = "wrong";
       }
@@ -2276,7 +2283,7 @@
     els.customTypeFeedback.hidden = false;
     els.customTypeFeedback.classList.toggle("quick", correct);
     updateCustomTypeFeedbackResult(correct, pendingCustomTypeRawAnswer, fuzzy);
-    els.customTypeSections.innerHTML = sectionsToHtml(card.sections);
+    els.customTypeSections.innerHTML = sectionsToHtml(correct ? card.sections : [section]);
     updateCustomAddAnswerButton();
 
     if (correct) {
@@ -2315,30 +2322,52 @@
     }
   });
 
-  els.customAddAnswerBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    if (customTypeAnswering || !pendingCustomTypeRawAnswer) return;
+  // Rules the missed question correct, either because the player's answer was
+  // added to the card (`addToCard`) or because it was only a typo.
+  function acceptCustomMiss(addToCard) {
+    if (customTypeAnswering || pendingCustomTypeCorrect || !pendingCustomTypeRawAnswer) return;
     const deck = customTypeDeck;
     const card = customTypeCards[customTypeIndex];
-    addCustomDeckAnswer(deck, card.front, customTypeCurrentSection.label, pendingCustomTypeRawAnswer);
+    if (addToCard) addCustomDeckAnswer(deck, card.front, customTypeCurrentSection.label, pendingCustomTypeRawAnswer);
     const state = customTermState.get(card.front);
     state.wrongs--;
     if (customTypeMode !== "quiz") state.left--;
-    if (customTypeMode === "quiz" && state.wrongs === 0 && state.graded === "wrong") {
-      // The miss was already saved as this card's first placement; now that
-      // the player's answer has been accepted, undo it and place the card as
-      // right once all of its questions are done.
-      delete deck.srs[card.front];
-      state.graded = null;
-      if (state.left === 0) {
-        applyCustomQuizResult(deck, card, true);
-        state.graded = "right";
-        customQuizKnown++;
+    if (state.wrongs === 0 && state.graded === "wrong" && state.undo) {
+      // The miss was already saved as this card's first grade; now that the
+      // answer has been accepted, take it back.
+      const key = `${deck.id}|${card.front}`;
+      deck.srs = deck.srs || {};
+      if (state.undo.srs) deck.srs[card.front] = state.undo.srs;
+      else delete deck.srs[card.front];
+      deck.updatedAt = new Date().toISOString();
+      saveCustomDecks();
+      if (customTypeMode === "review") {
+        if (state.undo.leech) leeches[key] = { ...state.undo.leech, at: Date.now() };
+        else delete leeches[key];
+        saveLeeches();
       }
+      state.graded = null;
+    }
+    if (state.left === 0 && state.wrongs === 0 && !state.graded) {
+      if (customTypeMode === "review") noteLeechAnswer(`${deck.id}|${card.front}`, true, true);
+      gradeCustomTerm(deck, card, true);
+      state.graded = "right";
+      if (customTypeMode === "quiz") customQuizKnown++;
     }
     pendingCustomTypeCorrect = true;
-    updateCustomTypeFeedbackResult(true, pendingCustomTypeRawAnswer, false);
+    updateCustomTypeFeedbackResult(true, pendingCustomTypeRawAnswer, !addToCard);
     els.customAddAnswerBtn.hidden = true;
+    els.customAddAnswerRow.hidden = true;
+  }
+
+  els.customAddAnswerBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    acceptCustomMiss(true);
+  });
+
+  els.customTypoBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    acceptCustomMiss(false);
   });
 
   els.customTypeBackBtn.addEventListener("click", () => {
@@ -3498,7 +3527,7 @@
   // same field) rather than one combined pool of everything.
   const QUESTION_TYPES = {
     meaning: {
-      label: "意味",
+      label: "Meaning",
       badgeClass: "",
       placeholder: "Answer",
     },
@@ -3514,7 +3543,7 @@
       placeholder: "答え",
     },
     wordMeaning: {
-      label: "単語の意味",
+      label: "Word meaning",
       badgeClass: "",
       placeholder: "Answer",
     },
@@ -3536,11 +3565,19 @@
   // Custom-deck items ask one question per section (type ids "s0", "s1", ...).
   const sectionIndex = (type) => Number(type.slice(1));
 
+  // The badge above the answer bar names the question in the language of its
+  // answer: English answers say "Meaning" rather than 意味.
+  const MEANING_LABELS = new Set(["意味", "いみ", "単語の意味"]);
+  function displayLabel(label, value) {
+    if (!MEANING_LABELS.has(label) || isKanaOrKanji(value)) return label;
+    return label === "単語の意味" ? "Word meaning" : "Meaning";
+  }
+
   function typeConfig(item, type) {
     if (!item.sections) return QUESTION_TYPES[type];
     const section = item.sections[sectionIndex(type)];
     return {
-      label: section.label,
+      label: displayLabel(section.label, section.value),
       badgeClass: badgeClassForLabel(section.label),
       placeholder: isKanaOrKanji(section.value) ? "答え" : "Answer",
     };
@@ -3811,9 +3848,9 @@
   function updateAddAnswerButton() {
     const canAdd = !pendingTypeCorrect && Boolean(pendingTypeRawAnswer);
     els.addAnswerBtn.hidden = !canAdd;
+    els.addAnswerRow.hidden = !canAdd;
     if (canAdd) {
-      const label = typeConfig(queue[0], currentQuestionType).label;
-      els.addAnswerBtnText.textContent = `「${pendingTypeRawAnswer}」を${label}として追加`;
+      els.addAnswerBtnText.textContent = "答えを追加";
     }
   }
 
@@ -3836,13 +3873,18 @@
     els.typeLegacyRows.hidden = Boolean(item.sections);
     els.typeSections.hidden = !item.sections;
     els.typeCardStats.hidden = Boolean(item.sections);
+    // After a miss only the part that was asked is shown, to keep it short.
+    const type = currentQuestionType;
     if (item.sections) {
-      els.typeSections.innerHTML = sectionsToHtml(item.sections);
+      els.typeSections.innerHTML = sectionsToHtml(correct ? item.sections : [item.sections[sectionIndex(type)]]);
     } else {
       els.typeOnyomi.textContent = item.onyomi || "—";
       els.typeKunyomi.textContent = item.kunyomi || "—";
       els.typeMeaning.textContent = item.meaning || "—";
-      els.typeWordBlock.hidden = !item.word;
+      els.typeOnyomiBlock.hidden = !correct && type !== "onyomi";
+      els.typeKunyomiBlock.hidden = !correct;
+      els.typeMeaning.hidden = !correct && type !== "meaning";
+      els.typeWordBlock.hidden = !item.word || (!correct && !isWordType(type));
       if (item.word) els.typeWord.textContent = `${item.word}（${item.wordReading}）${item.wordMeaning}`;
     }
     renderTypeCustomAnswers(item, currentQuestionType);
@@ -3917,6 +3959,17 @@
     updateTypeFeedbackResult(true, pendingTypeRawAnswer);
     renderTypeCustomAnswers(item, currentQuestionType);
     els.addAnswerBtn.hidden = true;
+    els.addAnswerRow.hidden = true;
+  });
+
+  // Rules a missed answer correct without saving it as an accepted answer.
+  els.typoBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (queue.length === 0 || typeAnswering || pendingTypeCorrect || !pendingTypeRawAnswer) return;
+    pendingTypeCorrect = true;
+    updateTypeFeedbackResult(true, pendingTypeRawAnswer, true);
+    els.addAnswerBtn.hidden = true;
+    els.addAnswerRow.hidden = true;
   });
 
   els.typeNewDeckBtn.addEventListener("click", () => {
