@@ -9,7 +9,7 @@
   const CUSTOM_DECKS_KEY = "kanjiFlashN2.customDecks.v1";
   // How long the "Correct!" confirmation shows before a right typed answer
   // moves on to the next card by itself.
-  const AUTO_ADVANCE_MS = 700;
+  const AUTO_ADVANCE_MS = 150;
   // In lessons and reviews a question answered wrongly goes back into the
   // session this many places later (or to the end if fewer remain), and the
   // session only ends once every question has been answered correctly.
@@ -65,6 +65,7 @@
     deckEditLegend: document.getElementById("deckEditLegend"),
     deckEditToolbar: document.getElementById("deckEditToolbar"),
     deckEditList: document.getElementById("deckEditList"),
+    deckEditNewBtn: document.getElementById("deckEditNewBtn"),
     deckEditUndo: document.getElementById("deckEditUndo"),
     deckEditUndoText: document.getElementById("deckEditUndoText"),
     deckEditUndoBtn: document.getElementById("deckEditUndoBtn"),
@@ -659,8 +660,74 @@
   // { box, due, lastSeen, streak } shape, so grading logic only needs to be
   // written once.
 
+  // A missed term is taken off the due list for the rest of the day and comes
+  // back at 6:00 the next morning, Pacific time (`dueAt`, in ms).
+  const MISS_RETURN_ZONE = "America/Los_Angeles";
+  const MISS_RETURN_HOUR = 6;
+
+  // How far the zone's clock is ahead of UTC at an instant, in ms.
+  function zoneOffsetMs(ms, zone) {
+    const parts = {};
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: zone,
+      hourCycle: "h23",
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+    })
+      .formatToParts(new Date(ms))
+      .forEach((p) => {
+        parts[p.type] = Number(p.value);
+      });
+    const asUtc = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+    return asUtc - Math.floor(ms / 1000) * 1000;
+  }
+
+  // The next 6:00 in the zone that falls on the zone's following calendar day.
+  function nextMissDueAt(nowMs) {
+    const offset = zoneOffsetMs(nowMs, MISS_RETURN_ZONE);
+    const local = new Date(nowMs + offset);
+    const wall = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate() + 1, MISS_RETURN_HOUR);
+    const first = wall - zoneOffsetMs(wall - offset, MISS_RETURN_ZONE);
+    return wall - zoneOffsetMs(first, MISS_RETURN_ZONE);
+  }
+
+  // Terms already missed today, before misses had a return time, get one too
+  // so they leave today's due list as well.
+  function migrateTodaysMisses() {
+    const today = dateKey(new Date());
+    const dueAt = nextMissDueAt(Date.now());
+    const fix = (entry) => {
+      if (!entry || entry.dueAt || entry.lastSeen !== today || entry.streak !== 0 || entry.due !== today) return false;
+      entry.dueAt = dueAt;
+      entry.due = dateKey(new Date(dueAt));
+      return true;
+    };
+    let statsChanged = false;
+    Object.values(stats.perCard || {}).forEach((entry) => {
+      if (fix(entry)) statsChanged = true;
+    });
+    if (statsChanged) saveStats();
+    let decksChanged = false;
+    customDecks.forEach((deck) => {
+      let changed = false;
+      Object.values(deck.srs || {}).forEach((entry) => {
+        if (fix(entry)) changed = true;
+      });
+      if (changed) {
+        deck.updatedAt = new Date().toISOString();
+        decksChanged = true;
+      }
+    });
+    if (decksChanged) saveCustomDecks();
+  }
+
   function isDue(entry, todayKeyStr) {
     if (!entry || !entry.due) return true;
+    if (entry.dueAt) return Date.now() >= entry.dueAt;
     return entry.due <= todayKeyStr;
   }
 
@@ -669,6 +736,7 @@
     const streak = entry && typeof entry.streak === "number" ? entry.streak : 0;
     let nextBox;
     let due;
+    let dueAt; // only a miss has one
     if (correct) {
       nextBox = Math.min(box + 1, MAX_BOX);
       const [y, m, d] = todayKeyStr.split("-").map(Number);
@@ -676,11 +744,13 @@
       due = dateKey(dueDate);
     } else {
       nextBox = Math.max(box - 1, 0);
-      due = todayKeyStr;
+      dueAt = nextMissDueAt(Date.now());
+      due = dateKey(new Date(dueAt));
     }
     return {
       box: nextBox,
       due,
+      dueAt,
       lastSeen: todayKeyStr,
       streak: correct ? streak + 1 : 0,
     };
@@ -702,6 +772,7 @@
     return {
       box: (newer && newer.box) || 0,
       due: (newer && newer.due) || null,
+      dueAt: (newer && newer.dueAt) || undefined,
       lastSeen: (newer && newer.lastSeen) || null,
       streak: (newer && newer.streak) || 0,
     };
@@ -1574,6 +1645,7 @@
   }
 
   function renderDeckEdit() {
+    els.deckEditNewBtn.hidden = Boolean(editingDeckId);
     if (editingDeckId === KANJI_DECK_ID) {
       renderKanjiEdit();
       return;
@@ -1649,6 +1721,17 @@
   }
 
   els.editDecksBtn.addEventListener("click", openDeckEdit);
+
+  // A new deck starts empty, with reading and meaning columns, and opens
+  // straight away so terms can be added to it.
+  els.deckEditNewBtn.addEventListener("click", () => {
+    const name = (window.prompt("新しいデッキの名前") || "").trim();
+    if (!name) return;
+    const deck = upsertCustomDeck(name, [], ["読み", "意味"], {}, null);
+    hideEditUndo();
+    editingDeckId = deck.id;
+    renderDeckEdit();
+  });
 
   els.deckEditBackBtn.addEventListener("click", () => {
     hideEditUndo();
@@ -1973,10 +2056,52 @@
     pendingCsvParse = { cards, columns, answers, replaceId };
     els.customSaveTitle.textContent = existing ? "デッキを置き換え" : "新しいデッキ";
     els.customDeckNameInput.value = defaultName;
-    els.customSaveInfo.textContent = `${cards.length}枚を読み込み`;
-    els.customSaveWarning.hidden = true;
+    updateCustomSaveNote();
     showScreen("customDeckSave");
   }
+
+  // A new upload with the name of a deck that already exists is merged into
+  // that deck instead of making a second one.
+  function findDeckByName(name) {
+    const wanted = name.trim().toLowerCase();
+    return wanted ? customDecks.find((d) => d.name.trim().toLowerCase() === wanted) || null : null;
+  }
+
+  // The cards of an upload that the deck does not have yet (by front text).
+  function newCardsFor(deck, cards) {
+    const fronts = new Set(deck.cards.map((c) => c.front));
+    return cards.filter((card) => {
+      if (fronts.has(card.front)) return false;
+      fronts.add(card.front);
+      return true;
+    });
+  }
+
+  function mergeIntoDeck(deck, cards, columns, answers) {
+    const added = newCardsFor(deck, cards);
+    deck.cards.push(...added);
+    deck.columns = Array.from(new Set([...deckColumns(deck), ...columns]));
+    deck.answers = mergeDeckAnswers(deck.answers, answers);
+    deck.updatedAt = new Date().toISOString();
+    saveCustomDecks();
+    return added.length;
+  }
+
+  function updateCustomSaveNote() {
+    if (!pendingCsvParse) return;
+    const target = pendingCsvParse.replaceId ? null : findDeckByName(els.customDeckNameInput.value);
+    const total = pendingCsvParse.cards.length;
+    if (target) {
+      const fresh = newCardsFor(target, pendingCsvParse.cards).length;
+      els.customSaveInfo.textContent = `${total}枚を読み込み · 既存のデッキに統合します（追加${fresh}枚、重複${total - fresh}枚はスキップ）`;
+    } else {
+      els.customSaveInfo.textContent = `${total}枚を読み込み`;
+    }
+    els.customSaveConfirmBtn.textContent = target ? "デッキを統合" : "デッキを保存";
+    els.customSaveWarning.hidden = true;
+  }
+
+  els.customDeckNameInput.addEventListener("input", updateCustomSaveNote);
 
   els.csvFileInput.addEventListener("change", () => {
     const file = els.csvFileInput.files && els.csvFileInput.files[0];
@@ -2021,13 +2146,18 @@
   els.customSaveConfirmBtn.addEventListener("click", () => {
     if (!pendingCsvParse) return;
     const name = els.customDeckNameInput.value.trim() || "Untitled Deck";
-    upsertCustomDeck(
-      name,
-      pendingCsvParse.cards,
-      pendingCsvParse.columns,
-      pendingCsvParse.answers,
-      pendingCsvParse.replaceId
-    );
+    const target = pendingCsvParse.replaceId ? null : findDeckByName(name);
+    if (target) {
+      mergeIntoDeck(target, pendingCsvParse.cards, pendingCsvParse.columns, pendingCsvParse.answers);
+    } else {
+      upsertCustomDeck(
+        name,
+        pendingCsvParse.cards,
+        pendingCsvParse.columns,
+        pendingCsvParse.answers,
+        pendingCsvParse.replaceId
+      );
+    }
     pendingCsvParse = null;
     renderCustomDecksList();
     showScreen("customDecks");
@@ -4612,7 +4742,7 @@
     return id;
   }
 
-  const SRS_FIELD_NAMES = ["box", "due", "lastSeen", "streak"];
+  const SRS_FIELD_NAMES = ["box", "due", "dueAt", "lastSeen", "streak"];
 
   function buildSyncState() {
     const group = loadSyncGroup();
@@ -4914,6 +5044,7 @@
   customAnswers = normalizeCustomAnswersShape(loadCustomAnswers());
   saveCustomAnswers();
   customDecks = loadCustomDecks();
+  migrateTodaysMisses();
   kanjiRemovals = loadJson(KANJI_REMOVALS_KEY, {}) || {};
   leeches = loadJson(LEECHES_KEY, {}) || {};
   applySettings();

@@ -25,7 +25,7 @@
 
   // ---------------------------------------------------------------- merge
 
-  const SRS_FIELDS = ["box", "due", "lastSeen", "streak"];
+  const SRS_FIELDS = ["box", "due", "dueAt", "lastSeen", "streak"];
   const DAILY_FIELDS = ["completed", "right", "wrong", "reviews"];
   const CARD_FIELDS = ["right", "wrong"];
 
