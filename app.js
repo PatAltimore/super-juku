@@ -65,6 +65,8 @@
     deckEditLegend: document.getElementById("deckEditLegend"),
     deckEditToolbar: document.getElementById("deckEditToolbar"),
     deckEditList: document.getElementById("deckEditList"),
+    deckEditTagsBtn: document.getElementById("deckEditTagsBtn"),
+    deckEditStatus: document.getElementById("deckEditStatus"),
     deckEditNewBtn: document.getElementById("deckEditNewBtn"),
     deckEditUndo: document.getElementById("deckEditUndo"),
     deckEditUndoText: document.getElementById("deckEditUndoText"),
@@ -1614,6 +1616,7 @@
   function hideEditUndo() {
     window.clearTimeout(undoTimer);
     els.deckEditUndo.hidden = true;
+    els.deckEditStatus.hidden = true; // also left behind whenever the screen changes
     lastDeletedCard = null;
   }
 
@@ -1926,6 +1929,101 @@
     renderDeckEdit();
   }
 
+  // ---------- fill in labels for a deck's cards ----------
+  // Looks each card without labels up in JMdict and gives it the common flag,
+  // part of speech and JLPT level, which is what the lesson filters use. A
+  // card is only labelled when a result has exactly its written form (and its
+  // reading, when the deck has one), so a wrong word is never attached.
+
+  const LABEL_LOOKUP_PARALLEL = 3;
+  let labelLookupRunning = false;
+
+  const kanaKey = (text) =>
+    typeof wanakana !== "undefined" && wanakana.isKana(text) ? wanakana.toHiragana(text) : text;
+
+  function cardReadings(deck, card) {
+    return card.sections
+      .filter((s) => READING_LABEL_PATTERN.test(s.label))
+      .flatMap((s) => s.value.split(/[;,、]/))
+      .map((v) => kanaKey(v.trim()))
+      .filter(Boolean);
+  }
+
+  function findCardWord(deck, card, words) {
+    const readings = cardReadings(deck, card);
+    return (
+      words.find((w) => {
+        if (wordFront(w) !== card.front) return false;
+        return !readings.length || readings.includes(kanaKey(w.reading.kana));
+      }) || null
+    );
+  }
+
+  async function lookupWords(query) {
+    const res = await fetch(TERM_SEARCH_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, language: "English", no_english: false }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return (data.words || []).filter((w) => w && w.reading && w.reading.kana && Array.isArray(w.senses));
+  }
+
+  async function fetchDeckLabels(deck) {
+    if (labelLookupRunning) return;
+    const todo = deck.cards.filter((card) => !card.tags);
+    if (!todo.length) {
+      els.deckEditStatus.textContent = "すべてのカードにラベルがあります。";
+      els.deckEditStatus.hidden = false;
+      return;
+    }
+    labelLookupRunning = true;
+    els.deckEditTagsBtn.disabled = true;
+    els.deckEditStatus.hidden = false;
+    await loadJlptLevels();
+    let done = 0;
+    let labelled = 0;
+    let failed = 0;
+    const show = () => {
+      els.deckEditTagsBtn.textContent = `取得中… ${done}/${todo.length}`;
+    };
+    show();
+    let next = 0;
+    const worker = async () => {
+      while (next < todo.length) {
+        const card = todo[next++];
+        try {
+          const word = findCardWord(deck, card, await lookupWords(card.front));
+          if (word) {
+            card.tags = { common: Boolean(word.common), jlpt: wordJlpt(word), pos: wordPos(word) || null };
+            labelled++;
+          }
+        } catch (err) {
+          failed++;
+        }
+        done++;
+        show();
+      }
+    };
+    await Promise.all(Array.from({ length: LABEL_LOOKUP_PARALLEL }, worker));
+    if (labelled) {
+      deck.updatedAt = new Date().toISOString();
+      saveCustomDecks();
+    }
+    labelLookupRunning = false;
+    els.deckEditTagsBtn.disabled = false;
+    els.deckEditTagsBtn.textContent = "ラベルを取得";
+    const skipped = todo.length - labelled - failed;
+    els.deckEditStatus.textContent =
+      failed === todo.length
+        ? "取得できませんでした。ネットワークを確認してください。"
+        : `${labelled}枚にラベルを付けました` +
+          (skipped ? `（${skipped}枚は一致する単語が見つかりませんでした）` : "") +
+          (failed ? `（${failed}枚は取得に失敗しました）` : "");
+    if (customDeckById(deck.id) && editingDeckId === deck.id) renderDeckEdit();
+  }
+
   function openTermSearch() {
     termSearchResultsList = [];
     termSearchToken++;
@@ -1976,6 +2074,8 @@
     const action = btn.dataset.action;
     if (action === "add-term") {
       openTermSearch();
+    } else if (action === "fetch-tags") {
+      fetchDeckLabels(deck);
     } else if (action === "download") {
       downloadTextFile(`${sanitizeFilename(deck.name)}.csv`, deckToCsvText(deck), "text/csv;charset=utf-8");
     } else if (action === "replace") {
@@ -2303,7 +2403,15 @@
       pluralVariants(t).forEach((v) => set.add(v));
     };
     addWithPlurals(normalize(value));
-    value.split(/[;,]/).forEach((part) => addWithPlurals(normalize(part)));
+    value.split(/[;,]/).forEach((part) => {
+      addWithPlurals(normalize(part));
+      // A kana answer is the same in hiragana and in katakana.
+      const kana = part.trim();
+      if (kana && typeof wanakana !== "undefined" && wanakana.isKana(kana)) {
+        set.add(wanakana.toHiragana(kana));
+        set.add(wanakana.toKatakana(kana));
+      }
+    });
     (extra || []).forEach((a) => {
       const t = normalize(a);
       if (t) set.add(t);
@@ -2511,6 +2619,7 @@
     customTypeAnswering = true;
     els.customTypeCard.classList.remove("answer-wrong", "answer-right");
     lockAnswerInput(els.customTypeInput, false);
+    bindKanaInput(els.customTypeInput, kanaModeFor(customTypeCurrentSection.value));
     els.customTypeInput.value = "";
     els.customTypeFeedback.hidden = true;
     els.customTypeSubmitBtn.textContent = "確認";
@@ -2665,6 +2774,11 @@
     updateCustomTypeFeedbackResult(true, pendingCustomTypeRawAnswer, !addToCard);
     els.customAddAnswerBtn.hidden = true;
     els.customAddAnswerRow.hidden = true;
+    window.clearTimeout(customTypeAutoAdvanceTimer);
+    customTypeAutoAdvanceTimer = window.setTimeout(() => {
+      customTypeAutoAdvanceTimer = null;
+      if (!customTypeAnswering && pendingCustomTypeCorrect) advanceCustomTypeCard();
+    }, AUTO_ADVANCE_MS);
   }
 
   els.customAddAnswerBtn.addEventListener("click", (e) => {
@@ -3839,13 +3953,13 @@
       placeholder: "Answer",
     },
     onyomi: {
-      label: "読み",
+      label: "読み方",
       badgeClass: "qt-onyomi",
       placeholder: "答え",
     },
     // The kanji's verb or adjective (item.word): its reading, then its meaning.
     wordReading: {
-      label: "単語の読み",
+      label: "単語の読み方",
       badgeClass: "qt-kunyomi",
       placeholder: "答え",
     },
@@ -3874,8 +3988,11 @@
 
   // The badge above the answer bar names the question in the language of its
   // answer: English answers say "Meaning" rather than 意味.
+  // Reading questions are called 読み方, whatever the column is named.
   const MEANING_LABELS = new Set(["意味", "いみ", "単語の意味"]);
   function displayLabel(label, value) {
+    if (/^reading$/i.test(label) || label === "よみ" || label === "読み") return "読み方";
+    if (label === "単語の読み") return "単語の読み方";
     if (!MEANING_LABELS.has(label) || isKanaOrKanji(value)) return label;
     return label === "単語の意味" ? "Word meaning" : "Meaning";
   }
@@ -3897,7 +4014,14 @@
     el.style.whiteSpace = "";
     if (Array.from(text).length > 2) {
       el.style.whiteSpace = "nowrap";
-      const available = el.clientWidth * 0.94;
+      // The element can grow to fit its text, so the room is also limited by
+      // its parent's width.
+      const parent = el.parentElement;
+      const parentStyle = parent && getComputedStyle(parent);
+      const parentRoom = parent
+        ? parent.clientWidth - parseFloat(parentStyle.paddingLeft) - parseFloat(parentStyle.paddingRight)
+        : Infinity;
+      const available = Math.min(el.clientWidth, parentRoom) * 0.94;
       if (available) {
         const range = document.createRange();
         range.selectNodeContents(el);
@@ -4003,6 +4127,29 @@
     return types[Math.floor(Math.random() * types.length)];
   }
 
+  // Typing in romaji turns into kana when a custom card's answer is written
+  // in a single kana script: toKatakana or toHiragana, else null. Separators
+  // between several answers ("ぶたい, ぶたい") don't count.
+  function kanaModeFor(value) {
+    if (typeof wanakana === "undefined") return null;
+    const letters = String(value).replace(/[\s,;、，；\/／.。()（）~〜-]/g, "");
+    if (!letters) return null;
+    if (wanakana.isKatakana(letters)) return "toKatakana";
+    // Hiragana, or a mix of the two scripts (either spelling is accepted).
+    if (wanakana.isKana(letters)) return "toHiragana";
+    return null;
+  }
+
+  function bindKanaInput(input, mode) {
+    if (typeof wanakana === "undefined") return;
+    try {
+      wanakana.unbind(input);
+    } catch (err) {
+      /* wasn't bound; ignore */
+    }
+    if (mode) wanakana.bind(input, { IMEMode: mode });
+  }
+
   function setTypeInputMode(type, item) {
     if (typeof wanakana === "undefined") return;
     try {
@@ -4011,9 +4158,8 @@
       /* wasn't bound; ignore */
     }
     if (item && item.sections) {
-      const value = item.sections[sectionIndex(type)].value;
-      if (wanakana.isKatakana(value)) wanakana.bind(els.typeInput, { IMEMode: "toKatakana" });
-      else if (wanakana.isHiragana(value)) wanakana.bind(els.typeInput, { IMEMode: "toHiragana" });
+      const mode = kanaModeFor(item.sections[sectionIndex(type)].value);
+      if (mode) wanakana.bind(els.typeInput, { IMEMode: mode });
     } else if (type === "onyomi") {
       wanakana.bind(els.typeInput, { IMEMode: "toKatakana" });
     } else if (type === "wordReading") {
@@ -4267,7 +4413,17 @@
     renderTypeCustomAnswers(item, currentQuestionType);
     els.addAnswerBtn.hidden = true;
     els.addAnswerRow.hidden = true;
+    scheduleTypeAdvance();
   });
+
+  // A miss ruled correct moves on after the same short pause as a right answer.
+  function scheduleTypeAdvance() {
+    window.clearTimeout(typeAutoAdvanceTimer);
+    typeAutoAdvanceTimer = window.setTimeout(() => {
+      typeAutoAdvanceTimer = null;
+      if (!typeAnswering && pendingTypeCorrect) advanceTypeCard();
+    }, AUTO_ADVANCE_MS);
+  }
 
   // Rules a missed answer correct without saving it as an accepted answer.
   els.typoBtn.addEventListener("click", (e) => {
@@ -4277,6 +4433,7 @@
     updateTypeFeedbackResult(true, pendingTypeRawAnswer, true);
     els.addAnswerBtn.hidden = true;
     els.addAnswerRow.hidden = true;
+    scheduleTypeAdvance();
   });
 
   els.typeNewDeckBtn.addEventListener("click", () => {

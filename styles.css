@@ -2762,6 +2762,24 @@ button.edit-row {
   padding-bottom: 8px;
 }
 
+/* The answer shown after a miss is large; the short-screen layout below
+   keeps these sizes. */
+[data-theme="dark"] .type-card .type-feedback .reading-label {
+  font-size: 0.85rem;
+}
+
+[data-theme="dark"] .type-card .type-feedback .reading-value {
+  font-size: 1.55rem;
+}
+
+[data-theme="dark"] .type-card .type-feedback .meaning {
+  font-size: 1.5rem;
+}
+
+[data-theme="dark"] .type-card .type-feedback #typeWordBlock .reading-value {
+  font-size: 1.25rem;
+}
+
 /* Short screens (a phone with its keyboard open): the feedback below the
    character is laid out compactly so the reading, meaning and word all stay
    in view without scrolling. */
@@ -2799,17 +2817,17 @@ button.edit-row {
 
   [data-theme="dark"] .type-card .type-feedback .reading-label {
     margin-bottom: 0;
-    font-size: 0.62rem;
+    font-size: 0.85rem;
   }
 
   [data-theme="dark"] .type-card .type-feedback .reading-value {
-    font-size: 0.98rem;
+    font-size: 1.55rem;
   }
 
   [data-theme="dark"] .type-card .type-feedback .meaning {
     padding: 2px 6px 0;
     margin-top: 0;
-    font-size: 0.95rem;
+    font-size: 1.5rem;
     border-top: none;
   }
 
@@ -2843,7 +2861,7 @@ button.edit-row {
   }
 
   [data-theme="dark"] .type-card .type-feedback #typeWordBlock .reading-value {
-    font-size: 0.82rem;
+    font-size: 1.25rem;
     font-weight: 500;
   }
 

@@ -75,11 +75,13 @@
       </div>
       <div class="deck-edit-toolbar" id="deckEditToolbar" hidden>
         <button class="secondary-btn" data-action="add-term" type="button">用語を追加</button>
+        <button class="secondary-btn" data-action="fetch-tags" id="deckEditTagsBtn" type="button">ラベルを取得</button>
         <button class="secondary-btn" data-action="download" type="button">ダウンロード</button>
         <button class="secondary-btn" data-action="replace" type="button">置き換え</button>
         <button class="danger-btn" data-action="delete-deck" type="button">デッキを削除</button>
         <button class="secondary-btn" data-action="restore-kanji" id="deckEditRestoreBtn" type="button" hidden>削除した漢字を戻す</button>
       </div>
+      <div class="stats-footnote" id="deckEditStatus" hidden></div>
       <div class="deck-edit-list" id="deckEditList"></div>
       <button class="secondary-btn" id="deckEditNewBtn" type="button">新しいデッキ</button>
       <div class="deck-edit-undo" id="deckEditUndo" hidden>
