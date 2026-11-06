@@ -175,9 +175,6 @@
     importMergeBtn: document.getElementById("importMergeBtn"),
     importReplaceBtn: document.getElementById("importReplaceBtn"),
     importCancelBtn: document.getElementById("importCancelBtn"),
-    reviewQuestionsDownBtn: document.getElementById("reviewQuestionsDownBtn"),
-    reviewQuestionsUpBtn: document.getElementById("reviewQuestionsUpBtn"),
-    reviewQuestionsValue: document.getElementById("reviewQuestionsValue"),
     quizQuestionsDownBtn: document.getElementById("quizQuestionsDownBtn"),
     quizQuestionsUpBtn: document.getElementById("quizQuestionsUpBtn"),
     quizQuestionsValue: document.getElementById("quizQuestionsValue"),
@@ -295,7 +292,7 @@
   const THEMES = ["dark", "hanafuda", "hyakunin"];
   const DEFAULT_THEME = "dark";
 
-  let settings = { stylizedFont: true, fontScale: 1, defaultDailyMinutes: DEFAULT_MINUTES, reviewQuestions: DEFAULT_QUESTIONS, quizQuestions: DEFAULT_QUESTIONS, theme: DEFAULT_THEME, lessonDeck: "n2-kanji", marathonDeck: "n2-kanji" };
+  let settings = { stylizedFont: true, fontScale: 1, defaultDailyMinutes: DEFAULT_MINUTES, quizQuestions: DEFAULT_QUESTIONS, theme: DEFAULT_THEME, lessonDeck: "n2-kanji", marathonDeck: "n2-kanji" };
   let lessonHistory = { completed: {}, placement: {}, today: null };
   let lessonSession = null;
   let lessonQuestionTypes = [];
@@ -662,8 +659,10 @@
   // { box, due, lastSeen, streak } shape, so grading logic only needs to be
   // written once.
 
-  // A missed term is taken off the due list for the rest of the day and comes
-  // back at 6:00 the next morning, Pacific time (`dueAt`, in ms).
+  // Every graded term has its own due time (`dueAt`, in ms). A right answer is
+  // due one interval after it was given. A missed term is taken off the due
+  // list for the rest of the day and comes back at 6:00 the next morning,
+  // Pacific time.
   const MISS_RETURN_ZONE = "America/Los_Angeles";
   const MISS_RETURN_HOUR = 6;
 
@@ -727,6 +726,21 @@
     if (decksChanged) saveCustomDecks();
   }
 
+  // Gives a graded term its next due time counted from `atMs`: a right answer
+  // one interval later, a miss the next 6:00 AM Pacific. Reviews call this with
+  // the time the session ended, so every term in a batch comes back together.
+  function stampDue(entry, correct, atMs) {
+    if (!entry) return;
+    if (correct) {
+      const when = new Date(atMs);
+      when.setDate(when.getDate() + BOX_INTERVALS_DAYS[Math.min(entry.box || 0, MAX_BOX)]);
+      entry.dueAt = when.getTime();
+    } else {
+      entry.dueAt = nextMissDueAt(atMs);
+    }
+    entry.due = dateKey(new Date(entry.dueAt));
+  }
+
   function isDue(entry, todayKeyStr) {
     if (!entry || !entry.due) return true;
     if (entry.dueAt) return Date.now() >= entry.dueAt;
@@ -738,11 +752,13 @@
     const streak = entry && typeof entry.streak === "number" ? entry.streak : 0;
     let nextBox;
     let due;
-    let dueAt; // only a miss has one
+    let dueAt; // the moment the term is due again
     if (correct) {
+      // Due again exactly one interval after this answer, to the minute.
       nextBox = Math.min(box + 1, MAX_BOX);
-      const [y, m, d] = todayKeyStr.split("-").map(Number);
-      const dueDate = new Date(y, m - 1, d + BOX_INTERVALS_DAYS[nextBox]);
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + BOX_INTERVALS_DAYS[nextBox]);
+      dueAt = dueDate.getTime();
       due = dateKey(dueDate);
     } else {
       nextBox = Math.max(box - 1, 0);
@@ -1588,13 +1604,13 @@
     const deckId = row && row.dataset.deckId;
     if (deckId === "leech") {
       const items = getLeechItems();
-      if (items.length) beginLesson(items.slice(0, settings.reviewQuestions), "leech");
+      if (items.length) beginLesson(items, "leech");
       return;
     }
     if (deckId === KANJI_DECK_ID) {
       activateDeck(KANJI_DECK_ID);
       const cards = getReviewCards();
-      if (cards.length) beginLesson(cards.slice(0, settings.reviewQuestions), "review");
+      if (cards.length) beginLesson(cards, "review");
       return;
     }
     const deck = customDecks.find((d) => d.id === deckId);
@@ -2478,7 +2494,7 @@
       window.alert("このデッキには現在復習するカードがありません。");
       return;
     }
-    startCustomTypeSession(deck, buildTypedQuestions(due), "review");
+    startCustomTypeSession(deck, buildTypedQuestions(due, true), "review");
   }
 
   function renderCustomStudy() {
@@ -2550,11 +2566,9 @@
   // Typed modes (Type Answer, Quiz, Review) ask every section (reading,
   // meaning, ...) of each card as its own question, shuffled with a term's
   // questions kept apart where possible.
-  function buildTypedQuestions(cards) {
-    return spreadQuestions(
-      cards.flatMap((card) => card.sections.map((section) => ({ card, section }))),
-      (q) => q.card
-    );
+  function buildTypedQuestions(cards, fullyRandom = false) {
+    const questions = cards.flatMap((card) => card.sections.map((section) => ({ card, section })));
+    return fullyRandom ? shuffle(questions) : spreadQuestions(questions, (q) => q.card);
   }
 
   function startCustomTypeSession(deck, questions, mode) {
@@ -2602,6 +2616,23 @@
     startCustomTypeSession(deck, buildTypedQuestions(cards), "quiz");
   }
 
+  // The custom-deck counterpart of alignLessonDueTimes (not for the quiz).
+  function alignCustomDueTimes() {
+    const deck = customTypeDeck;
+    if (!deck || customTypeMode === "quiz") return;
+    const end = Date.now();
+    let changed = false;
+    customTermState.forEach((state, front) => {
+      if (!state.graded) return;
+      stampDue(deck.srs && deck.srs[front], state.graded === "right", end);
+      changed = true;
+    });
+    if (changed) {
+      deck.updatedAt = new Date(end).toISOString();
+      saveCustomDecks();
+    }
+  }
+
   function gradeCustomTerm(deck, card, correct) {
     if (customTypeMode === "quiz") applyCustomQuizResult(deck, card, correct);
     else applyCustomSrsResult(deck, card.front, correct);
@@ -2611,6 +2642,7 @@
     const deck = customTypeDeck;
     const idx = customTypeIndex;
     if (idx >= customTypeCards.length) {
+      alignCustomDueTimes();
       showCustomDeckComplete(deck, customTypeMode, customTermState.size);
       return;
     }
@@ -2794,6 +2826,7 @@
   els.customTypeBackBtn.addEventListener("click", () => {
     window.clearTimeout(customTypeAutoAdvanceTimer);
     customTypeAutoAdvanceTimer = null;
+    alignCustomDueTimes();
     customTypeDeck = null;
     renderCustomDecksList();
     showScreen("customDecks");
@@ -2820,9 +2853,6 @@
           parsed.defaultDailyMinutes <= MAX_MINUTES
             ? parsed.defaultDailyMinutes
             : DEFAULT_MINUTES,
-        reviewQuestions: Number.isFinite(parsed.reviewQuestions)
-          ? Math.min(MAX_QUESTIONS, Math.max(MIN_QUESTIONS, parsed.reviewQuestions))
-          : DEFAULT_QUESTIONS,
         quizQuestions: Number.isFinite(parsed.quizQuestions)
           ? Math.min(MAX_QUESTIONS, Math.max(MIN_QUESTIONS, parsed.quizQuestions))
           : DEFAULT_QUESTIONS,
@@ -2857,7 +2887,6 @@
     const pct = Math.round(settings.fontScale * 100);
     els.fontSizeSlider.value = String(pct);
     els.fontSizeValue.textContent = `${pct}%`;
-    els.reviewQuestionsValue.textContent = String(settings.reviewQuestions);
     els.quizQuestionsValue.textContent = String(settings.quizQuestions);
     if (els.themeOptions) {
       els.themeOptions.querySelectorAll(".theme-option").forEach((btn) => {
@@ -2904,8 +2933,6 @@
     saveSettings();
   }
 
-  els.reviewQuestionsDownBtn.addEventListener("click", () => changeQuestionSetting("reviewQuestions", -1));
-  els.reviewQuestionsUpBtn.addEventListener("click", () => changeQuestionSetting("reviewQuestions", 1));
   els.quizQuestionsDownBtn.addEventListener("click", () => changeQuestionSetting("quizQuestions", -1));
   els.quizQuestionsUpBtn.addEventListener("click", () => changeQuestionSetting("quizQuestions", 1));
 
@@ -3405,18 +3432,18 @@
 
   // Lessons are typed: every kanji gets a question per available answer type
   // (meaning and onyomi reading), all shuffled together.
-  function buildLessonQuestions(cards) {
-    return spreadQuestions(
-      cards.flatMap((item) =>
-        availableQuestionTypes(item).map((type) => ({ item, type }))
-      ),
-      (q) => q.item
+  // Lessons keep a term's questions apart; a review (復習 or リーチ) is shuffled
+  // completely, so any question can follow any other.
+  function buildLessonQuestions(cards, fullyRandom = false) {
+    const questions = cards.flatMap((item) =>
+      availableQuestionTypes(item).map((type) => ({ item, type }))
     );
+    return fullyRandom ? shuffle(questions) : spreadQuestions(questions, (q) => q.item);
   }
 
   function beginLesson(cards, kind) {
     savedMainSession = { queue, totalCount, masteredCount };
-    const questions = buildLessonQuestions(cards);
+    const questions = buildLessonQuestions(cards, kind === "review" || kind === "leech");
     lessonSession = {
       date: dateKey(new Date()),
       kind,
@@ -3460,13 +3487,19 @@
       state.wrongs++;
       if (!state.graded) {
         if (kind === "review" || all) noteLeechAnswer(leechKey(item), false, false);
-        if (counts) gradeItemSrs(item, false);
+        if (counts) {
+          gradeItemSrs(item, false);
+          state.scheduled = true;
+        }
         state.graded = "wrong";
       }
     }
     if (state.left === 0 && state.wrongs === 0 && !state.graded) {
       if (kind === "review" || all) noteLeechAnswer(leechKey(item), true, true);
-      if (counts && (!all || isDue(srsOf(item), dateKey(new Date())))) gradeItemSrs(item, true);
+      if (counts && (!all || isDue(srsOf(item), dateKey(new Date())))) {
+        gradeItemSrs(item, true);
+        state.scheduled = true;
+      }
       state.graded = "right";
     }
   }
@@ -3494,7 +3527,28 @@
 
   let lessonResultsKind = "lesson";
 
+  // When a lesson or review ends (or is left), the terms it graded all get
+  // their next due time counted from that moment.
+  function alignLessonDueTimes() {
+    if (!lessonSession) return;
+    const end = Date.now();
+    const touched = new Set();
+    lessonSession.cards.forEach((item) => {
+      const state = lessonTermState.get(item.num);
+      if (!state || !state.scheduled) return;
+      stampDue(srsOf(item), state.graded === "right", end);
+      if (item.deckId) touched.add(item.deckId);
+    });
+    saveStats();
+    touched.forEach((id) => {
+      const deck = customDeckById(id);
+      if (deck) deck.updatedAt = new Date(end).toISOString();
+    });
+    if (touched.size) saveCustomDecks();
+  }
+
   function finishLesson() {
+    alignLessonDueTimes();
     if (lessonSession.kind === "lesson") {
       lessonHistory.completed[completedKey(lessonSession.date)] = lessonSession.cards.map((item) => item.num);
       saveLessonHistory();
@@ -3550,7 +3604,7 @@
   });
   els.startReviewBtn.addEventListener("click", () => {
     const cards = getReviewCards();
-    if (cards.length) beginLesson(cards.slice(0, settings.reviewQuestions), "review");
+    if (cards.length) beginLesson(cards, "review");
   });
 
   els.lessonResultsLessonsBtn.addEventListener("click", () => {
@@ -3659,6 +3713,7 @@
     btn.addEventListener("click", () => {
       clearDailyInterval();
       if (lessonSession) {
+        alignLessonDueTimes();
         if (savedMainSession) {
           queue = savedMainSession.queue;
           totalCount = savedMainSession.totalCount;
@@ -3825,7 +3880,7 @@
   els.statsBody.addEventListener("click", (event) => {
     if (!event.target.closest("[data-action='review-now']")) return;
     const cards = getReviewCards();
-    if (cards.length) beginLesson(cards.slice(0, settings.reviewQuestions), "review");
+    if (cards.length) beginLesson(cards, "review");
   });
 
   els.modeStatsBtn.addEventListener("click", () => {
