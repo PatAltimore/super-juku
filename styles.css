@@ -3161,9 +3161,24 @@ button.edit-row {
 .study-strip {
   flex: 0 0 auto;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   gap: 8px;
   padding: 8px 12px;
+}
+
+.study-strip-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* The words are separate bubbles under the kanji. */
+.study-chip-word {
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 1rem;
 }
 
 .study-chip {
@@ -3238,4 +3253,66 @@ button.edit-row {
 
 .study-word-examples {
   padding: 4px 8px 8px;
+}
+
+.study-mnemonic {
+  width: min(100%, 560px);
+  margin: 22px auto 0;
+  text-align: left;
+}
+
+.study-mnemonic-input {
+  width: 100%;
+  resize: vertical;
+  padding: 10px 12px;
+  border: 1.5px solid #c4c4c4;
+  border-radius: 12px;
+  background: #f6f6f6;
+  color: #1c1c1c;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.study-mnemonic-input:focus {
+  outline: 2px solid var(--q-bg);
+  outline-offset: 1px;
+}
+
+/* The mnemonic shown on request after a miss, on its own line. */
+.mnemonic-note {
+  flex: 1 1 100%;
+  width: 100%;
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+}
+
+.mnemonic-note[hidden] {
+  display: none;
+}
+
+.mnemonic-card {
+  width: min(100%, 560px);
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  text-align: center;
+}
+
+.mnemonic-note .mnemonic-text {
+  font-size: 1.1rem;
+  white-space: pre-wrap;
+}
+
+.mnemonic-note.empty .mnemonic-text {
+  opacity: 0.6;
+  font-size: 0.95rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-theme="dark"] .type-card .mnemonic-card {
+    background: rgba(0, 0, 0, 0.07);
+    color: #1c1c1c;
+  }
 }

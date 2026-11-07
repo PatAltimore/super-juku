@@ -34,7 +34,7 @@
   const DEFAULT_QUESTIONS = 10;
   // Leitner-box spaced repetition: box index -> days until next due date.
   // A correct answer advances a card to the next box (longer interval); a
-  // miss drops it back a box and makes it due again immediately.
+  // miss keeps it in its box and brings it back at 6:00 the next morning.
   const BOX_INTERVALS_DAYS = [0, 1, 3, 7, 14, 30, 90, 90];
   const MAX_BOX = BOX_INTERVALS_DAYS.length - 1;
   const KNOWN_BOX_THRESHOLD = 4;
@@ -209,6 +209,8 @@
     typeInput: document.getElementById("typeInput"),
     typeSubmitBtn: document.getElementById("typeSubmitBtn"),
     typeFeedback: document.getElementById("typeFeedback"),
+    typeMnemonic: document.getElementById("typeMnemonic"),
+    customTypeMnemonic: document.getElementById("customTypeMnemonic"),
     typeFeedbackResult: document.getElementById("typeFeedbackResult"),
     typeOnyomi: document.getElementById("typeOnyomi"),
     typeOnyomiBlock: document.getElementById("typeOnyomiBlock"),
@@ -421,7 +423,7 @@
     els.rank.title = rank.maxed ? "最高ランクです" : `次のレベルまであと${rank.toNext}回の復習`;
     els.streak.title = streak.doneToday ? "連続で学習した日数" : "今日はまだ学習していません。続けるには今日学習しましょう。";
     // Questions waiting across the decks (the リーチ deck has its own count).
-    let due = questionCount(getReviewCards(visibleKanji()));
+    let due = unitQuestionCount(getReviewUnits(visibleKanji()));
     customDecks.forEach((deck) => {
       due += customQuestionCount(getDueCustomCards(deck));
     });
@@ -513,6 +515,16 @@
       if (item) items.push(item);
     });
     return items;
+  }
+
+  // ---------- mnemonics ----------
+  // Text the player types under a term's meaning or readings on the study
+  // screen: { "<term key>|<tab>": { text, at } }, kept per term and per tab.
+  const MNEMONICS_KEY = "kanjiFlashN2.mnemonics.v1";
+  let mnemonics = {};
+
+  function saveMnemonics() {
+    saveJson(MNEMONICS_KEY, mnemonics);
   }
 
   const isKanjiRemoved = (num) => Boolean(kanjiRemovals[num] && kanjiRemovals[num].removed);
@@ -774,7 +786,7 @@
       dueAt = dueDate.getTime();
       due = dateKey(dueDate);
     } else {
-      nextBox = Math.max(box - 1, 0);
+      nextBox = box; // a miss keeps the level; it only comes back sooner
       dueAt = nextMissDueAt(Date.now());
       due = dateKey(new Date(dueAt));
     }
@@ -1024,8 +1036,14 @@
     saveStats();
   }
 
-  function gradeBuiltinSrs(kanjiNum, correct) {
-    const cardKey = String(kanjiNum);
+  // A kanji and the word (verb or adjective) that goes with it are scheduled
+  // separately: the kanji (its meaning and onyomi) under its number, the word
+  // (its reading and meaning) under "w<number>".
+  const groupOfType = (type) => (type === "wordReading" || type === "wordMeaning" ? "word" : "kanji");
+  const srsKeyOf = (num, group) => (group === "word" ? `w${num}` : String(num));
+
+  function gradeBuiltinSrs(kanjiNum, correct, group = "kanji") {
+    const cardKey = srsKeyOf(kanjiNum, group);
     if (!stats.perCard[cardKey]) {
       stats.perCard[cardKey] = { right: 0, wrong: 0 };
     }
@@ -1039,12 +1057,12 @@
   // Progress for an item lives in stats.perCard for the built-in deck and in
   // the deck's own srs (keyed by card front) for a custom deck, so Lessons and
   // Ultimate Challenge share progress with that deck's other study modes.
-  function srsOf(item) {
+  function srsOf(item, group = "kanji") {
     if (item.deckId) {
       const deck = customDeckById(item.deckId);
       return (deck && deck.srs && deck.srs[item.front]) || null;
     }
-    return stats.perCard[String(item.num)] || null;
+    return stats.perCard[srsKeyOf(item.num, group)] || null;
   }
 
   // Progress shown by colour. A correct answer moves a card up one box: the
@@ -1074,9 +1092,9 @@
     if (deck && gradeSrs) applyCustomSrsResult(deck, item.front, correct);
   }
 
-  function gradeItemSrs(item, correct) {
+  function gradeItemSrs(item, correct, group = "kanji") {
     if (!item.deckId) {
-      gradeBuiltinSrs(item.num, correct);
+      gradeBuiltinSrs(item.num, correct, group);
       return;
     }
     const deck = customDeckById(item.deckId);
@@ -1600,7 +1618,7 @@
     els.customDecksEmpty.hidden = customDecks.length > 0;
     const n2Row = `
       <div class="custom-deck-row" data-deck-id="${KANJI_DECK_ID}">
-        <div class="custom-deck-header">${deckReviewButton("N2漢字", `${visibleKanji().length}枚`, questionCount(getReviewCards(visibleKanji())))}
+        <div class="custom-deck-header">${deckReviewButton("N2漢字", `${visibleKanji().length}枚`, unitQuestionCount(getReviewUnits(visibleKanji())))}
         </div>
       </div>`;
     const leechItems = getLeechItems();
@@ -1633,8 +1651,8 @@
     }
     if (deckId === KANJI_DECK_ID) {
       activateDeck(KANJI_DECK_ID);
-      const cards = getReviewCards();
-      if (cards.length) beginLesson(cards, "review");
+      const units = getReviewUnits();
+      if (units.length) startReview(units);
       return;
     }
     const deck = customDecks.find((d) => d.id === deckId);
@@ -2757,6 +2775,7 @@
     els.customTypeFeedback.hidden = false;
     els.customTypeFeedback.classList.toggle("quick", correct);
     els.customTypeFeedback.classList.remove("revealed");
+    els.customTypeMnemonic.hidden = true;
     updateCustomTypeFeedbackResult(correct, pendingCustomTypeRawAnswer, fuzzy);
     customTypeInfoRevealed = false;
     els.customTypeSections.innerHTML = sectionsToHtml(correct ? card.sections : [section]);
@@ -3262,16 +3281,49 @@
   // Spaced-repetition review queue: any previously-attempted kanji whose SRS
   // box has come due, weakest/most-overdue first. Brand-new kanji are
   // introduced via Lessons instead, not here.
-  function getReviewCards(items = allKanji) {
+  // Reviews work on units: a kanji (meaning and onyomi) and its word (reading
+  // and meaning) are separate units, each due on its own schedule.
+  function getReviewUnits(items = allKanji) {
     const today = dateKey(new Date());
-    const due = [];
+    const units = [];
     items.forEach((item) => {
       const entry = srsOf(item);
-      if (!entry || !isItemStudied(item) || !isDue(entry, today)) return;
-      due.push({ item, box: entry.box || 0, dueDate: entry.due || "" });
+      if (entry && isItemStudied(item) && isDue(entry, today)) units.push({ item, part: "kanji" });
+      if (item.word && !item.deckId) {
+        const word = srsOf(item, "word");
+        if (word && word.lastSeen && isDue(word, today)) units.push({ item, part: "word" });
+      }
     });
-    due.sort((a, b) => a.box - b.box || (a.dueDate < b.dueDate ? -1 : a.dueDate > b.dueDate ? 1 : 0));
-    return due.map((d) => d.item);
+    return units;
+  }
+
+  const unitQuestionCount = (units) =>
+    units.reduce((n, u) => n + availableQuestionTypes(u.item, u.part).length, 0);
+
+  function startReview(units) {
+    const cards = Array.from(new Set(units.map((u) => u.item)));
+    beginLesson(cards, "review", units);
+  }
+
+  // Kanji studied before words had their own schedule start the word on the
+  // kanji's current one.
+  function migrateWordSchedules() {
+    let changed = false;
+    n2Kanji.forEach((item) => {
+      const entry = stats.perCard[String(item.num)];
+      if (!item.word || !entry || !entry.lastSeen || stats.perCard[`w${item.num}`]) return;
+      stats.perCard[`w${item.num}`] = {
+        right: 0,
+        wrong: 0,
+        box: entry.box,
+        due: entry.due,
+        dueAt: entry.dueAt,
+        lastSeen: entry.lastSeen,
+        streak: entry.streak,
+      };
+      changed = true;
+    });
+    if (changed) saveStats();
   }
 
   // What a chart tile shows above and below the term: for kanji the reading
@@ -3454,7 +3506,7 @@
       html += `<span class="calendar-day${key === todayKey ? " calendar-today" : ""}${completed ? " calendar-complete" : ""}">${day}</span>`;
     }
     els.lessonCalendar.innerHTML = html;
-    const reviewCount = getReviewCards().length;
+    const reviewCount = getReviewUnits().length;
     els.startReviewBtn.disabled = reviewCount === 0;
   }
 
@@ -3462,9 +3514,10 @@
   // (meaning and onyomi reading), all shuffled together.
   // Lessons keep a term's questions apart; a review (復習 or リーチ) is shuffled
   // completely, so any question can follow any other.
-  function buildLessonQuestions(cards, fullyRandom = false) {
-    const questions = cards.flatMap((item) =>
-      availableQuestionTypes(item).map((type) => ({ item, type }))
+  function buildLessonQuestions(cards, fullyRandom = false, units = null) {
+    const list = units || cards.map((item) => ({ item, part: "all" }));
+    const questions = list.flatMap(({ item, part }) =>
+      availableQuestionTypes(item, part).map((type) => ({ item, type }))
     );
     return fullyRandom ? shuffle(questions) : spreadQuestions(questions, (q) => q.item);
   }
@@ -3492,7 +3545,26 @@
   }
 
   function startStudy() {
-    study = { batch: lessonRun.batches[lessonRun.index], index: 0, tab: "meaning", openWord: null };
+    // The five kanji come first, then the word (verb or adjective) that goes
+    // with each of them, shown the same way as separate entries.
+    const batch = lessonRun.batches[lessonRun.index];
+    const entries = [
+      ...batch.map((item) => ({ view: item })),
+      ...batch
+        .filter((item) => item.word)
+        .map((item) => ({
+          word: true,
+          view: {
+            front: item.word,
+            kanji: item.word,
+            wordEntry: true,
+            parent: item,
+            meaning: item.wordMeaning,
+            wordReading: item.wordReading,
+          },
+        })),
+    ];
+    study = { batch, entries, index: 0, tab: "meaning", openWord: null };
     showScreen("lessonStudy");
     renderStudy();
   }
@@ -3500,6 +3572,7 @@
   const termText = (item) => item.front || item.kanji;
 
   function studyReadingParts(item) {
+    if (item.wordEntry) return item.wordReading ? [["読み方", item.wordReading]] : [];
     if (!item.sections) {
       const parts = [];
       if (item.onyomi) parts.push(["音読み", item.onyomi]);
@@ -3612,11 +3685,25 @@
       .join("")}</div>`;
   }
 
+  function mnemonicKey(item, tab) {
+    const base = item.wordEntry ? `${leechKey(item.parent)}|word` : leechKey(item);
+    return `${base}|${tab}`;
+  }
+
+  function mnemonicFieldHtml(item, tab) {
+    const saved = mnemonics[mnemonicKey(item, tab)];
+    return `<div class="study-mnemonic">
+      <div class="study-label">Mnemonic</div>
+      <textarea class="study-mnemonic-input" rows="3" data-tab="${tab}" placeholder="語呂合わせやメモを入力" spellcheck="false">${escapeHtml(saved ? saved.text : "")}</textarea>
+    </div>`;
+  }
+
   function studyPanelHtml(item, tab) {
     const block = ([label, value]) =>
       `<div class="study-block"><div class="study-label">${escapeHtml(label)}</div><div class="study-value">${escapeHtml(value)}</div></div>`;
-    if (tab === "meaning") return `<div class="study-blocks">${studyMeaningParts(item).map(block).join("")}</div>`;
-    if (tab === "readings") return `<div class="study-blocks study-blocks-row">${studyReadingParts(item).map(block).join("")}</div>`;
+    if (tab === "meaning") return `<div class="study-blocks">${studyMeaningParts(item).map(block).join("")}</div>${mnemonicFieldHtml(item, tab)}`;
+    if (tab === "readings") return `<div class="study-blocks study-blocks-row">${studyReadingParts(item).map(block).join("")}</div>${mnemonicFieldHtml(item, tab)}`;
+    if (item.wordEntry) return exampleSentencesHtml(item.front);
     if (!item.sections) return kanjiExamplesHtml(item);
     const cached = exampleCache.get(termText(item));
     if (!cached) return `<div class="study-status">読み込み中…</div>`;
@@ -3631,11 +3718,12 @@
 
   function renderStudy() {
     if (!study) return;
-    const item = study.batch[study.index];
+    const entry = study.entries[study.index];
+    const item = entry.view;
     const tabs = studyTabsFor(item);
     if (!tabs.some(([id]) => id === study.tab)) study.tab = "meaning";
     setQuestionTone(els.screenLessonStudy, study.tab === "readings" ? "reading" : "meaning");
-    els.studyProgress.textContent = `${study.index + 1} / ${study.batch.length}`;
+    els.studyProgress.textContent = `${entry.word ? "単語 " : ""}${study.index + 1} / ${study.entries.length}`;
     els.studyTerm.textContent = termText(item);
     els.studyGloss.textContent = studyGloss(item);
     els.studyTabs.innerHTML = tabs
@@ -3645,13 +3733,19 @@
       )
       .join("");
     els.studyPanel.innerHTML = studyPanelHtml(item, study.tab);
-    els.studyStrip.innerHTML = study.batch
-      .map(
-        (it, i) =>
-          `<button class="study-chip${i === study.index ? " active" : ""}" type="button" data-index="${i}">${escapeHtml(termText(it))}</button>`
-      )
-      .join("");
-    const last = study.index === study.batch.length - 1;
+    const chips = (words) =>
+      study.entries
+        .map((e, i) => ({ e, i }))
+        .filter(({ e }) => Boolean(e.word) === words)
+        .map(
+          ({ e, i }) =>
+            `<button class="study-chip${words ? " study-chip-word" : ""}${i === study.index ? " active" : ""}" type="button" data-index="${i}">${escapeHtml(termText(e.view))}</button>`
+        )
+        .join("");
+    els.studyStrip.innerHTML =
+      `<div class="study-strip-row">${chips(false)}</div>` +
+      (study.entries.some((e) => e.word) ? `<div class="study-strip-row">${chips(true)}</div>` : "");
+    const last = study.index === study.entries.length - 1;
     els.studyPrevBtn.disabled = study.index === 0;
     els.studyNextBtn.disabled = last;
     els.studyContinueBtn.textContent = last ? "クイズを始める" : "次へ";
@@ -3666,8 +3760,16 @@
     const query = termText(item);
     const shown = study;
     const refresh = () => {
-      if (study === shown && study.tab === "examples" && termText(study.batch[study.index]) === query) renderStudy();
+      if (study === shown && study.tab === "examples" && termText(study.entries[study.index].view) === query) renderStudy();
     };
+    if (item.wordEntry) {
+      if (!exampleCache.has(`${query}|loose`)) {
+        loadExamples(query, false)
+          .catch(() => exampleCache.set(`${query}|loose`, []))
+          .then(refresh);
+      }
+      return;
+    }
     if (item.sections) {
       if (!exampleCache.has(query)) {
         loadExamples(query)
@@ -3693,15 +3795,16 @@
   function studyMove(step) {
     if (!study) return;
     const next = study.index + step;
-    if (next < 0 || next >= study.batch.length) return;
+    if (next < 0 || next >= study.entries.length) return;
     study.index = next;
     study.openWord = null;
+    study.tab = "meaning"; // every new term starts on its meaning
     renderStudy();
   }
 
   function studyAdvance() {
     if (!study) return;
-    if (study.index < study.batch.length - 1) {
+    if (study.index < study.entries.length - 1) {
       studyMove(1);
       return;
     }
@@ -3712,7 +3815,7 @@
 
   function studyShiftTab(step) {
     if (!study) return;
-    const tabs = studyTabsFor(study.batch[study.index]);
+    const tabs = studyTabsFor(study.entries[study.index].view);
     const at = tabs.findIndex(([id]) => id === study.tab);
     const next = tabs[at + step];
     if (!next) return;
@@ -3731,7 +3834,16 @@
     if (!chip || !study) return;
     study.index = Number(chip.dataset.index);
     study.openWord = null;
+    study.tab = "meaning"; // every new term starts on its meaning
     renderStudy();
+  });
+  // What is typed is saved as it goes, for the term and tab being shown.
+  els.studyPanel.addEventListener("input", (event) => {
+    const field = event.target.closest(".study-mnemonic-input");
+    if (!field || !study) return;
+    const item = study.entries[study.index].view;
+    mnemonics[mnemonicKey(item, field.dataset.tab)] = { text: field.value, at: Date.now() };
+    saveMnemonics();
   });
   els.studyPanel.addEventListener("click", (event) => {
     const word = event.target.closest("[data-word]");
@@ -3754,6 +3866,7 @@
   document.addEventListener("keydown", (event) => {
     if (!study || els.screenLessonStudy.hidden) return;
     if (event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.target instanceof Element && event.target.closest("textarea, input")) return; // typing a mnemonic
     const actions = {
       ArrowLeft: () => studyShiftTab(-1),
       ArrowRight: () => studyShiftTab(1),
@@ -3769,12 +3882,12 @@
   });
 
   window.addEventListener("resize", () => {
-    if (study && !els.screenLessonStudy.hidden) fitFront(els.studyTerm, termText(study.batch[study.index]));
+    if (study && !els.screenLessonStudy.hidden) fitFront(els.studyTerm, termText(study.entries[study.index].view));
   });
 
-  function beginLesson(cards, kind) {
+  function beginLesson(cards, kind, units = null) {
     savedMainSession = { queue, totalCount, masteredCount };
-    const questions = buildLessonQuestions(cards, kind === "review" || kind === "leech");
+    const questions = buildLessonQuestions(cards, kind === "review" || kind === "leech", units);
     lessonSession = {
       date: dateKey(new Date()),
       kind,
@@ -3784,14 +3897,19 @@
       right: 0,
       wrong: 0,
       mistakes: [],
+      leechCounted: new Set(),
     };
-    // A kanji is graded once per lesson: wrong as soon as any of its
-    // questions is missed, right after all of them are answered correctly.
+    // A kanji and its word are each graded once per session: wrong as soon as
+    // any of their questions is missed, right after all of them are answered
+    // correctly. They are graded separately, so a missed word doesn't hold
+    // back its kanji.
     lessonTermState = new Map();
     questions.forEach((q) => {
-      const state = lessonTermState.get(q.item.num);
+      const group = groupOfType(q.type);
+      const key = `${q.item.num}:${group}`;
+      const state = lessonTermState.get(key);
       if (state) state.left++;
-      else lessonTermState.set(q.item.num, { left: 1, wrongs: 0, graded: null });
+      else lessonTermState.set(key, { item: q.item, group, left: 1, wrongs: 0, graded: null });
     });
     queue = questions.map((q) => q.item);
     lessonQuestionTypes = questions.map((q) => q.type);
@@ -3806,8 +3924,9 @@
   // already studied, and a correct run only moves it up when it was due, so
   // going through the whole deck neither marks new terms as lessoned nor
   // speeds up the schedule.
-  function gradeLessonTerm(item, correct) {
-    const state = lessonTermState.get(item.num);
+  function gradeLessonTerm(item, correct, type) {
+    const group = groupOfType(type);
+    const state = lessonTermState.get(`${item.num}:${group}`);
     const kind = lessonSession.kind;
     const all = kind === "all";
     const counts = kind !== "leech" && (!all || isItemStudied(item));
@@ -3817,18 +3936,22 @@
     if (!correct) {
       state.wrongs++;
       if (!state.graded) {
-        if (kind === "review" || all) noteLeechAnswer(leechKey(item), false, false);
+        // A kanji counts as one miss per session, whichever part was missed.
+        if ((kind === "review" || all) && !lessonSession.leechCounted.has(leechKey(item))) {
+          lessonSession.leechCounted.add(leechKey(item));
+          noteLeechAnswer(leechKey(item), false, false);
+        }
         if (counts) {
-          gradeItemSrs(item, false);
+          gradeItemSrs(item, false, group);
           state.scheduled = true;
         }
         state.graded = "wrong";
       }
     }
     if (state.left === 0 && state.wrongs === 0 && !state.graded) {
-      if (kind === "review" || all) noteLeechAnswer(leechKey(item), true, true);
-      if (counts && (!all || isDue(srsOf(item), dateKey(new Date())))) {
-        gradeItemSrs(item, true);
+      if ((kind === "review" || all) && group === "kanji") noteLeechAnswer(leechKey(item), true, true);
+      if (counts && (!all || isDue(srsOf(item, group), dateKey(new Date())))) {
+        gradeItemSrs(item, true, group);
         state.scheduled = true;
       }
       state.graded = "right";
@@ -3864,11 +3987,10 @@
     if (!lessonSession) return;
     const end = Date.now();
     const touched = new Set();
-    lessonSession.cards.forEach((item) => {
-      const state = lessonTermState.get(item.num);
-      if (!state || !state.scheduled) return;
-      stampDue(srsOf(item), state.graded === "right", end);
-      if (item.deckId) touched.add(item.deckId);
+    lessonTermState.forEach((state) => {
+      if (!state.scheduled) return;
+      stampDue(srsOf(state.item, state.group), state.graded === "right", end);
+      if (state.item.deckId) touched.add(state.item.deckId);
     });
     saveStats();
     touched.forEach((id) => {
@@ -3952,8 +4074,8 @@
     updateLessonSelection();
   });
   els.startReviewBtn.addEventListener("click", () => {
-    const cards = getReviewCards();
-    if (cards.length) beginLesson(cards, "review");
+    const units = getReviewUnits();
+    if (units.length) startReview(units);
   });
 
   els.lessonResultsLessonsBtn.addEventListener("click", () => {
@@ -4162,17 +4284,18 @@
     const overallAccuracy = totalCompleted
       ? Math.round((totalRight / totalCompleted) * 100)
       : 0;
-    const cardsAttempted = Object.keys(stats.perCard).length;
+    const kanjiKeys = Object.keys(stats.perCard).filter((key) => !key.startsWith("w"));
+    const cardsAttempted = kanjiKeys.length;
 
     let known = 0;
     let learning = 0;
-    Object.keys(stats.perCard).forEach((key) => {
+    kanjiKeys.forEach((key) => {
       if (srsTier(stats.perCard[key]) === "known") known++;
       else learning++;
     });
     const totalKanji = visibleKanji().length || n2Kanji.length || 367;
     const newCount = Math.max(totalKanji - cardsAttempted, 0);
-    const dueCount = getReviewCards().length;
+    const dueCount = getReviewUnits().length;
 
     els.statsBody.innerHTML = `
       <div class="stats-section-title">過去7日間</div>
@@ -4230,8 +4353,8 @@
 
   els.statsBody.addEventListener("click", (event) => {
     if (!event.target.closest("[data-action='review-now']")) return;
-    const cards = getReviewCards();
-    if (cards.length) beginLesson(cards, "review");
+    const units = getReviewUnits();
+    if (units.length) startReview(units);
   });
 
   els.modeStatsBtn.addEventListener("click", () => {
@@ -4555,16 +4678,17 @@
   document.addEventListener("keydown", (event) => {
     if (event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return;
     const key = event.key.toLowerCase();
-    if (key !== "a" && key !== "t" && key !== "f") return;
+    if (key !== "a" && key !== "t" && key !== "f" && key !== "m") return;
     let missed = null;
     if (!els.screenType.hidden && !typeAnswering && !pendingTypeCorrect && pendingTypeRawAnswer) {
-      missed = { add: els.addAnswerBtn, typo: els.typoBtn, reveal: revealTypeInfo };
+      missed = { add: els.addAnswerBtn, typo: els.typoBtn, reveal: revealTypeInfo, mnemonic: showTypeMnemonic };
     } else if (!els.screenCustomType.hidden && !customTypeAnswering && !pendingCustomTypeCorrect && pendingCustomTypeRawAnswer) {
-      missed = { add: els.customAddAnswerBtn, typo: els.customTypoBtn, reveal: revealCustomTypeInfo };
+      missed = { add: els.customAddAnswerBtn, typo: els.customTypoBtn, reveal: revealCustomTypeInfo, mnemonic: showCustomTypeMnemonic };
     }
     if (!missed) return;
     event.preventDefault();
     if (key === "f") missed.reveal();
+    else if (key === "m") missed.mnemonic();
     else (key === "a" ? missed.add : missed.typo).click();
   });
 
@@ -4589,6 +4713,39 @@
   }
 
   // F shows everything about the card after a miss, and F again hides it.
+  // M after a miss shows (or hides) the mnemonic written for what was asked:
+  // the meaning's for a meaning question, the readings' for a reading question.
+  function mnemonicText(base, kind) {
+    const saved = mnemonics[`${base}|${kind === "reading" ? "readings" : "meaning"}`];
+    return saved ? saved.text.trim() : "";
+  }
+
+  function toggleMnemonic(note, text) {
+    if (!note.hidden) {
+      note.hidden = true;
+      return;
+    }
+    note.innerHTML = `<div class="mnemonic-card"><div class="study-label">Mnemonic</div><div class="mnemonic-text">${text ? escapeHtml(text) : "メモはありません"}</div></div>`;
+    note.classList.toggle("empty", !text);
+    note.hidden = false;
+  }
+
+  function showTypeMnemonic() {
+    const item = queue[0];
+    if (!item) return;
+    const base = !item.sections && isWordType(currentQuestionType) ? `${leechKey(item)}|word` : leechKey(item);
+    toggleMnemonic(els.typeMnemonic, mnemonicText(base, questionKind(item, currentQuestionType)));
+  }
+
+  function showCustomTypeMnemonic() {
+    const card = customTypeCards[customTypeIndex];
+    if (!card) return;
+    toggleMnemonic(
+      els.customTypeMnemonic,
+      mnemonicText(`${customTypeDeck.id}|${card.front}`, kindOfLabel(customTypeCurrentSection.label))
+    );
+  }
+
   function revealTypeInfo() {
     const item = queue[0];
     if (!item) return;
@@ -4619,13 +4776,18 @@
     }
   });
 
-  function availableQuestionTypes(item) {
+  // `part` limits a kanji to its own questions ("kanji") or its word's
+  // ("word"); "all" asks both.
+  function availableQuestionTypes(item, part = "all") {
     if (item.sections) {
       return item.sections.map((s, i) => (s.value ? `s${i}` : null)).filter(Boolean);
     }
-    const types = ["meaning"];
-    if (item.onyomi) types.push("onyomi");
-    if (item.word) types.push("wordReading", "wordMeaning");
+    const types = [];
+    if (part !== "word") {
+      types.push("meaning");
+      if (item.onyomi) types.push("onyomi");
+    }
+    if (part !== "kanji" && item.word) types.push("wordReading", "wordMeaning");
     return types;
   }
 
@@ -4830,6 +4992,7 @@
     els.typeFeedback.hidden = false;
     els.typeFeedback.classList.toggle("quick", correct);
     els.typeFeedback.classList.remove("revealed");
+    els.typeMnemonic.hidden = true;
     updateTypeFeedbackResult(correct, pendingTypeRawAnswer, fuzzy);
     els.typeLegacyRows.hidden = Boolean(item.sections);
     els.typeSections.hidden = !item.sections;
@@ -4876,7 +5039,7 @@
       }
       if (!all || isItemStudied(item)) recordItemResult(item, pendingTypeCorrect, false);
       if (pendingTypeCorrect && (all || lessonSession.kind === "review" || lessonSession.kind === "leech")) addReviewPoint();
-      gradeLessonTerm(item, pendingTypeCorrect);
+      gradeLessonTerm(item, pendingTypeCorrect, type);
       lessonSession.seen++;
       if (pendingTypeCorrect) lessonSession.right++;
       else lessonSession.wrong++;
@@ -4953,6 +5116,7 @@
       stats,
       lessons: lessonHistory,
       leeches,
+      mnemonics,
       deck: {
         queueNums: queue.map((item) => item.num),
         masteredCount,
@@ -4979,6 +5143,10 @@
     if (profile.stats) {
       stats = profile.stats;
       saveStats();
+    }
+    if (profile.mnemonics) {
+      mnemonics = KanjiFlashSync.mergeMnemonics({}, profile.mnemonics);
+      saveMnemonics();
     }
     if (profile.leeches) {
       leeches = KanjiFlashSync.mergeLeeches({}, profile.leeches);
@@ -5140,6 +5308,7 @@
       stats: { daily, perCard },
       lessons: { completed, epoch, placement, today },
       leeches: KanjiFlashSync.mergeLeeches(local.leeches, incoming.leeches),
+      mnemonics: KanjiFlashSync.mergeMnemonics(local.mnemonics, incoming.mnemonics),
       settings: incoming.settings || local.settings,
       deck: incoming.deck || local.deck,
     };
@@ -5426,6 +5595,7 @@
       deletedDecks: loadJson(DECK_TOMBSTONES_KEY, {}),
       kanjiRemovals,
       leeches,
+      mnemonics,
     };
   }
 
@@ -5487,6 +5657,8 @@
     saveKanjiRemovals();
     leeches = merged.leeches || {};
     saveLeeches();
+    mnemonics = merged.mnemonics || {};
+    saveMnemonics();
     const group = loadSyncGroup();
     if (group) {
       group.members = merged.members;
@@ -5702,6 +5874,7 @@
   migrateTodaysMisses();
   kanjiRemovals = loadJson(KANJI_REMOVALS_KEY, {}) || {};
   leeches = loadJson(LEECHES_KEY, {}) || {};
+  mnemonics = loadJson(MNEMONICS_KEY, {}) || {};
   applySettings();
   dailyMinutes = settings.defaultDailyMinutes;
 
@@ -5709,6 +5882,7 @@
     .then((res) => res.json())
     .then((data) => {
       n2Kanji = data;
+      migrateWordSchedules();
       allKanji = visibleKanji();
       kanjiByNum = new Map(allKanji.map((item) => [item.num, item]));
       applyDeckState();

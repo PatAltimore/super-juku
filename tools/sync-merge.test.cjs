@@ -314,6 +314,18 @@ test("leeches: the most recently changed entry per term wins", () => {
   assert.deepEqual(mergeState(phone, empty()).leeches, phone.leeches);
 });
 
+test("mnemonics: the text edited last wins per term and tab", () => {
+  const note = (at, text) => ({ text, at });
+  const phone = { ...empty(), mnemonics: { "n2|1|meaning": note(5, "old"), "n2|2|meaning": note(5, "two") } };
+  const pc = { ...empty(), mnemonics: { "n2|1|meaning": note(9, ""), "n2|3|readings": note(4, "three") } };
+  const a = mergeState(phone, pc);
+  assert.deepEqual(a.mnemonics, mergeState(pc, phone).mnemonics);
+  assert.equal(a.mnemonics["n2|1|meaning"].text, ""); // cleared later on the PC
+  assert.equal(a.mnemonics["n2|2|meaning"].text, "two");
+  assert.equal(a.mnemonics["n2|3|readings"].text, "three");
+  assert.deepEqual(mergeState(phone, empty()).mnemonics, phone.mnemonics);
+});
+
 (async () => {
   for (const { name, fn } of queue) {
     await fn();

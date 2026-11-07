@@ -238,6 +238,20 @@
     return out;
   }
 
+  // Mnemonics per term and tab ({ text, at }): the one edited last wins.
+  function mergeMnemonics(local, remote) {
+    const out = {};
+    const l = isObj(local) ? local : {};
+    const r = isObj(remote) ? remote : {};
+    new Set([...Object.keys(l), ...Object.keys(r)]).forEach((key) => {
+      const a = isObj(l[key]) ? l[key] : null;
+      const b = isObj(r[key]) ? r[key] : null;
+      const pick = b && (!a || num(b.at) > num(a.at)) ? b : a;
+      if (pick && typeof pick.text === "string") out[key] = { text: pick.text, at: num(pick.at) };
+    });
+    return out;
+  }
+
   function mergeDeckPair(a, b) {
     const ua = a.updatedAt || "";
     const ub = b.updatedAt || "";
@@ -320,6 +334,7 @@
       deletedDecks: decks.deleted,
       kanjiRemovals: mergeKanjiRemovals(local.kanjiRemovals, remote.kanjiRemovals),
       leeches: mergeLeeches(local.leeches, remote.leeches),
+      mnemonics: mergeMnemonics(local.mnemonics, remote.mnemonics),
     };
   }
 
@@ -1008,6 +1023,7 @@
   const api = {
     mergeState,
     mergeLeeches,
+    mergeMnemonics,
     mergeCounts,
     totalCounts,
     nearbyPairing,
