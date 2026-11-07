@@ -1238,6 +1238,10 @@ body {
   font-size: 1.05rem;
 }
 
+.type-feedback-result:empty {
+  display: none;
+}
+
 .feedback-good {
   color: var(--success);
 }
@@ -2835,6 +2839,21 @@ button.edit-row {
     display: none;
   }
 
+  /* The answer alone sits a little above the bar; once everything is shown
+     (F) it can use the space down to the bar. */
+  [data-theme="dark"] .type-card .type-feedback {
+    padding-bottom: 34px;
+  }
+
+  [data-theme="dark"] .type-card .type-feedback.revealed {
+    padding-bottom: 6px;
+  }
+
+  /* The two buttons take their own line above the answer. */
+  [data-theme="dark"] .type-card .type-feedback .add-answer-row {
+    flex: 1 1 100%;
+  }
+
   [data-theme="dark"] .type-card .type-feedback .add-answer-btn {
     flex: 0 0 auto;
     margin: 0;
@@ -2869,4 +2888,354 @@ button.edit-row {
     padding-top: 8px;
     padding-bottom: 8px;
   }
+}
+
+/* Colours for what is asked: the area above the answer bar is pink for
+   readings and purple for meanings. */
+[data-theme="dark"] .screen.q-reading { --q-bg: #e5189a; }
+[data-theme="dark"] .screen.q-meaning { --q-bg: #a02fe2; }
+
+[data-theme="dark"] .screen:has(.type-card).q-reading,
+[data-theme="dark"] .screen:has(.type-card).q-meaning {
+  background: var(--q-bg);
+  transition: background-color 0.15s ease;
+}
+
+/* On a computer the screen is laid out in bands, top to bottom: a tall area
+   for the term, a full-width band naming the question, then a large answer
+   bar, with the result and the answer shown after a miss below it. The bar
+   sits around the middle of the screen so the eyes stay there. */
+@media (min-width: 700px) and (min-height: 520px) {
+  [data-theme="dark"] .screen:has(.type-card).q-reading,
+  [data-theme="dark"] .screen:has(.type-card).q-meaning {
+    background: var(--bg);
+  }
+
+  [data-theme="dark"] .screen:has(.type-card) .topbar,
+  [data-theme="dark"] .screen:has(.type-card) .type-card .kanji {
+    background: var(--q-bg, var(--bg));
+    transition: background-color 0.15s ease;
+  }
+
+  /* Under the answer bar the screen is the same grey as the band above it
+     while typing, and stays grey after an answer, with dark text. */
+  [data-theme="dark"] .type-card {
+    background: #e4e4e4;
+    transition: background-color 0.15s ease;
+  }
+
+  [data-theme="dark"] .type-card .type-feedback,
+  [data-theme="dark"] .type-card .congrats {
+    color: #1c1c1c;
+  }
+
+  [data-theme="dark"] .type-card .type-feedback .reading-label {
+    color: #5a5a5a;
+  }
+
+  [data-theme="dark"] .type-card .type-feedback .reading-value,
+  [data-theme="dark"] .type-card .type-feedback .meaning {
+    color: #1c1c1c;
+  }
+
+  [data-theme="dark"] .type-card .type-feedback .feedback-good {
+    color: #14502e;
+  }
+
+  [data-theme="dark"] .type-card .kanji {
+    align-self: stretch;
+    flex: 0 0 44vh;
+    font-size: calc(min(26vh, 240px) * var(--font-scale));
+  }
+
+  [data-theme="dark"] .type-card .question-type-badge {
+    padding: 22px 14px;
+    font-size: 1.15rem;
+    letter-spacing: 0.04em;
+  }
+
+  [data-theme="dark"] .type-card .type-form {
+    padding: 14px 16px;
+  }
+
+  [data-theme="dark"] .type-card .type-input {
+    font-size: 1.7rem;
+    padding: 16px 120px;
+  }
+
+  [data-theme="dark"] .type-card .type-submit-btn {
+    right: 16px;
+    padding: 12px 24px;
+    font-size: 1rem;
+  }
+
+  [data-theme="dark"] .type-card .type-feedback {
+    order: 5;
+    align-self: center;
+    flex: 1 1 0;
+    width: min(100%, 900px);
+    max-height: none;
+    min-height: 0;
+    padding-top: 20px;
+  }
+}
+
+/* A computer has the keys (A and T), so the two buttons are for touch screens
+   only, whatever the window size. */
+@media (hover: hover) and (pointer: fine) {
+  .add-answer-row .add-answer-btn {
+    display: none;
+  }
+}
+
+/* ---------- lesson study screen ---------- */
+
+.screen-study {
+  --q-bg: #a02fe2;
+  background: #e4e4e4;
+  color: #1c1c1c;
+}
+
+.screen-study.q-reading { --q-bg: #e5189a; }
+.screen-study.q-meaning { --q-bg: #a02fe2; }
+
+.study-hero {
+  flex: 0 0 auto;
+  min-height: 34vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--q-bg);
+  color: #fff;
+  transition: background-color 0.15s ease;
+}
+
+.study-hero .topbar {
+  width: 100%;
+  background: transparent;
+}
+
+.study-hero .icon-btn,
+.study-hero .screen-title {
+  color: #fff;
+}
+
+.study-term {
+  width: 100%;
+  padding: 0 16px;
+  text-align: center;
+  font-family: "Shippori Mincho", serif;
+  font-size: calc(min(20vh, 170px) * var(--font-scale));
+  line-height: 1.1;
+  margin-top: auto;
+}
+
+.study-gloss {
+  min-height: 1.6em;
+  margin: 6px 16px 18px;
+  text-align: center;
+  font-size: 1.5rem;
+  opacity: 0.92;
+}
+
+.study-tabs {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+  background: #2b2b2b;
+}
+
+.study-tab {
+  position: relative;
+  padding: 16px 18px;
+  background: none;
+  border: none;
+  color: #cfcfcf;
+  font: inherit;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+
+.study-tab.active {
+  color: #fff;
+}
+
+.study-tab.active::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -1px;
+  width: 14px;
+  height: 14px;
+  background: #e4e4e4;
+  transform: translate(-50%, 50%) rotate(45deg);
+}
+
+.study-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+  padding-top: 8px;
+}
+
+.study-nav {
+  flex: 0 0 auto;
+  width: 44px;
+  background: none;
+  border: none;
+  color: #8a8a8a;
+  font-size: 2rem;
+  cursor: pointer;
+}
+
+.study-nav:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.study-panel {
+  flex: 1;
+  min-width: 0;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 14px 8px;
+  overflow-y: auto;
+}
+
+.study-panel {
+  text-align: center;
+}
+
+.study-blocks {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Onyomi and kunyomi (and the word's reading) sit next to each other. */
+.study-blocks-row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 16px 48px;
+}
+
+.study-label {
+  margin-bottom: 4px;
+  color: #5a5a5a;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.study-value {
+  font-size: 1.5rem;
+  line-height: 1.4;
+}
+
+.study-example {
+  padding: 10px 0;
+  border-bottom: 1px solid #c8c8c8;
+}
+
+.study-example-ja {
+  font-size: 1.3rem;
+  line-height: 1.8;
+}
+
+.study-example-en {
+  color: #4a4a4a;
+  font-size: 0.98rem;
+}
+
+.study-status {
+  color: #6a6a6a;
+  font-size: 0.95rem;
+}
+
+.study-strip {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
+.study-chip {
+  min-width: 3em;
+  padding: 6px 10px;
+  border: 2px solid #b8b8b8;
+  border-radius: 10px;
+  background: #f2f2f2;
+  color: #1c1c1c;
+  font: inherit;
+  font-family: "Shippori Mincho", serif;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.study-chip.active {
+  border-color: var(--q-bg);
+  box-shadow: 0 0 0 2px var(--q-bg);
+}
+
+.study-actions {
+  flex: 0 0 auto;
+  padding: 4px 16px calc(14px + var(--safe-bottom, 0px));
+  display: flex;
+  justify-content: center;
+}
+
+.study-actions .primary-btn {
+  width: min(100%, 420px);
+}
+
+.study-words {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.study-word {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px 12px;
+  padding: 10px 14px;
+  border: 1.5px solid #c4c4c4;
+  border-radius: 12px;
+  background: #f4f4f4;
+  color: #1c1c1c;
+  font: inherit;
+  cursor: pointer;
+}
+
+.study-word.open {
+  border-color: var(--q-bg);
+}
+
+.study-word-form {
+  font-family: "Shippori Mincho", serif;
+  font-size: 1.5rem;
+}
+
+.study-word-reading {
+  color: #5a5a5a;
+  font-size: 0.95rem;
+}
+
+.study-word-gloss {
+  flex: 1 1 100%;
+  font-size: 1rem;
+}
+
+.study-word-examples {
+  padding: 4px 8px 8px;
 }

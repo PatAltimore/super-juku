@@ -50,6 +50,17 @@
     screenPlay: document.getElementById("screen-play"),
     screenDailyResults: document.getElementById("screen-daily-results"),
     screenLessonResults: document.getElementById("screen-lesson-results"),
+    screenLessonStudy: document.getElementById("screen-lesson-study"),
+    studyBackBtn: document.getElementById("studyBackBtn"),
+    studyProgress: document.getElementById("studyProgress"),
+    studyTerm: document.getElementById("studyTerm"),
+    studyGloss: document.getElementById("studyGloss"),
+    studyTabs: document.getElementById("studyTabs"),
+    studyPanel: document.getElementById("studyPanel"),
+    studyPrevBtn: document.getElementById("studyPrevBtn"),
+    studyNextBtn: document.getElementById("studyNextBtn"),
+    studyStrip: document.getElementById("studyStrip"),
+    studyContinueBtn: document.getElementById("studyContinueBtn"),
     screenStats: document.getElementById("screen-stats"),
     screenSettings: document.getElementById("screen-settings"),
     screenLessons: document.getElementById("screen-lessons"),
@@ -266,6 +277,7 @@
     play: els.screenPlay,
     dailyResults: els.screenDailyResults,
     lessonResults: els.screenLessonResults,
+    lessonStudy: els.screenLessonStudy,
     stats: els.screenStats,
     type: els.screenType,
     settings: els.screenSettings,
@@ -2419,14 +2431,17 @@
       pluralVariants(t).forEach((v) => set.add(v));
     };
     addWithPlurals(normalize(value));
-    value.split(/[;,]/).forEach((part) => {
+    addWithPlurals(stripParens(normalize(value)));
+    splitOutsideParens(value, ";,").forEach((part) => {
       addWithPlurals(normalize(part));
+      addWithPlurals(stripParens(normalize(part)));
       // A kana answer is the same in hiragana and in katakana.
-      const kana = part.trim();
-      if (kana && typeof wanakana !== "undefined" && wanakana.isKana(kana)) {
-        set.add(wanakana.toHiragana(kana));
-        set.add(wanakana.toKatakana(kana));
-      }
+      [part.trim(), stripParens(part)].forEach((kana) => {
+        if (kana && typeof wanakana !== "undefined" && wanakana.isKana(kana)) {
+          set.add(wanakana.toHiragana(kana));
+          set.add(wanakana.toKatakana(kana));
+        }
+      });
     });
     (extra || []).forEach((a) => {
       const t = normalize(a);
@@ -2656,6 +2671,7 @@
     els.customTypeFeedback.hidden = true;
     els.customTypeSubmitBtn.textContent = "確認";
     els.customTypeBadge.textContent = displayLabel(customTypeCurrentSection.label, customTypeCurrentSection.value);
+    setQuestionTone(els.screenCustomType, kindOfLabel(customTypeCurrentSection.label));
     const badgeClass = badgeClassForLabel(customTypeCurrentSection.label);
     els.customTypeBadge.className = "question-type-badge" + (badgeClass ? ` ${badgeClass}` : "");
     els.customTypeFront.textContent = card.front;
@@ -2674,9 +2690,7 @@
       ? fuzzy
         ? "✓ 正解！（ほぼ一致 — 軽いタイプミス）"
         : "✓ 正解！"
-      : raw
-      ? `✕ 惜しい — 入力: 「${raw}」`
-      : "✕ 未回答";
+      : ""; // a miss is shown by the red bar and the answer below
     els.customTypeFeedbackResult.className =
       "type-feedback-result " + (correct ? "feedback-good" : "feedback-bad");
   }
@@ -2730,7 +2744,9 @@
 
     els.customTypeFeedback.hidden = false;
     els.customTypeFeedback.classList.toggle("quick", correct);
+    els.customTypeFeedback.classList.remove("revealed");
     updateCustomTypeFeedbackResult(correct, pendingCustomTypeRawAnswer, fuzzy);
+    customTypeInfoRevealed = false;
     els.customTypeSections.innerHTML = sectionsToHtml(correct ? card.sections : [section]);
     updateCustomAddAnswerButton();
 
@@ -3441,6 +3457,309 @@
     return fullyRandom ? shuffle(questions) : spreadQuestions(questions, (q) => q.item);
   }
 
+  // ---------- lesson: study a batch of five, then quiz on it ----------
+  // The selected terms are taken five at a time. Each batch is first shown
+  // term by term (meaning, readings and example sentences on tabs), then asked
+  // as the usual typed quiz; the next batch follows until all are done.
+
+  const LESSON_BATCH_SIZE = 5;
+  const STUDY_TABS = [
+    ["meaning", "Meaning"],
+    ["readings", "Readings"],
+    ["examples", "Examples"],
+  ];
+  let lessonRun = null; // { batches, index, seen, right, wrong }
+  let study = null; // { batch, index, tab }
+  const exampleCache = new Map();
+
+  function startLesson(cards) {
+    const batches = [];
+    for (let i = 0; i < cards.length; i += LESSON_BATCH_SIZE) batches.push(cards.slice(i, i + LESSON_BATCH_SIZE));
+    lessonRun = { batches, index: 0, seen: 0, right: 0, wrong: 0 };
+    startStudy();
+  }
+
+  function startStudy() {
+    study = { batch: lessonRun.batches[lessonRun.index], index: 0, tab: "meaning", openWord: null };
+    showScreen("lessonStudy");
+    renderStudy();
+  }
+
+  const termText = (item) => item.front || item.kanji;
+
+  function studyReadingParts(item) {
+    if (!item.sections) {
+      const parts = [];
+      if (item.onyomi) parts.push(["音読み", item.onyomi]);
+      if (item.kunyomi) parts.push(["訓読み", item.kunyomi]);
+      if (item.word) parts.push(["単語", `${item.word}（${item.wordReading}）`]);
+      return parts;
+    }
+    return item.sections.filter((s) => kindOfLabel(s.label) === "reading").map((s) => [s.label, s.value]);
+  }
+
+  function studyMeaningParts(item) {
+    if (!item.sections) {
+      const parts = [["Meaning", item.meaning || "—"]];
+      if (item.word) parts.push(["単語", `${item.word}: ${item.wordMeaning}`]);
+      return parts;
+    }
+    const rest = item.sections.filter((s) => kindOfLabel(s.label) !== "reading");
+    return (rest.length ? rest : item.sections).map((s) => [displayLabel(s.label, s.value), s.value]);
+  }
+
+  function studyTabsFor(item) {
+    return STUDY_TABS.filter(([id]) => id !== "readings" || studyReadingParts(item).length);
+  }
+
+  function studyGloss(item) {
+    const first = studyMeaningParts(item)[0];
+    return first ? splitOutsideParens(first[1], ";,")[0].trim() : "";
+  }
+
+  // Jotoba's "[担当者|たん|とう|しゃ]" furigana markup as ruby text.
+  function furiganaHtml(markup) {
+    let html = "";
+    let last = 0;
+    const pattern = /\[([^\]|]+)\|([^\]]+)\]/g;
+    let match;
+    while ((match = pattern.exec(markup))) {
+      html += escapeHtml(markup.slice(last, match.index));
+      html += `<ruby>${escapeHtml(match[1])}<rt>${escapeHtml(match[2].split("|").join(""))}</rt></ruby>`;
+      last = match.index + match[0].length;
+    }
+    return html + escapeHtml(markup.slice(last));
+  }
+
+  // `strict` keeps only sentences that contain the query exactly; a word's
+  // sentences are matched by Jotoba on its dictionary form (so a verb may show
+  // up conjugated) and are kept as they come.
+  async function loadExamples(query, strict = true) {
+    const cacheKey = strict ? query : `${query}|loose`;
+    if (exampleCache.has(cacheKey)) return exampleCache.get(cacheKey);
+    const res = await fetch("https://jotoba.de/api/search/sentences", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, language: "English", no_english: false }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const sentences = (Array.isArray(data) ? data : data.sentences || [])
+      .filter((x) => x && x.content && x.translation && (!strict || x.content.includes(query)))
+      .slice(0, 3);
+    exampleCache.set(cacheKey, sentences);
+    return sentences;
+  }
+
+  // The N2 kanji's Examples tab lists words that contain the kanji, with their
+  // English definitions; tapping one shows example sentences for it.
+  const MAX_EXAMPLE_WORDS = 8;
+  const exampleWordsCache = new Map();
+
+  async function loadExampleWords(kanji) {
+    if (exampleWordsCache.has(kanji)) return exampleWordsCache.get(kanji);
+    // The wildcard search returns the words that contain the kanji anywhere.
+    const words = (await lookupWords(`*${kanji}*`))
+      .filter((w) => wordFront(w).includes(kanji) && w.senses.length)
+      .sort((a, b) => Number(Boolean(b.common)) - Number(Boolean(a.common)))
+      .slice(0, MAX_EXAMPLE_WORDS);
+    exampleWordsCache.set(kanji, words);
+    return words;
+  }
+
+  function exampleSentencesHtml(front) {
+    const sentences = exampleCache.get(`${front}|loose`);
+    if (!sentences) return `<div class="study-status">読み込み中…</div>`;
+    if (!sentences.length) return `<div class="study-status">例文が見つかりませんでした。</div>`;
+    return sentences
+      .map(
+        (x) =>
+          `<div class="study-example"><div class="study-example-ja">${furiganaHtml(x.furigana || x.content)}</div><div class="study-example-en">${escapeHtml(x.translation)}</div></div>`
+      )
+      .join("");
+  }
+
+  function kanjiExamplesHtml(item) {
+    const words = exampleWordsCache.get(termText(item));
+    if (!words) return `<div class="study-status">読み込み中…</div>`;
+    if (!words.length) return `<div class="study-status">この漢字を含む単語が見つかりませんでした。</div>`;
+    return `<div class="study-words">${words
+      .map((w) => {
+        const front = wordFront(w);
+        const open = study.openWord === front;
+        const reading = w.reading.kanji ? w.reading.kana : "";
+        return `<div class="study-word-item">
+          <button class="study-word${open ? " open" : ""}" type="button" data-word="${escapeHtml(front)}">
+            <span class="study-word-form">${escapeHtml(front)}</span>
+            ${reading ? `<span class="study-word-reading">${escapeHtml(reading)}</span>` : ""}
+            <span class="study-word-gloss">${escapeHtml(wordMeaning(w))}</span>
+          </button>
+          ${open ? `<div class="study-word-examples">${exampleSentencesHtml(front)}</div>` : ""}
+        </div>`;
+      })
+      .join("")}</div>`;
+  }
+
+  function studyPanelHtml(item, tab) {
+    const block = ([label, value]) =>
+      `<div class="study-block"><div class="study-label">${escapeHtml(label)}</div><div class="study-value">${escapeHtml(value)}</div></div>`;
+    if (tab === "meaning") return `<div class="study-blocks">${studyMeaningParts(item).map(block).join("")}</div>`;
+    if (tab === "readings") return `<div class="study-blocks study-blocks-row">${studyReadingParts(item).map(block).join("")}</div>`;
+    if (!item.sections) return kanjiExamplesHtml(item);
+    const cached = exampleCache.get(termText(item));
+    if (!cached) return `<div class="study-status">読み込み中…</div>`;
+    if (!cached.length) return `<div class="study-status">例文が見つかりませんでした。</div>`;
+    return cached
+      .map(
+        (x) =>
+          `<div class="study-example"><div class="study-example-ja">${furiganaHtml(x.furigana || x.content)}</div><div class="study-example-en">${escapeHtml(x.translation)}</div></div>`
+      )
+      .join("");
+  }
+
+  function renderStudy() {
+    if (!study) return;
+    const item = study.batch[study.index];
+    const tabs = studyTabsFor(item);
+    if (!tabs.some(([id]) => id === study.tab)) study.tab = "meaning";
+    setQuestionTone(els.screenLessonStudy, study.tab === "readings" ? "reading" : "meaning");
+    els.studyProgress.textContent = `${study.index + 1} / ${study.batch.length}`;
+    els.studyTerm.textContent = termText(item);
+    els.studyGloss.textContent = studyGloss(item);
+    els.studyTabs.innerHTML = tabs
+      .map(
+        ([id, label]) =>
+          `<button class="study-tab${id === study.tab ? " active" : ""}" type="button" role="tab" data-tab="${id}">${label}</button>`
+      )
+      .join("");
+    els.studyPanel.innerHTML = studyPanelHtml(item, study.tab);
+    els.studyStrip.innerHTML = study.batch
+      .map(
+        (it, i) =>
+          `<button class="study-chip${i === study.index ? " active" : ""}" type="button" data-index="${i}">${escapeHtml(termText(it))}</button>`
+      )
+      .join("");
+    const last = study.index === study.batch.length - 1;
+    els.studyPrevBtn.disabled = study.index === 0;
+    els.studyNextBtn.disabled = last;
+    els.studyContinueBtn.textContent = last ? "クイズを始める" : "次へ";
+    window.requestAnimationFrame(() => fitFront(els.studyTerm, termText(item)));
+    if (study.tab === "examples") loadStudyExamples(item);
+  }
+
+  // Fetches what the Examples tab needs (sentences for a custom term, the word
+  // list for a kanji, and the sentences of the word that is open), then draws
+  // the screen again if the player is still looking at it.
+  function loadStudyExamples(item) {
+    const query = termText(item);
+    const shown = study;
+    const refresh = () => {
+      if (study === shown && study.tab === "examples" && termText(study.batch[study.index]) === query) renderStudy();
+    };
+    if (item.sections) {
+      if (!exampleCache.has(query)) {
+        loadExamples(query)
+          .catch(() => exampleCache.set(query, []))
+          .then(refresh);
+      }
+      return;
+    }
+    if (!exampleWordsCache.has(query)) {
+      loadExampleWords(query)
+        .catch(() => exampleWordsCache.set(query, []))
+        .then(refresh);
+      return;
+    }
+    const open = study.openWord;
+    if (open && !exampleCache.has(`${open}|loose`)) {
+      loadExamples(open, false)
+        .catch(() => exampleCache.set(`${open}|loose`, []))
+        .then(refresh);
+    }
+  }
+
+  function studyMove(step) {
+    if (!study) return;
+    const next = study.index + step;
+    if (next < 0 || next >= study.batch.length) return;
+    study.index = next;
+    study.openWord = null;
+    renderStudy();
+  }
+
+  function studyAdvance() {
+    if (!study) return;
+    if (study.index < study.batch.length - 1) {
+      studyMove(1);
+      return;
+    }
+    const batch = study.batch;
+    study = null;
+    beginLesson(batch, "lesson");
+  }
+
+  function studyShiftTab(step) {
+    if (!study) return;
+    const tabs = studyTabsFor(study.batch[study.index]);
+    const at = tabs.findIndex(([id]) => id === study.tab);
+    const next = tabs[at + step];
+    if (!next) return;
+    study.tab = next[0];
+    renderStudy();
+  }
+
+  els.studyTabs.addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-tab]");
+    if (!tab || !study) return;
+    study.tab = tab.dataset.tab;
+    renderStudy();
+  });
+  els.studyStrip.addEventListener("click", (event) => {
+    const chip = event.target.closest("[data-index]");
+    if (!chip || !study) return;
+    study.index = Number(chip.dataset.index);
+    study.openWord = null;
+    renderStudy();
+  });
+  els.studyPanel.addEventListener("click", (event) => {
+    const word = event.target.closest("[data-word]");
+    if (!word || !study) return;
+    study.openWord = study.openWord === word.dataset.word ? null : word.dataset.word;
+    renderStudy();
+  });
+  els.studyPrevBtn.addEventListener("click", () => studyMove(-1));
+  els.studyNextBtn.addEventListener("click", () => studyMove(1));
+  els.studyContinueBtn.addEventListener("click", studyAdvance);
+  els.studyBackBtn.addEventListener("click", () => {
+    study = null;
+    lessonRun = null;
+    renderLessons();
+    showScreen("lessons");
+  });
+
+  // ←/→ switch between Meaning, Readings and Examples; ↓, Enter or Space goes
+  // to the next term (and from the last one into the quiz) and ↑ to the previous.
+  document.addEventListener("keydown", (event) => {
+    if (!study || els.screenLessonStudy.hidden) return;
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    const actions = {
+      ArrowLeft: () => studyShiftTab(-1),
+      ArrowRight: () => studyShiftTab(1),
+      ArrowUp: () => studyMove(-1),
+      ArrowDown: studyAdvance,
+      Enter: studyAdvance,
+      " ": studyAdvance,
+    };
+    const action = actions[event.key];
+    if (!action) return;
+    event.preventDefault();
+    action();
+  });
+
+  window.addEventListener("resize", () => {
+    if (study && !els.screenLessonStudy.hidden) fitFront(els.studyTerm, termText(study.batch[study.index]));
+  });
+
   function beginLesson(cards, kind) {
     savedMainSession = { queue, totalCount, masteredCount };
     const questions = buildLessonQuestions(cards, kind === "review" || kind === "leech");
@@ -3550,7 +3869,9 @@
   function finishLesson() {
     alignLessonDueTimes();
     if (lessonSession.kind === "lesson") {
-      lessonHistory.completed[completedKey(lessonSession.date)] = lessonSession.cards.map((item) => item.num);
+      const key = completedKey(lessonSession.date);
+      const done = lessonHistory.completed[key] || [];
+      lessonHistory.completed[key] = Array.from(new Set([...done, ...lessonSession.cards.map((item) => item.num)]));
       saveLessonHistory();
     }
     if (savedMainSession) {
@@ -3560,6 +3881,22 @@
     }
     savedMainSession = null;
     const kind = lessonSession.kind;
+    // A lesson is several batches: add this one to the running totals and go
+    // on to the next batch's study screen until all are done.
+    if (kind === "lesson" && lessonRun) {
+      lessonRun.seen += lessonSession.seen;
+      lessonRun.right += lessonSession.right;
+      lessonRun.wrong += lessonSession.wrong;
+      lessonSession = null;
+      mode = null;
+      if (lessonRun.index + 1 < lessonRun.batches.length) {
+        lessonRun.index++;
+        startStudy();
+        return;
+      }
+      lessonSession = { seen: lessonRun.seen, right: lessonRun.right, wrong: lessonRun.wrong, kind };
+      lessonRun = null;
+    }
     lessonResultsKind = kind;
     els.lessonResultTitle.textContent =
       kind === "all" ? "すべて復習完了" : kind === "review" ? "復習完了" : kind === "leech" ? "リーチ復習完了" : "レッスン完了";
@@ -3586,7 +3923,7 @@
   // Starts a lesson on the terms selected on the chart.
   els.startLessonBtn.addEventListener("click", () => {
     const cards = todaysLessonCards();
-    if (cards.length) beginLesson(cards, "lesson");
+    if (cards.length) startLesson(cards);
   });
   els.clearSelectionBtn.addEventListener("click", () => {
     const today = ensureTodaysLesson();
@@ -3712,6 +4049,8 @@
   document.querySelectorAll("[data-back]").forEach((btn) => {
     btn.addEventListener("click", () => {
       clearDailyInterval();
+      lessonRun = null;
+      study = null;
       if (lessonSession) {
         alignLessonDueTimes();
         if (savedMainSession) {
@@ -4032,9 +4371,34 @@
 
   // Accepted forms of one English gloss: with and without a leading "to" and
   // without parenthetical notes ("to run (a business)" -> "run").
+  // Splits an answer at separators that are not inside parentheses.
+  function splitOutsideParens(text, separators) {
+    const parts = [];
+    let depth = 0;
+    let current = "";
+    for (const ch of text) {
+      if (ch === "(" || ch === "（") depth++;
+      else if ((ch === ")" || ch === "）") && depth > 0) depth--;
+      if (depth === 0 && separators.includes(ch)) {
+        parts.push(current);
+        current = "";
+      } else {
+        current += ch;
+      }
+    }
+    parts.push(current);
+    return parts;
+  }
+
+  // The answer without its parenthetical notes: what is in parentheses is not
+  // required to be typed.
+  function stripParens(text) {
+    return text.replace(/\s*[(（][^)）]*[)）]/g, "").replace(/\s+/g, " ").trim();
+  }
+
   function glossVariants(part) {
     const t = normalize(part);
-    const noParens = t.replace(/\s*\([^)]*\)/g, "").replace(/\s+/g, " ").trim();
+    const noParens = stripParens(t);
     return [t, noParens, t.replace(/^to\s+/, ""), noParens.replace(/^to\s+/, "")].filter(Boolean);
   }
 
@@ -4050,6 +4414,24 @@
     if (label === "単語の読み") return "単語の読み方";
     if (!MEANING_LABELS.has(label) || isKanaOrKanji(value)) return label;
     return label === "単語の意味" ? "Word meaning" : "Meaning";
+  }
+
+  // The area above the answer bar takes a muted colour by what is asked: one
+  // for readings, one for meanings (none for any other kind of column).
+  function kindOfLabel(label) {
+    if (READING_LABEL_PATTERN.test(label)) return "reading";
+    if (MEANING_LABEL_PATTERN.test(label)) return "meaning";
+    return null;
+  }
+
+  function setQuestionTone(screen, kind) {
+    screen.classList.toggle("q-reading", kind === "reading");
+    screen.classList.toggle("q-meaning", kind === "meaning");
+  }
+
+  function questionKind(item, type) {
+    if (item.sections) return kindOfLabel(item.sections[sectionIndex(type)].label);
+    return type === "onyomi" || type === "wordReading" ? "reading" : "meaning";
   }
 
   function typeConfig(item, type) {
@@ -4155,6 +4537,64 @@
     btn.addEventListener("pointerdown", (event) => event.preventDefault());
   });
 
+  // After a miss, A adds the typed answer to the card, T rules it a typo (the
+  // same as the two buttons, which are replaced by these keys on a computer)
+  // and F shows everything about the card, not only the part that was asked.
+  document.addEventListener("keydown", (event) => {
+    if (event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return;
+    const key = event.key.toLowerCase();
+    if (key !== "a" && key !== "t" && key !== "f") return;
+    let missed = null;
+    if (!els.screenType.hidden && !typeAnswering && !pendingTypeCorrect && pendingTypeRawAnswer) {
+      missed = { add: els.addAnswerBtn, typo: els.typoBtn, reveal: revealTypeInfo };
+    } else if (!els.screenCustomType.hidden && !customTypeAnswering && !pendingCustomTypeCorrect && pendingCustomTypeRawAnswer) {
+      missed = { add: els.customAddAnswerBtn, typo: els.customTypoBtn, reveal: revealCustomTypeInfo };
+    }
+    if (!missed) return;
+    event.preventDefault();
+    if (key === "f") missed.reveal();
+    else (key === "a" ? missed.add : missed.typo).click();
+  });
+
+  // The information under the term: everything (`full`), or after a miss just
+  // the part that was asked.
+  let typeInfoRevealed = false;
+  let customTypeInfoRevealed = false;
+
+  function renderTypeInfo(item, type, full) {
+    if (item.sections) {
+      els.typeSections.innerHTML = sectionsToHtml(full ? item.sections : [item.sections[sectionIndex(type)]]);
+      return;
+    }
+    els.typeOnyomi.textContent = item.onyomi || "—";
+    els.typeKunyomi.textContent = item.kunyomi || "—";
+    els.typeMeaning.textContent = item.meaning || "—";
+    els.typeOnyomiBlock.hidden = !full && type !== "onyomi";
+    els.typeKunyomiBlock.hidden = !full;
+    els.typeMeaning.hidden = !full && type !== "meaning";
+    els.typeWordBlock.hidden = !item.word || (!full && !isWordType(type));
+    if (item.word) els.typeWord.textContent = `${item.word}（${item.wordReading}）${item.wordMeaning}`;
+  }
+
+  // F shows everything about the card after a miss, and F again hides it.
+  function revealTypeInfo() {
+    const item = queue[0];
+    if (!item) return;
+    typeInfoRevealed = !typeInfoRevealed;
+    els.typeFeedback.classList.toggle("revealed", typeInfoRevealed);
+    renderTypeInfo(item, currentQuestionType, typeInfoRevealed);
+  }
+
+  function revealCustomTypeInfo() {
+    const card = customTypeCards[customTypeIndex];
+    if (!card) return;
+    customTypeInfoRevealed = !customTypeInfoRevealed;
+    els.customTypeFeedback.classList.toggle("revealed", customTypeInfoRevealed);
+    els.customTypeSections.innerHTML = sectionsToHtml(
+      customTypeInfoRevealed ? card.sections : [customTypeCurrentSection]
+    );
+  }
+
   // Re-fit the visible front when the window changes size.
   window.addEventListener("resize", () => {
     if (!els.screenPlay.hidden && queue[0]) fitFront(els.kanji, queue[0].kanji);
@@ -4240,14 +4680,15 @@
     if (type === "wordReading") {
       set.add(normalize(item.wordReading));
     } else if (type === "wordMeaning") {
-      item.wordMeaning.split(/[;,/]/).forEach((part) => glossVariants(part).forEach((v) => set.add(v)));
+      splitOutsideParens(item.wordMeaning, ";,/").forEach((part) => glossVariants(part).forEach((v) => set.add(v)));
     } else if (type === "meaning") {
-      item.meaning.split(/[;,]/).forEach((part) => {
-        const t = normalize(part);
-        if (t) {
-          set.add(t);
-          pluralVariants(t).forEach((v) => set.add(v));
-        }
+      splitOutsideParens(item.meaning, ";,").forEach((part) => {
+        [normalize(part), stripParens(normalize(part))].forEach((t) => {
+          if (t) {
+            set.add(t);
+            pluralVariants(t).forEach((v) => set.add(v));
+          }
+        });
       });
     } else {
       [item[`${type}Romaji`], item[type]].forEach((field) => {
@@ -4303,6 +4744,7 @@
     const config = typeConfig(item, currentQuestionType);
 
     els.questionTypeBadge.hidden = false;
+    setQuestionTone(els.screenType, questionKind(item, currentQuestionType));
     els.questionTypeBadge.textContent = config.label;
     els.questionTypeBadge.className =
       "question-type-badge" + (config.badgeClass ? ` ${config.badgeClass}` : "");
@@ -4330,9 +4772,7 @@
       ? fuzzy
         ? "✓ 正解！（ほぼ一致 — 軽いタイプミス）"
         : "✓ 正解！"
-      : raw
-      ? `✕ 惜しい — 入力: 「${raw}」`
-      : "✕ 未回答";
+      : ""; // a miss is shown by the red bar and the answer below
     els.typeFeedbackResult.className =
       "type-feedback-result " + (correct ? "feedback-good" : "feedback-bad");
   }
@@ -4377,24 +4817,15 @@
 
     els.typeFeedback.hidden = false;
     els.typeFeedback.classList.toggle("quick", correct);
+    els.typeFeedback.classList.remove("revealed");
     updateTypeFeedbackResult(correct, pendingTypeRawAnswer, fuzzy);
     els.typeLegacyRows.hidden = Boolean(item.sections);
     els.typeSections.hidden = !item.sections;
     els.typeCardStats.hidden = Boolean(item.sections);
-    // After a miss only the part that was asked is shown, to keep it short.
-    const type = currentQuestionType;
-    if (item.sections) {
-      els.typeSections.innerHTML = sectionsToHtml(correct ? item.sections : [item.sections[sectionIndex(type)]]);
-    } else {
-      els.typeOnyomi.textContent = item.onyomi || "—";
-      els.typeKunyomi.textContent = item.kunyomi || "—";
-      els.typeMeaning.textContent = item.meaning || "—";
-      els.typeOnyomiBlock.hidden = !correct && type !== "onyomi";
-      els.typeKunyomiBlock.hidden = !correct;
-      els.typeMeaning.hidden = !correct && type !== "meaning";
-      els.typeWordBlock.hidden = !item.word || (!correct && !isWordType(type));
-      if (item.word) els.typeWord.textContent = `${item.word}（${item.wordReading}）${item.wordMeaning}`;
-    }
+    // After a miss only the part that was asked is shown, to keep it short
+    // (F shows the rest).
+    typeInfoRevealed = false;
+    renderTypeInfo(item, currentQuestionType, correct);
     renderTypeCustomAnswers(item, currentQuestionType);
     updateAddAnswerButton();
     const cardStats = getCardStats(item.num);

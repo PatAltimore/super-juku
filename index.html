@@ -267,6 +267,29 @@
     </div>
   </section>
 
+  <!-- LESSON STUDY (a batch of terms, one at a time, before the quiz) -->
+  <section class="screen screen-study" id="screen-lesson-study" hidden>
+    <div class="study-hero">
+      <header class="topbar">
+        <button class="icon-btn" id="studyBackBtn" type="button" aria-label="レッスンに戻る">←</button>
+        <span class="screen-title" id="studyProgress">1 / 5</span>
+        <span class="icon-btn-spacer"></span>
+      </header>
+      <div class="study-term" id="studyTerm"></div>
+      <div class="study-gloss" id="studyGloss"></div>
+    </div>
+    <nav class="study-tabs" id="studyTabs" role="tablist"></nav>
+    <div class="study-body">
+      <button class="study-nav" id="studyPrevBtn" type="button" aria-label="前の用語">‹</button>
+      <div class="study-panel" id="studyPanel"></div>
+      <button class="study-nav" id="studyNextBtn" type="button" aria-label="次の用語">›</button>
+    </div>
+    <div class="study-strip" id="studyStrip"></div>
+    <div class="study-actions">
+      <button class="primary-btn" id="studyContinueBtn" type="button">次へ</button>
+    </div>
+  </section>
+
   <!-- TYPE ANSWER -->
   <section class="screen" id="screen-type" hidden>
     <header class="topbar">
