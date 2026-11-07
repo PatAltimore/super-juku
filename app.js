@@ -1585,24 +1585,30 @@
           </button>`;
   }
 
+  // The number on a deck's button is how many questions its review asks: one
+  // for each answer a due term has (meaning, reading, ...).
+  const questionCount = (items) => items.reduce((n, item) => n + availableQuestionTypes(item).length, 0);
+  const customQuestionCount = (cards) => cards.reduce((n, card) => n + card.sections.length, 0);
+
   function renderCustomDecksList() {
     els.customDecksEmpty.hidden = customDecks.length > 0;
     const n2Row = `
       <div class="custom-deck-row" data-deck-id="${KANJI_DECK_ID}">
-        <div class="custom-deck-header">${deckReviewButton("N2漢字", `${visibleKanji().length}枚`, getReviewCards(visibleKanji()).length)}
+        <div class="custom-deck-header">${deckReviewButton("N2漢字", `${visibleKanji().length}枚`, questionCount(getReviewCards(visibleKanji())))}
         </div>
       </div>`;
-    const leechCount = getLeechItems().length;
+    const leechItems = getLeechItems();
+    const leechCount = leechItems.length;
     const leechRow = `
       <div class="custom-deck-row" data-deck-id="leech">
-        <div class="custom-deck-header">${deckReviewButton("リーチ", leechCount ? "苦手なカード（任意）" : "苦手なカードはありません", leechCount)}
+        <div class="custom-deck-header">${deckReviewButton("リーチ", leechCount ? "苦手なカード（任意）" : "苦手なカードはありません", questionCount(leechItems))}
         </div>
       </div>`;
     els.customDecksList.innerHTML = n2Row + customDecks
       .map((deck) => {
         return `
       <div class="custom-deck-row" data-deck-id="${escapeHtml(deck.id)}">
-        <div class="custom-deck-header">${deckReviewButton(deck.name, `${deck.cards.length}枚`, getDueCustomCards(deck).length)}
+        <div class="custom-deck-header">${deckReviewButton(deck.name, `${deck.cards.length}枚`, customQuestionCount(getDueCustomCards(deck)))}
         </div>
       </div>`;
       })
