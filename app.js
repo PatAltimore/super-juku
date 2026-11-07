@@ -420,9 +420,10 @@
     els.rankLevel.textContent = `Lv.${rank.level}`;
     els.rank.title = rank.maxed ? "最高ランクです" : `次のレベルまであと${rank.toNext}回の復習`;
     els.streak.title = streak.doneToday ? "連続で学習した日数" : "今日はまだ学習していません。続けるには今日学習しましょう。";
-    let due = getReviewCards(visibleKanji()).length;
+    // Questions waiting across the decks (the リーチ deck has its own count).
+    let due = questionCount(getReviewCards(visibleKanji()));
     customDecks.forEach((deck) => {
-      due += getDueCustomCards(deck).length;
+      due += customQuestionCount(getDueCustomCards(deck));
     });
     els.customDecksDueNum.textContent = String(due);
     els.customDecksDue.classList.toggle("has-due", due > 0);
@@ -1587,8 +1588,13 @@
 
   // The number on a deck's button is how many questions its review asks: one
   // for each answer a due term has (meaning, reading, ...).
-  const questionCount = (items) => items.reduce((n, item) => n + availableQuestionTypes(item).length, 0);
-  const customQuestionCount = (cards) => cards.reduce((n, card) => n + card.sections.length, 0);
+  function questionCount(items) {
+    return items.reduce((n, item) => n + availableQuestionTypes(item).length, 0);
+  }
+
+  function customQuestionCount(cards) {
+    return cards.reduce((n, card) => n + card.sections.length, 0);
+  }
 
   function renderCustomDecksList() {
     els.customDecksEmpty.hidden = customDecks.length > 0;
