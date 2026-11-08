@@ -3316,3 +3316,20 @@ button.edit-row {
     color: #1c1c1c;
   }
 }
+
+/* Typing a mnemonic: keep the field in view above the keyboard. */
+.screen-study.typing .study-hero {
+  min-height: 0;
+}
+
+.screen-study.typing .study-term {
+  margin-top: 0;
+  font-size: calc(min(11vh, 72px) * var(--font-scale));
+}
+
+.screen-study.typing .study-gloss,
+.screen-study.typing .study-strip,
+.screen-study.typing .study-actions,
+.screen-study.typing .study-nav {
+  display: none;
+}

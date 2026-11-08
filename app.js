@@ -3694,7 +3694,7 @@
     const saved = mnemonics[mnemonicKey(item, tab)];
     return `<div class="study-mnemonic">
       <div class="study-label">Mnemonic</div>
-      <textarea class="study-mnemonic-input" rows="3" data-tab="${tab}" placeholder="語呂合わせやメモを入力" spellcheck="false">${escapeHtml(saved ? saved.text : "")}</textarea>
+      <textarea class="study-mnemonic-input" rows="3" data-tab="${tab}" placeholder="語呂合わせやメモを入力" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" enterkeyhint="done">${escapeHtml(saved ? saved.text : "")}</textarea>
     </div>`;
   }
 
@@ -3837,6 +3837,19 @@
     study.tab = "meaning"; // every new term starts on its meaning
     renderStudy();
   });
+  // While a mnemonic is being typed the screen is compacted (the term shrinks
+  // and the term bubbles and button go away) so the field stays above the
+  // phone keyboard.
+  els.studyPanel.addEventListener("focusin", (event) => {
+    const field = event.target.closest(".study-mnemonic-input");
+    if (!field) return;
+    els.screenLessonStudy.classList.add("typing");
+    window.setTimeout(() => field.scrollIntoView({ block: "center" }), 150);
+  });
+  els.studyPanel.addEventListener("focusout", (event) => {
+    if (event.target.closest(".study-mnemonic-input")) els.screenLessonStudy.classList.remove("typing");
+  });
+
   // What is typed is saved as it goes, for the term and tab being shown.
   els.studyPanel.addEventListener("input", (event) => {
     const field = event.target.closest(".study-mnemonic-input");
