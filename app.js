@@ -3818,7 +3818,12 @@
     const tabs = studyTabsFor(study.entries[study.index].view);
     const at = tabs.findIndex(([id]) => id === study.tab);
     const next = tabs[at + step];
-    if (!next) return;
+    // Past the last tab (→) or the first (←) the arrow goes on to the next or
+    // previous term, which opens on its meaning.
+    if (!next) {
+      studyMove(step);
+      return;
+    }
     study.tab = next[0];
     renderStudy();
   }
@@ -3837,14 +3842,22 @@
     study.tab = "meaning"; // every new term starts on its meaning
     renderStudy();
   });
-  // While a mnemonic is being typed the screen is compacted (the term shrinks
-  // and the term bubbles and button go away) so the field stays above the
-  // phone keyboard.
+  // On a touch screen, while a mnemonic is being typed the screen is compacted
+  // (the term shrinks and the term bubbles and button go away) so the field
+  // stays above the keyboard. On a computer nothing moves.
   els.studyPanel.addEventListener("focusin", (event) => {
     const field = event.target.closest(".study-mnemonic-input");
-    if (!field) return;
+    if (!field || !window.matchMedia("(hover: none), (pointer: coarse)").matches) return;
     els.screenLessonStudy.classList.add("typing");
     window.setTimeout(() => field.scrollIntoView({ block: "center" }), 150);
+  });
+  // Enter finishes the note (Shift+Enter starts a new line): it is already
+  // saved as it was typed, so the field just lets go of the cursor.
+  els.studyPanel.addEventListener("keydown", (event) => {
+    const field = event.target.closest(".study-mnemonic-input");
+    if (!field || event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+    event.preventDefault();
+    field.blur();
   });
   els.studyPanel.addEventListener("focusout", (event) => {
     if (event.target.closest(".study-mnemonic-input")) els.screenLessonStudy.classList.remove("typing");
@@ -3874,7 +3887,8 @@
     showScreen("lessons");
   });
 
-  // ←/→ switch between Meaning, Readings and Examples; ↓, Enter or Space goes
+  // ←/→ switch between Meaning, Readings and Examples (→ on the last tab and ←
+  // on the first move to the next or previous term); ↓, Enter or Space goes
   // to the next term (and from the last one into the quiz) and ↑ to the previous.
   document.addEventListener("keydown", (event) => {
     if (!study || els.screenLessonStudy.hidden) return;
