@@ -755,9 +755,10 @@ body {
   white-space: nowrap;
 }
 
-/* Colour by progress: covered in a lesson (amber), then green, pink, purple
-   and light blue after the 3rd, 4th, 5th and 6th review. */
+/* Colour by progress: covered in a lesson (amber), then lime, green, pink,
+   purple and light blue after the 2nd, 3rd, 4th, 5th and 6th review. */
 .status-learning { --status-rgb: 232, 176, 75; }
+.status-r2 { --status-rgb: 176, 208, 70; }
 .status-r3 { --status-rgb: 76, 195, 138; }
 .status-r4 { --status-rgb: 240, 111, 168; }
 .status-r5 { --status-rgb: 167, 123, 240; }
@@ -773,6 +774,7 @@ body {
 }
 
 .status-dot.status-learning,
+.status-dot.status-r2,
 .status-dot.status-r3,
 .status-dot.status-r4,
 .status-dot.status-r5,
@@ -2231,6 +2233,7 @@ button.edit-row {
 }
 
 .edit-row.status-learning,
+.edit-row.status-r2,
 .edit-row.status-r3,
 .edit-row.status-r4,
 .edit-row.status-r5,

@@ -1066,10 +1066,11 @@
   }
 
   // Progress shown by colour. A correct answer moves a card up one box: the
-  // lesson takes it to box 1 and each review one higher, so box 4 means three
-  // reviews are done (green), 5 four (pink), 6 five (purple), 7 six (light
-  // blue). Before that a studied card is "learning"; one never studied is "new".
-  const REVIEW_STATUS_BY_BOX = { 4: "r3", 5: "r4", 6: "r5", 7: "r6" };
+  // lesson takes it to box 1 and each review one higher, so box 3 means two
+  // reviews are done (lime), 4 three (green), 5 four (pink), 6 five (purple), 7
+  // six (light blue). Before that a studied card is "learning"; one never
+  // studied is "new".
+  const REVIEW_STATUS_BY_BOX = { 3: "r2", 4: "r3", 5: "r4", 6: "r5", 7: "r6" };
 
   function statusOfEntry(entry, studied) {
     if (!studied || !entry) return "new";
@@ -2811,6 +2812,7 @@
   els.customTypeForm.addEventListener("submit", (e) => {
     e.preventDefault();
     if (customTypeAnswering) {
+      if (!els.customTypeInput.value.trim()) return;
       checkCustomTypeAnswer();
     } else {
       advanceCustomTypeCard();
@@ -4238,6 +4240,7 @@
   const STATUS_LABELS = [
     ["new", "未学習"],
     ["learning", "学習済み"],
+    ["r2", "復習2"],
     ["r3", "復習3"],
     ["r4", "復習4"],
     ["r5", "復習5"],
@@ -5080,6 +5083,8 @@
     e.preventDefault();
     if (queue.length === 0) return;
     if (typeAnswering) {
+      // Enter on an empty field does nothing; it is not an answer.
+      if (!els.typeInput.value.trim()) return;
       checkTypeAnswer();
     } else {
       advanceTypeCard();
