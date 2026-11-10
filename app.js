@@ -173,6 +173,10 @@
     termSearchInput: document.getElementById("termSearchInput"),
     termSearchResults: document.getElementById("termSearchResults"),
     termSearchClose: document.getElementById("termSearchClose"),
+    noteModal: document.getElementById("noteModal"),
+    noteModalTitle: document.getElementById("noteModalTitle"),
+    noteFields: document.getElementById("noteFields"),
+    noteModalClose: document.getElementById("noteModalClose"),
     rankModal: document.getElementById("rankModal"),
     rankModalTitle: document.getElementById("rankModalTitle"),
     rankModalBody: document.getElementById("rankModalBody"),
@@ -1698,6 +1702,70 @@
     return card.sections.map((s) => s.value).join(" · ");
   }
 
+  // ---------- mnemonics of a term, from 編集 ----------
+  // The same notes as the Mnemonic box on the study screen (same keys), for a
+  // kanji, its word and its noun, or for a custom card: one note for the
+  // meaning and one for the readings of each.
+
+  function deckCardItem(deck, card) {
+    return { deckId: deck.id, front: card.front, kanji: card.front, sections: card.sections };
+  }
+
+  function noteFieldsFor(item) {
+    const base = leechKey(item);
+    const fields = [
+      { label: "Meaning", key: `${base}|meaning` },
+      { label: "Readings", key: `${base}|readings` },
+    ];
+    if (item.word) {
+      fields.push({ label: `単語 ${item.word} · Meaning`, key: `${base}|word|meaning` });
+      fields.push({ label: `単語 ${item.word} · Readings`, key: `${base}|word|readings` });
+    }
+    if (item.noun) {
+      fields.push({ label: `名詞 ${item.noun} · Meaning`, key: `${base}|noun|meaning` });
+      fields.push({ label: `名詞 ${item.noun} · Readings`, key: `${base}|noun|readings` });
+    }
+    return fields;
+  }
+
+  function editNoteButton(fields) {
+    const has = fields.some((f) => mnemonics[f.key] && mnemonics[f.key].text.trim());
+    return `<button class="edit-note${has ? " has-note" : ""}" data-action="edit-note" type="button" aria-label="メモ">メモ</button>`;
+  }
+
+  function openNoteModal(title, fields) {
+    els.noteModalTitle.textContent = title;
+    els.noteFields.innerHTML = fields
+      .map(
+        (f, i) => `<div>
+          <div class="note-field-label">${escapeHtml(f.label)}</div>
+          <textarea class="note-field-input" rows="2" data-key="${escapeHtml(f.key)}" placeholder="語呂合わせやメモを入力" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false">${escapeHtml(mnemonics[f.key] ? mnemonics[f.key].text : "")}</textarea>
+        </div>`
+      )
+      .join("");
+    els.noteModal.hidden = false;
+  }
+
+  function closeNoteModal() {
+    els.noteModal.hidden = true;
+    renderDeckEdit(); // refresh which rows have a note
+  }
+
+  // Saved as it is typed, like the box on the study screen.
+  els.noteFields.addEventListener("input", (event) => {
+    const field = event.target.closest(".note-field-input");
+    if (!field) return;
+    mnemonics[field.dataset.key] = { text: field.value, at: Date.now() };
+    saveMnemonics();
+  });
+  els.noteModalClose.addEventListener("click", closeNoteModal);
+  els.noteModal.addEventListener("click", (event) => {
+    if (event.target === els.noteModal) closeNoteModal();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !els.noteModal.hidden) closeNoteModal();
+  });
+
   function renderKanjiEdit() {
     const removedCount = n2Kanji.length - visibleKanji().length;
     els.deckEditLegend.hidden = false;
@@ -1715,6 +1783,7 @@
         <div class="edit-row status-${status}" data-num="${item.num}">
           <span class="edit-front">${escapeHtml(item.kanji)}</span>
           <span class="edit-sub">${escapeHtml([item.onyomi || item.kunyomi, item.meaning].filter(Boolean).join(" · "))}</span>
+          ${editNoteButton(noteFieldsFor(item))}
           <button class="edit-delete" data-action="delete-card" type="button" aria-label="${escapeHtml(item.kanji)}を削除">✕</button>
         </div>`;
       })
@@ -1768,6 +1837,7 @@
             <span class="edit-sub">${escapeHtml(cardSummary(card))}</span>
             ${card.tags ? `<span class="edit-tags">${termTagsHtml(card.tags)}</span>` : ""}
           </span>
+          ${editNoteButton(noteFieldsFor(deckCardItem(deck, card)))}
           <button class="edit-delete" data-action="delete-card" type="button" aria-label="${escapeHtml(card.front)}を削除">✕</button>
         </div>`;
           })
@@ -1826,6 +1896,19 @@
       editingDeckId = open.dataset.editDeck;
       hideEditUndo();
       renderDeckEdit();
+      return;
+    }
+    const note = event.target.closest("[data-action='edit-note']");
+    if (note) {
+      const row = note.closest(".edit-row");
+      if (editingDeckId === KANJI_DECK_ID) {
+        const item = n2Kanji.find((k) => k.num === Number(row.dataset.num));
+        if (item) openNoteModal(item.kanji, noteFieldsFor(item));
+      } else {
+        const deck = editingDeckId && customDeckById(editingDeckId);
+        const card = deck && deck.cards[Number(row.dataset.index)];
+        if (card) openNoteModal(card.front, noteFieldsFor(deckCardItem(deck, card)));
+      }
       return;
     }
     const del = event.target.closest("[data-action='delete-card']");

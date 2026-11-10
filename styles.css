@@ -3369,3 +3369,56 @@ button.edit-row {
 .study-chip-noun {
   border-style: dashed;
 }
+
+/* ---------- mnemonics in 編集 ---------- */
+
+.edit-note {
+  flex: 0 0 auto;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.edit-note.has-note {
+  border-color: var(--text);
+  color: var(--text);
+}
+
+.note-modal-card {
+  max-width: 460px;
+  max-height: 100%;
+}
+
+.note-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.note-field-label {
+  margin-bottom: 4px;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+}
+
+.note-field-input {
+  width: 100%;
+  resize: vertical;
+  padding: 8px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.4;
+}
