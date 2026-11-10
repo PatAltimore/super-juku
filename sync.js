@@ -170,6 +170,8 @@
         onyomi: sortedUnion(a.onyomi, b.onyomi),
         kunyomi: sortedUnion(a.kunyomi, b.kunyomi),
         wordMeaning: sortedUnion(a.wordMeaning, b.wordMeaning),
+        nounReading: sortedUnion(a.nounReading, b.nounReading),
+        nounMeaning: sortedUnion(a.nounMeaning, b.nounMeaning),
       };
     });
     return out;

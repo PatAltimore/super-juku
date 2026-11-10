@@ -128,6 +128,7 @@ body {
 }
 
 .topbar {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2897,9 +2898,11 @@ button.edit-row {
    readings and purple for meanings. */
 [data-theme="dark"] .screen.q-reading { --q-bg: #e5189a; }
 [data-theme="dark"] .screen.q-meaning { --q-bg: #a02fe2; }
+[data-theme="dark"] .screen.q-kun { --q-bg: #0f9b8e; }
 
 [data-theme="dark"] .screen:has(.type-card).q-reading,
-[data-theme="dark"] .screen:has(.type-card).q-meaning {
+[data-theme="dark"] .screen:has(.type-card).q-meaning,
+[data-theme="dark"] .screen:has(.type-card).q-kun {
   background: var(--q-bg);
   transition: background-color 0.15s ease;
 }
@@ -2910,7 +2913,8 @@ button.edit-row {
    sits around the middle of the screen so the eyes stay there. */
 @media (min-width: 700px) and (min-height: 520px) {
   [data-theme="dark"] .screen:has(.type-card).q-reading,
-  [data-theme="dark"] .screen:has(.type-card).q-meaning {
+  [data-theme="dark"] .screen:has(.type-card).q-meaning,
+[data-theme="dark"] .screen:has(.type-card).q-kun {
     background: var(--bg);
   }
 
@@ -3001,6 +3005,7 @@ button.edit-row {
 
 .screen-study.q-reading { --q-bg: #e5189a; }
 .screen-study.q-meaning { --q-bg: #a02fe2; }
+.screen-study.q-kun { --q-bg: #0f9b8e; }
 
 .study-hero {
   flex: 0 0 auto;
@@ -3178,7 +3183,8 @@ button.edit-row {
 }
 
 /* The words are separate bubbles under the kanji. */
-.study-chip-word {
+.study-chip-word,
+.study-chip-noun {
   border-radius: 999px;
   padding: 6px 14px;
   font-size: 1rem;
@@ -3335,4 +3341,31 @@ button.edit-row {
 .screen-study.typing .study-actions,
 .screen-study.typing .study-nav {
   display: none;
+}
+
+/* The running score in the top right corner of the typed screens. */
+.score-hud {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.score-hud[hidden] {
+  display: none;
+}
+
+.score-right { color: #bff7d6; }
+.score-wrong { color: #ffcdc7; }
+.score-percent { opacity: 0.95; }
+
+.study-chip-noun {
+  border-style: dashed;
 }

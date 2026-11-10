@@ -297,6 +297,7 @@
       <button class="icon-btn" data-back type="button" aria-label="ホームに戻る">←</button>
       <span class="progress" id="typeProgress">0 / 0</span>
       <span class="icon-btn-spacer"></span>
+      <span class="score-hud" id="typeScore" hidden></span>
     </header>
     <main class="stage">
       <div class="type-card" id="typeCard">
@@ -337,6 +338,10 @@
               <div class="reading-value" id="typeKunyomi">—</div>
             </div>
             <div class="meaning" id="typeMeaning">—</div>
+            <div class="reading-block" id="typeNounBlock" hidden>
+              <div class="reading-label">名詞</div>
+              <div class="reading-value" id="typeNoun">—</div>
+            </div>
             <div class="reading-block" id="typeWordBlock" hidden>
               <div class="reading-label">単語</div>
               <div class="reading-value" id="typeWord">—</div>
@@ -438,6 +443,7 @@
       <button class="icon-btn" id="customTypeBackBtn" type="button" aria-label="デッキ一覧に戻る">◀</button>
       <span class="progress" id="customTypeProgress">0 / 0</span>
       <span class="icon-btn-spacer"></span>
+      <span class="score-hud" id="customTypeScore" hidden></span>
     </header>
     <main class="stage">
       <div class="type-card" id="customTypeCard">

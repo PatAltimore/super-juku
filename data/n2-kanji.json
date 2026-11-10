@@ -24,7 +24,10 @@
     "onyomiRomaji": "sou",
     "kunyomi": "す(べて)、 すべ(て)、 ふさ",
     "kunyomiRomaji": "su(bete), sube(te), fusa",
-    "meaning": "general, whole, all, full, total"
+    "meaning": "general, whole, all, full, total",
+    "noun": "総",
+    "nounReading": "ふさ",
+    "nounMeaning": "tuft (of hair / threads / etc.), fringe, tassel"
   },
   {
     "num": 21306,
@@ -42,7 +45,10 @@
     "onyomiRomaji": "ryou",
     "kunyomi": "えり",
     "kunyomiRomaji": "eri",
-    "meaning": "jurisdiction, dominion, territory, fief, reign"
+    "meaning": "jurisdiction, dominion, territory, fief, reign",
+    "noun": "領",
+    "nounReading": "えり",
+    "nounMeaning": "collar, lapel, neckband"
   },
   {
     "num": 30476,
@@ -114,7 +120,10 @@
     "onyomiRomaji": "gun",
     "kunyomi": "いくさ",
     "kunyomiRomaji": "ikusa",
-    "meaning": "army, force, troops, war, battle"
+    "meaning": "army, force, troops, war, battle",
+    "noun": "軍",
+    "nounReading": "いくさ",
+    "nounMeaning": "war, battle, campaign"
   },
   {
     "num": 22243,
@@ -132,7 +141,10 @@
     "onyomiRomaji": "kaku",
     "kunyomi": "おのおの",
     "kunyomiRomaji": "onoono",
-    "meaning": "each, every, either"
+    "meaning": "each, every, either",
+    "noun": "各",
+    "nounReading": "おのおの",
+    "nounMeaning": "each"
   },
   {
     "num": 23798,
@@ -141,7 +153,10 @@
     "onyomiRomaji": "tou",
     "kunyomi": "しま",
     "kunyomiRomaji": "shima",
-    "meaning": "island"
+    "meaning": "island",
+    "noun": "島",
+    "nounReading": "しま",
+    "nounMeaning": "island, one's turf"
   },
   {
     "num": 38761,
@@ -150,7 +165,10 @@
     "onyomiRomaji": "kaku",
     "kunyomi": "かわ",
     "kunyomiRomaji": "kawa",
-    "meaning": "leather, skin, reform, become serious"
+    "meaning": "leather, skin, reform, become serious",
+    "noun": "革",
+    "nounReading": "かわ",
+    "nounMeaning": "leather"
   },
   {
     "num": 26449,
@@ -159,7 +177,10 @@
     "onyomiRomaji": "son",
     "kunyomi": "むら",
     "kunyomiRomaji": "mura",
-    "meaning": "village, town"
+    "meaning": "village, town",
+    "noun": "村",
+    "nounReading": "むら",
+    "nounMeaning": "village"
   },
   {
     "num": 21218,
@@ -168,7 +189,10 @@
     "onyomiRomaji": "sei, zei",
     "kunyomi": "いきお(い)、 はずみ",
     "kunyomiRomaji": "ikio(i), hazumi",
-    "meaning": "forces, energy, military strength"
+    "meaning": "forces, energy, military strength",
+    "noun": "勢",
+    "nounReading": "いきおい",
+    "nounMeaning": "force, vigor, vigour"
   },
   {
     "num": 28187,
@@ -255,7 +279,10 @@
     "onyomiRomaji": "kyou, kei",
     "kunyomi": "さかい",
     "kunyomiRomaji": "sakai",
-    "meaning": "boundary, border, region"
+    "meaning": "boundary, border, region",
+    "noun": "境",
+    "nounReading": "さかい",
+    "nounMeaning": "border, boundary, turning point"
   },
   {
     "num": 23566,
@@ -333,7 +360,10 @@
     "onyomiRomaji": "shuu, su",
     "kunyomi": "す",
     "kunyomiRomaji": "su",
-    "meaning": "state, province"
+    "meaning": "state, province",
+    "noun": "州",
+    "nounReading": "す",
+    "nounMeaning": "sandbank, sandbar"
   },
   {
     "num": 27494,
@@ -372,7 +402,10 @@
     "onyomiRomaji": "gaku",
     "kunyomi": "ひたい",
     "kunyomiRomaji": "hitai",
-    "meaning": "forehead, tablet, plaque, framed picture, sum"
+    "meaning": "forehead, tablet, plaque, framed picture, sum",
+    "noun": "額",
+    "nounReading": "ひたい",
+    "nounMeaning": "forehead, brow"
   },
   {
     "num": 27431,
@@ -426,7 +459,10 @@
     "onyomiRomaji": "hen",
     "kunyomi": "あた(り)、 ほと(り)、 べ",
     "kunyomiRomaji": "ata(ri), hoto(ri), be",
-    "meaning": "environs, boundary, border, vicinity"
+    "meaning": "environs, boundary, border, vicinity",
+    "noun": "辺",
+    "nounReading": "ほとり",
+    "nounMeaning": "side (esp. of a waterbody), edge, bank"
   },
   {
     "num": 36896,
@@ -459,7 +495,10 @@
     "onyomiRomaji": "gi",
     "kunyomi": "わざ",
     "kunyomiRomaji": "waza",
-    "meaning": "skill, art, craft, ability, feat"
+    "meaning": "skill, art, craft, ability, feat",
+    "noun": "技",
+    "nounReading": "わざ",
+    "nounMeaning": "technique, art, skill"
   },
   {
     "num": 20302,
@@ -510,7 +549,10 @@
     "onyomiRomaji": "mon",
     "kunyomi": "かど、 と",
     "kunyomiRomaji": "kado, to",
-    "meaning": "gate, counter for cannons"
+    "meaning": "gate, counter for cannons",
+    "noun": "門",
+    "nounReading": "と",
+    "nounMeaning": "door (esp. Japanese-style), shutter, window shutter"
   },
   {
     "num": 35506,
@@ -561,7 +603,10 @@
     "onyomiRomaji": "zou, sou",
     "kunyomi": "くら、 おさ(める)、 かく(れる)",
     "kunyomiRomaji": "kura, osa(meru), kaku(reru)",
-    "meaning": "storehouse, hide, own, have, possess"
+    "meaning": "storehouse, hide, own, have, possess",
+    "noun": "蔵",
+    "nounReading": "くら",
+    "nounMeaning": "warehouse, storehouse, cellar"
   },
   {
     "num": 37327,
@@ -573,7 +618,10 @@
     "meaning": "quantity, measure, weight, amount, consider",
     "word": "量る",
     "wordReading": "はかる",
-    "wordMeaning": "to measure, to weigh, to survey"
+    "wordMeaning": "to measure, to weigh, to survey",
+    "noun": "量",
+    "nounReading": "はか",
+    "nounMeaning": "progress"
   },
   {
     "num": 22411,
@@ -582,7 +630,10 @@
     "onyomiRomaji": "kei",
     "kunyomi": "かた、 がた",
     "kunyomiRomaji": "kata, gata",
-    "meaning": "mould, type, model"
+    "meaning": "mould, type, model",
+    "noun": "型",
+    "nounReading": "かた",
+    "nounMeaning": "type, style, model"
   },
   {
     "num": 27841,
@@ -600,7 +651,10 @@
     "onyomiRomaji": "shin",
     "kunyomi": "はり",
     "kunyomiRomaji": "hari",
-    "meaning": "needle, pin, staple, stinger"
+    "meaning": "needle, pin, staple, stinger",
+    "noun": "針",
+    "nounReading": "はり",
+    "nounMeaning": "needle, pin, hook"
   },
   {
     "num": 23554,
@@ -621,7 +675,10 @@
     "meaning": "valley",
     "word": "谷まる",
     "wordReading": "きわまる",
-    "wordMeaning": "to reach an extreme, to reach a limit, to terminate"
+    "wordMeaning": "to reach an extreme, to reach a limit, to terminate",
+    "noun": "谷",
+    "nounReading": "たに",
+    "nounMeaning": "valley, ravine, gorge"
   },
   {
     "num": 21490,
@@ -639,7 +696,10 @@
     "onyomiRomaji": "kai",
     "kunyomi": "きざはし",
     "kunyomiRomaji": "kizahashi",
-    "meaning": "storey, stair, counter for storeys of a building"
+    "meaning": "storey, stair, counter for storeys of a building",
+    "noun": "階",
+    "nounReading": "きざはし",
+    "nounMeaning": "stairs, stairs at the front of a noh stage"
   },
   {
     "num": 31649,
@@ -648,7 +708,10 @@
     "onyomiRomaji": "kan",
     "kunyomi": "くだ",
     "kunyomiRomaji": "kuda",
-    "meaning": "pipe, tube, wind instrument, drunken talk, control"
+    "meaning": "pipe, tube, wind instrument, drunken talk, control",
+    "noun": "管",
+    "nounReading": "くだ",
+    "nounMeaning": "pipe, tube, bobbin (in a shuttle or spinning wheel)"
   },
   {
     "num": 20853,
@@ -657,7 +720,10 @@
     "onyomiRomaji": "hei, hyou",
     "kunyomi": "つわもの",
     "kunyomiRomaji": "tsuwamono",
-    "meaning": "soldier, private, troops, army, warfare"
+    "meaning": "soldier, private, troops, army, warfare",
+    "noun": "兵",
+    "nounReading": "つわもの",
+    "nounMeaning": "soldier, warrior, person of courage"
   },
   {
     "num": 25509,
@@ -681,7 +747,10 @@
     "meaning": "dainty, get thin, taper, slender, narrow",
     "word": "細い",
     "wordReading": "ほそい",
-    "wordMeaning": "thin, slender, fine"
+    "wordMeaning": "thin, slender, fine",
+    "noun": "細",
+    "nounReading": "ほそ",
+    "nounMeaning": "fine thread, hempen cord"
   },
   {
     "num": 21177,
@@ -705,7 +774,10 @@
     "meaning": "round, full (month), perfection, -ship, pills",
     "word": "丸める",
     "wordReading": "まるめる",
-    "wordMeaning": "to make round, to roll up, to curl up"
+    "wordMeaning": "to make round, to roll up, to curl up",
+    "noun": "丸",
+    "nounReading": "まる",
+    "nounMeaning": "circle, entirety, whole"
   },
   {
     "num": 28286,
@@ -750,7 +822,10 @@
     "meaning": "old times, old things, old friend, former, ex-",
     "word": "旧い",
     "wordReading": "ふるい",
-    "wordMeaning": "old, aged, ancient"
+    "wordMeaning": "old, aged, ancient",
+    "noun": "旧",
+    "nounReading": "もと",
+    "nounMeaning": "earlier times, the past, previous state"
   },
   {
     "num": 27211,
@@ -759,7 +834,10 @@
     "onyomiRomaji": "kyou",
     "kunyomi": "はし",
     "kunyomiRomaji": "hashi",
-    "meaning": "bridge"
+    "meaning": "bridge",
+    "noun": "橋",
+    "nounReading": "はし",
+    "nounMeaning": "bridge"
   },
   {
     "num": 23736,
@@ -768,7 +846,10 @@
     "onyomiRomaji": "gan",
     "kunyomi": "きし",
     "kunyomiRomaji": "kishi",
-    "meaning": "beach"
+    "meaning": "beach",
+    "noun": "岸",
+    "nounReading": "きし",
+    "nounMeaning": "bank, coast, shore"
   },
   {
     "num": 21608,
@@ -795,7 +876,10 @@
     "onyomiRomaji": "ko",
     "kunyomi": "と",
     "kunyomiRomaji": "to",
-    "meaning": "door, counter for houses, door radical (no. 63)"
+    "meaning": "door, counter for houses, door radical (no. 63)",
+    "noun": "戸",
+    "nounReading": "と",
+    "nounMeaning": "door (esp. Japanese-style), shutter, window shutter"
   },
   {
     "num": 22830,
@@ -846,7 +930,10 @@
     "onyomiRomaji": "chiku",
     "kunyomi": "たけ",
     "kunyomiRomaji": "take",
-    "meaning": "bamboo"
+    "meaning": "bamboo",
+    "noun": "竹",
+    "nounReading": "たけ",
+    "nounMeaning": "bamboo (any grass of subfamily Bambusoideae), middle (of a three-tier ranking system)"
   },
   {
     "num": 36229,
@@ -870,7 +957,10 @@
     "meaning": "row, and, besides, as well as, line up",
     "word": "並べる",
     "wordReading": "ならべる",
-    "wordMeaning": "to line up, to set up, to arrange in a line"
+    "wordMeaning": "to line up, to set up, to arrange in a line",
+    "noun": "並",
+    "nounReading": "なみ",
+    "nounMeaning": "average, medium, common"
   },
   {
     "num": 30274,
@@ -900,7 +990,10 @@
     "onyomiRomaji": "shin",
     "kunyomi": "もり",
     "kunyomiRomaji": "mori",
-    "meaning": "forest, woods"
+    "meaning": "forest, woods",
+    "noun": "森",
+    "nounReading": "もり",
+    "nounMeaning": "forest, shrine grove"
   },
   {
     "num": 31478,
@@ -930,7 +1023,10 @@
     "onyomiRomaji": "kon",
     "kunyomi": "ね、 ね",
     "kunyomiRomaji": "ne, ne",
-    "meaning": "root, radical, head (pimple)"
+    "meaning": "root, radical, head (pimple)",
+    "noun": "根",
+    "nounReading": "ね",
+    "nounMeaning": "root (of a plant), root (of a tooth / hair / etc.), center (of a pimple / etc.)"
   },
   {
     "num": 36009,
@@ -966,7 +1062,10 @@
     "onyomiRomaji": "fuku",
     "kunyomi": "はば",
     "kunyomiRomaji": "haba",
-    "meaning": "hanging scroll, width"
+    "meaning": "hanging scroll, width",
+    "noun": "幅",
+    "nounReading": "はば",
+    "nounMeaning": "width, breadth, freedom (e.g. of thought)"
   },
   {
     "num": 33324,
@@ -1002,7 +1101,10 @@
     "onyomiRomaji": "rin",
     "kunyomi": "はやし",
     "kunyomiRomaji": "hayashi",
-    "meaning": "grove, forest"
+    "meaning": "grove, forest",
+    "noun": "林",
+    "nounReading": "はやし",
+    "nounMeaning": "wood, woods, forest"
   },
   {
     "num": 35013,
@@ -1041,7 +1143,10 @@
     "onyomiRomaji": "ka",
     "kunyomi": "かわ",
     "kunyomiRomaji": "kawa",
-    "meaning": "river"
+    "meaning": "river",
+    "noun": "河",
+    "nounReading": "かわ",
+    "nounMeaning": "river, stream"
   },
   {
     "num": 33322,
@@ -1059,7 +1164,10 @@
     "onyomiRomaji": "tetsu",
     "kunyomi": "くろがね",
     "kunyomiRomaji": "kurogane",
-    "meaning": "iron"
+    "meaning": "iron",
+    "noun": "鉄",
+    "nounReading": "くろがね",
+    "nounMeaning": "iron"
   },
   {
     "num": 20816,
@@ -1068,7 +1176,10 @@
     "onyomiRomaji": "ji, ni, gei",
     "kunyomi": "こ、 こ、 っこ",
     "kunyomiRomaji": "ko, ko, kko",
-    "meaning": "newborn babe, child, young of animals"
+    "meaning": "newborn babe, child, young of animals",
+    "noun": "児",
+    "nounReading": "こ",
+    "nounMeaning": "child, kid, teenager"
   },
   {
     "num": 31105,
@@ -1089,7 +1200,10 @@
     "meaning": "stamp, seal, mark, imprint, symbol",
     "word": "印す",
     "wordReading": "しるす",
-    "wordMeaning": "to leave (a mark / trace / etc.), to print, to stamp"
+    "wordMeaning": "to leave (a mark / trace / etc.), to print, to stamp",
+    "noun": "印",
+    "nounReading": "しるし",
+    "nounMeaning": "mark, sign, symbol"
   },
   {
     "num": 36870,
@@ -1101,7 +1215,10 @@
     "meaning": "inverted, reverse, opposite, wicked",
     "word": "逆らう",
     "wordReading": "さからう",
-    "wordMeaning": "to go against, to oppose, to disobey"
+    "wordMeaning": "to go against, to oppose, to disobey",
+    "noun": "逆",
+    "nounReading": "さか",
+    "nounMeaning": "inverse, reverse"
   },
   {
     "num": 25563,
@@ -1146,7 +1263,10 @@
     "onyomiRomaji": "yu, yuu",
     "kunyomi": "あぶら",
     "kunyomiRomaji": "abura",
-    "meaning": "oil, fat"
+    "meaning": "oil, fat",
+    "noun": "油",
+    "nounReading": "あぶら",
+    "nounMeaning": "oil"
   },
   {
     "num": 26292,
@@ -1167,7 +1287,10 @@
     "onyomiRomaji": "rin",
     "kunyomi": "わ",
     "kunyomiRomaji": "wa",
-    "meaning": "wheel, ring, circle, link, loop"
+    "meaning": "wheel, ring, circle, link, loop",
+    "noun": "輪",
+    "nounReading": "わ",
+    "nounMeaning": "ring, circle, loop"
   },
   {
     "num": 21344,
@@ -1308,7 +1431,10 @@
     "onyomiRomaji": "riku, roku",
     "kunyomi": "おか",
     "kunyomiRomaji": "oka",
-    "meaning": "land, six"
+    "meaning": "land, six",
+    "noun": "陸",
+    "nounReading": "おか",
+    "nounMeaning": "land, shore"
   },
   {
     "num": 29577,
@@ -1317,7 +1443,10 @@
     "onyomiRomaji": "gyoku",
     "kunyomi": "たま、 たま、 だま",
     "kunyomiRomaji": "tama, tama, dama",
-    "meaning": "jewel, ball"
+    "meaning": "jewel, ball",
+    "noun": "玉",
+    "nounReading": "たま",
+    "nounMeaning": "ball, sphere, globe"
   },
   {
     "num": 27874,
@@ -1326,7 +1455,10 @@
     "onyomiRomaji": "ha",
     "kunyomi": "なみ",
     "kunyomiRomaji": "nami",
-    "meaning": "waves, billows, Poland"
+    "meaning": "waves, billows, Poland",
+    "noun": "波",
+    "nounReading": "なみ",
+    "nounMeaning": "wave, billow, ripple"
   },
   {
     "num": 24111,
@@ -1338,7 +1470,10 @@
     "meaning": "sash, belt, obi, zone, region",
     "word": "帯びる",
     "wordReading": "おびる",
-    "wordMeaning": "to wear (a sword / decoration / etc.), to carry, to bear"
+    "wordMeaning": "to wear (a sword / decoration / etc.), to carry, to bear",
+    "noun": "帯",
+    "nounReading": "おび",
+    "nounMeaning": "obi (kimono sash)"
   },
   {
     "num": 24310,
@@ -1359,7 +1494,10 @@
     "onyomiRomaji": "u",
     "kunyomi": "は、 わ、 はね",
     "kunyomiRomaji": "ha, wa, hane",
-    "meaning": "feathers, counter for birds, rabbits"
+    "meaning": "feathers, counter for birds, rabbits",
+    "noun": "羽",
+    "nounReading": "はね",
+    "nounMeaning": "feather, plume, down"
   },
   {
     "num": 22266,
@@ -1383,7 +1521,10 @@
     "meaning": "rule, law, follow, based on, model after",
     "word": "則る",
     "wordReading": "のっとる",
-    "wordMeaning": "to follow (a rule / precedent / style / etc.), to conform to, to be in accordance with"
+    "wordMeaning": "to follow (a rule / precedent / style / etc.), to conform to, to be in accordance with",
+    "noun": "則",
+    "nounReading": "のり",
+    "nounMeaning": "rule, law, regulation"
   },
   {
     "num": 20081,
@@ -1446,7 +1587,10 @@
     "onyomiRomaji": "rei",
     "kunyomi": "よわい、 とし",
     "kunyomiRomaji": "yowai, toshi",
-    "meaning": "age"
+    "meaning": "age",
+    "noun": "齢",
+    "nounReading": "よわい",
+    "nounMeaning": "(one's) age"
   },
   {
     "num": 22258,
@@ -1509,7 +1653,10 @@
     "onyomiRomaji": "gan",
     "kunyomi": "いわ",
     "kunyomiRomaji": "iwa",
-    "meaning": "boulder, rock, cliff"
+    "meaning": "boulder, rock, cliff",
+    "noun": "岩",
+    "nounReading": "いわ",
+    "nounMeaning": "rock, boulder, crag"
   },
   {
     "num": 32244,
@@ -1560,7 +1707,10 @@
     "onyomiRomaji": "jou, sei",
     "kunyomi": "しろ",
     "kunyomiRomaji": "shiro",
-    "meaning": "castle"
+    "meaning": "castle",
+    "noun": "城",
+    "nounReading": "しろ",
+    "nounMeaning": "castle"
   },
   {
     "num": 24739,
@@ -1608,7 +1758,10 @@
     "onyomiRomaji": "kaku",
     "kunyomi": "かど、 つの",
     "kunyomiRomaji": "kado, tsuno",
-    "meaning": "angle, corner, square, horn, antlers"
+    "meaning": "angle, corner, square, horn, antlers",
+    "noun": "角",
+    "nounReading": "かど",
+    "nounMeaning": "corner, edge, (street) corner"
   },
   {
     "num": 32097,
@@ -1653,7 +1806,10 @@
     "onyomiRomaji": "ri",
     "kunyomi": "うら",
     "kunyomiRomaji": "ura",
-    "meaning": "back, amidst, in, reverse, inside"
+    "meaning": "back, amidst, in, reverse, inside",
+    "noun": "裏",
+    "nounReading": "うら",
+    "nounMeaning": "opposite side, bottom, other side"
   },
   {
     "num": 20175,
@@ -1662,7 +1818,10 @@
     "onyomiRomaji": "butsu, futsu",
     "kunyomi": "ほとけ",
     "kunyomiRomaji": "hotoke",
-    "meaning": "Buddha, the dead, France"
+    "meaning": "Buddha, the dead, France",
+    "noun": "仏",
+    "nounReading": "ほとけ",
+    "nounMeaning": "Buddha, Shakyamuni, Buddhist image"
   },
   {
     "num": 32318,
@@ -1692,7 +1851,10 @@
     "onyomiRomaji": "ka",
     "kunyomi": "たから",
     "kunyomiRomaji": "takara",
-    "meaning": "freight, goods, property"
+    "meaning": "freight, goods, property",
+    "noun": "貨",
+    "nounReading": "たから",
+    "nounMeaning": "treasure"
   },
   {
     "num": 28151,
@@ -1725,7 +1887,10 @@
     "onyomiRomaji": "chi",
     "kunyomi": "いけ",
     "kunyomiRomaji": "ike",
-    "meaning": "pond, cistern, pool, reservoir"
+    "meaning": "pond, cistern, pool, reservoir",
+    "noun": "池",
+    "nounReading": "いけ",
+    "nounMeaning": "pond"
   },
   {
     "num": 34880,
@@ -1734,7 +1899,10 @@
     "onyomiRomaji": "ketsu",
     "kunyomi": "ち",
     "kunyomiRomaji": "chi",
-    "meaning": "blood"
+    "meaning": "blood",
+    "noun": "血",
+    "nounReading": "ち",
+    "nounMeaning": "blood, ancestry, lineage"
   },
   {
     "num": 28201,
@@ -1746,7 +1914,10 @@
     "meaning": "warm",
     "word": "温かい",
     "wordReading": "あたたかい",
-    "wordMeaning": "warm, mild, (pleasantly) hot"
+    "wordMeaning": "warm, mild, (pleasantly) hot",
+    "noun": "温",
+    "nounReading": "ぬく",
+    "nounMeaning": "idiot, dummy, slow person"
   },
   {
     "num": 23395,
@@ -1764,7 +1935,10 @@
     "onyomiRomaji": "sei, shou",
     "kunyomi": "ほし、 ぼし",
     "kunyomiRomaji": "hoshi, boshi",
-    "meaning": "star, spot, dot, mark"
+    "meaning": "star, spot, dot, mark",
+    "noun": "星",
+    "nounReading": "ほし",
+    "nounMeaning": "star (usu. excluding the Sun), planet (usu. excluding Earth), heavenly body"
   },
   {
     "num": 27704,
@@ -1806,7 +1980,10 @@
     "onyomiRomaji": "ko, ku",
     "kunyomi": "くら",
     "kunyomiRomaji": "kura",
-    "meaning": "warehouse, storehouse"
+    "meaning": "warehouse, storehouse",
+    "noun": "庫",
+    "nounReading": "くら",
+    "nounMeaning": "warehouse, storehouse, cellar"
   },
   {
     "num": 21002,
@@ -1836,7 +2013,10 @@
     "meaning": "incense, smell, perfume",
     "word": "香る",
     "wordReading": "かおる",
-    "wordMeaning": "to smell sweet, to be fragrant"
+    "wordMeaning": "to smell sweet, to be fragrant",
+    "noun": "香",
+    "nounReading": "かおり",
+    "nounMeaning": "aroma, fragrance, scent"
   },
   {
     "num": 22338,
@@ -1845,7 +2025,10 @@
     "onyomiRomaji": "han",
     "kunyomi": "さか",
     "kunyomiRomaji": "saka",
-    "meaning": "slope, incline, hill"
+    "meaning": "slope, incline, hill",
+    "noun": "坂",
+    "nounReading": "さか",
+    "nounMeaning": "slope, incline, hill"
   },
   {
     "num": 24213,
@@ -1854,7 +2037,10 @@
     "onyomiRomaji": "tei",
     "kunyomi": "そこ",
     "kunyomiRomaji": "soko",
-    "meaning": "bottom, sole, depth, bottom price, base"
+    "meaning": "bottom, sole, depth, bottom price, base",
+    "noun": "底",
+    "nounReading": "そこ",
+    "nounMeaning": "bottom, sole, bed (of a river)"
   },
   {
     "num": 24067,
@@ -1866,7 +2052,10 @@
     "meaning": "linen, cloth, spread, distribute",
     "word": "布く",
     "wordReading": "しく",
-    "wordMeaning": "to spread out (e.g. a futon), to lay out, to lay down (e.g. a cushion)"
+    "wordMeaning": "to spread out (e.g. a futon), to lay out, to lay down (e.g. a cushion)",
+    "noun": "布",
+    "nounReading": "ぬの",
+    "nounMeaning": "cloth, fabric, material"
   },
   {
     "num": 23546,
@@ -1875,7 +2064,10 @@
     "onyomiRomaji": "ji",
     "kunyomi": "てら",
     "kunyomiRomaji": "tera",
-    "meaning": "Buddhist temple"
+    "meaning": "Buddhist temple",
+    "noun": "寺",
+    "nounReading": "てら",
+    "nounMeaning": "temple (Buddhist)"
   },
   {
     "num": 23431,
@@ -1998,7 +2190,10 @@
     "onyomiRomaji": "chuu",
     "kunyomi": "なか",
     "kunyomiRomaji": "naka",
-    "meaning": "go-between, relationship"
+    "meaning": "go-between, relationship",
+    "noun": "仲",
+    "nounReading": "なか",
+    "nounMeaning": "relation, relationship"
   },
   {
     "num": 26628,
@@ -2019,7 +2214,10 @@
     "onyomiRomaji": "satsu",
     "kunyomi": "ふだ",
     "kunyomiRomaji": "fuda",
-    "meaning": "tag, paper money, counter for bonds, placard, bid"
+    "meaning": "tag, paper money, counter for bonds, placard, bid",
+    "noun": "札",
+    "nounReading": "ふだ",
+    "nounMeaning": "ticket, token, check"
   },
   {
     "num": 26495,
@@ -2028,7 +2226,10 @@
     "onyomiRomaji": "han, ban",
     "kunyomi": "いた",
     "kunyomiRomaji": "ita",
-    "meaning": "plank, board, plate, stage"
+    "meaning": "plank, board, plate, stage",
+    "noun": "板",
+    "nounReading": "いた",
+    "nounMeaning": "board, plank, sheet (of metal)"
   },
   {
     "num": 39592,
@@ -2037,7 +2238,10 @@
     "onyomiRomaji": "kotsu",
     "kunyomi": "ほね",
     "kunyomiRomaji": "hone",
-    "meaning": "skeleton, bone, remains, frame"
+    "meaning": "skeleton, bone, remains, frame",
+    "noun": "骨",
+    "nounReading": "ほね",
+    "nounMeaning": "bone, frame"
   },
   {
     "num": 20670,
@@ -2061,7 +2265,10 @@
     "meaning": "deliver, reach, arrive, report, notify",
     "word": "届ける",
     "wordReading": "とどける",
-    "wordMeaning": "to deliver, to forward, to send"
+    "wordMeaning": "to deliver, to forward, to send",
+    "noun": "届",
+    "nounReading": "とどけ",
+    "nounMeaning": "report, notification, registration"
   },
   {
     "num": 24059,
@@ -2073,7 +2280,10 @@
     "meaning": "scroll, volume, book, part, roll up",
     "word": "巻く",
     "wordReading": "まく",
-    "wordMeaning": "to wind, to coil, to roll"
+    "wordMeaning": "to wind, to coil, to roll",
+    "noun": "巻",
+    "nounReading": "まき",
+    "nounMeaning": "roll (e.g. of cloth), winding (e.g. watch)"
   },
   {
     "num": 29123,
@@ -2094,7 +2304,10 @@
     "onyomiRomaji": "seki",
     "kunyomi": "あと",
     "kunyomiRomaji": "ato",
-    "meaning": "tracks, mark, print, impression"
+    "meaning": "tracks, mark, print, impression",
+    "noun": "跡",
+    "nounReading": "あと",
+    "nounMeaning": "trace, tracks, mark"
   },
   {
     "num": 21253,
@@ -2184,7 +2397,10 @@
     "meaning": "bake, burning",
     "word": "焼く",
     "wordReading": "やく",
-    "wordMeaning": "to burn, to roast, to broil"
+    "wordMeaning": "to burn, to roast, to broil",
+    "noun": "焼",
+    "nounReading": "やき",
+    "nounMeaning": "roasting, grilling, toasting"
   },
   {
     "num": 31777,
@@ -2193,7 +2409,10 @@
     "onyomiRomaji": "kan, ken",
     "kunyomi": "えら(ぶ)、 ふだ",
     "kunyomiRomaji": "era(bu), fuda",
-    "meaning": "simplicity, brevity"
+    "meaning": "simplicity, brevity",
+    "noun": "簡",
+    "nounReading": "ふだ",
+    "nounMeaning": "ticket, token, check"
   },
   {
     "num": 31456,
@@ -2256,7 +2475,10 @@
     "meaning": "dilute, thin, weak (tea), pampas grass",
     "word": "薄い",
     "wordReading": "うすい",
-    "wordMeaning": "thin (of an object), pale, light"
+    "wordMeaning": "thin (of an object), pale, light",
+    "noun": "薄",
+    "nounReading": "すすき",
+    "nounMeaning": "Chinese silvergrass (Miscanthus sinensis), maiden grass, susuki grass"
   },
   {
     "num": 32676,
@@ -2268,7 +2490,10 @@
     "meaning": "flock, group, crowd, herd, swarm",
     "word": "群れる",
     "wordReading": "むれる",
-    "wordMeaning": "to crowd, to flock, to swarm"
+    "wordMeaning": "to crowd, to flock, to swarm",
+    "noun": "群",
+    "nounReading": "むら",
+    "nounMeaning": "gathering"
   },
   {
     "num": 31186,
@@ -2289,7 +2514,10 @@
     "meaning": "heart, interior",
     "word": "奥まる",
     "wordReading": "おくまる",
-    "wordMeaning": "to lie deep in, to extend far back"
+    "wordMeaning": "to lie deep in, to extend far back",
+    "noun": "奥",
+    "nounReading": "おく",
+    "nounMeaning": "inner part, interior, back (of a drawer / one's throat / etc.)"
   },
   {
     "num": 35440,
@@ -2301,7 +2529,10 @@
     "meaning": "packed, close, pressed, reprove, rebuke",
     "word": "詰める",
     "wordReading": "つめる",
-    "wordMeaning": "to stuff into, to jam, to cram"
+    "wordMeaning": "to stuff into, to jam, to cram",
+    "noun": "詰",
+    "nounReading": "つめ",
+    "nounMeaning": "stuffing, packing, endgame"
   },
   {
     "num": 21452,
@@ -2322,7 +2553,10 @@
     "meaning": "thorn, pierce, stab, prick, sting",
     "word": "刺す",
     "wordReading": "さす",
-    "wordMeaning": "to pierce, to stab, to prick"
+    "wordMeaning": "to pierce, to stab, to prick",
+    "noun": "刺",
+    "nounReading": "とげ",
+    "nounMeaning": "thorn, spine, prickle"
   },
   {
     "num": 32020,
@@ -2394,7 +2628,10 @@
     "onyomiRomaji": "sen",
     "kunyomi": "いずみ",
     "kunyomiRomaji": "izumi",
-    "meaning": "spring, fountain"
+    "meaning": "spring, fountain",
+    "noun": "泉",
+    "nounReading": "いずみ",
+    "nounMeaning": "spring, fountain"
   },
   {
     "num": 30382,
@@ -2403,7 +2640,10 @@
     "onyomiRomaji": "hi",
     "kunyomi": "かわ",
     "kunyomiRomaji": "kawa",
-    "meaning": "pelt, skin, hide, leather, skin radical (no. 107)"
+    "meaning": "pelt, skin, hide, leather, skin radical (no. 107)",
+    "noun": "皮",
+    "nounReading": "かわ",
+    "nounMeaning": "skin, hide, pelt"
   },
   {
     "num": 28417,
@@ -2427,7 +2667,10 @@
     "meaning": "laid waste, rough, rude, wild",
     "word": "荒らす",
     "wordReading": "あらす",
-    "wordMeaning": "to lay waste, to devastate, to damage"
+    "wordMeaning": "to lay waste, to devastate, to damage",
+    "noun": "荒",
+    "nounReading": "あら",
+    "nounMeaning": "remaining bony parts (of a fish after filleting), flaw (esp. of a person), fault"
   },
   {
     "num": 36015,
@@ -2472,7 +2715,10 @@
     "onyomiRomaji": "chuu",
     "kunyomi": "はしら",
     "kunyomiRomaji": "hashira",
-    "meaning": "pillar, post, cylinder, support"
+    "meaning": "pillar, post, cylinder, support",
+    "noun": "柱",
+    "nounReading": "はしら",
+    "nounMeaning": "pillar, post, support"
   },
   {
     "num": 31085,
@@ -2484,7 +2730,10 @@
     "meaning": "ritual, offer prayers, celebrate, deify, enshrine",
     "word": "祭る",
     "wordReading": "まつる",
-    "wordMeaning": "to deify, to enshrine, to pray"
+    "wordMeaning": "to deify, to enshrine, to pray",
+    "noun": "祭",
+    "nounReading": "まつり",
+    "nounMeaning": "festival, feast, matsuri"
   },
   {
     "num": 34955,
@@ -2493,7 +2742,10 @@
     "onyomiRomaji": "tai, dai",
     "kunyomi": "ふくろ",
     "kunyomiRomaji": "fukuro",
-    "meaning": "sack, bag, pouch"
+    "meaning": "sack, bag, pouch",
+    "noun": "袋",
+    "nounReading": "ふくろ",
+    "nounMeaning": "bag, sack, pouch"
   },
   {
     "num": 31558,
@@ -2502,7 +2754,10 @@
     "onyomiRomaji": "hitsu",
     "kunyomi": "ふで",
     "kunyomiRomaji": "fude",
-    "meaning": "writing brush, writing, painting brush, handwriting"
+    "meaning": "writing brush, writing, painting brush, handwriting",
+    "noun": "筆",
+    "nounReading": "ふで",
+    "nounMeaning": "writing brush, paintbrush, pen"
   },
   {
     "num": 35347,
@@ -2514,7 +2769,10 @@
     "meaning": "instruction, Japanese character reading, explanation, read",
     "word": "訓える",
     "wordReading": "おしえる",
-    "wordMeaning": "to teach, to instruct, to tell"
+    "wordMeaning": "to teach, to instruct, to tell",
+    "noun": "訓",
+    "nounReading": "くん",
+    "nounMeaning": "native Japanese reading of a Chinese character, precept, lesson"
   },
   {
     "num": 28020,
@@ -2535,7 +2793,10 @@
     "onyomiRomaji": "dou",
     "kunyomi": "わらべ",
     "kunyomiRomaji": "warabe",
-    "meaning": "juvenile, child"
+    "meaning": "juvenile, child",
+    "noun": "童",
+    "nounReading": "わらべ",
+    "nounMeaning": "child"
   },
   {
     "num": 23453,
@@ -2544,7 +2805,10 @@
     "onyomiRomaji": "hou",
     "kunyomi": "たから",
     "kunyomiRomaji": "takara",
-    "meaning": "treasure, wealth, valuables"
+    "meaning": "treasure, wealth, valuables",
+    "noun": "宝",
+    "nounReading": "たから",
+    "nounMeaning": "treasure"
   },
   {
     "num": 23553,
@@ -2562,7 +2826,10 @@
     "onyomiRomaji": "kyou",
     "kunyomi": "むね、 むな",
     "kunyomiRomaji": "mune, muna",
-    "meaning": "bosom, breast, chest, heart, feelings"
+    "meaning": "bosom, breast, chest, heart, feelings",
+    "noun": "胸",
+    "nounReading": "むね",
+    "nounMeaning": "chest, breast, breasts"
   },
   {
     "num": 30722,
@@ -2571,7 +2838,10 @@
     "onyomiRomaji": "sa, sha",
     "kunyomi": "すな",
     "kunyomiRomaji": "suna",
-    "meaning": "sand"
+    "meaning": "sand",
+    "noun": "砂",
+    "nounReading": "すな",
+    "nounMeaning": "sand, grit, fine gravel"
   },
   {
     "num": 22633,
@@ -2580,7 +2850,10 @@
     "onyomiRomaji": "en",
     "kunyomi": "しお",
     "kunyomiRomaji": "shio",
-    "meaning": "salt"
+    "meaning": "salt",
+    "noun": "塩",
+    "nounReading": "しお",
+    "nounMeaning": "salt, common salt, table salt"
   },
   {
     "num": 36066,
@@ -2601,7 +2874,10 @@
     "onyomiRomaji": "wan",
     "kunyomi": "うで",
     "kunyomiRomaji": "ude",
-    "meaning": "arm, ability, talent"
+    "meaning": "arm, ability, talent",
+    "noun": "腕",
+    "nounReading": "うで",
+    "nounMeaning": "arm, ability, skill"
   },
   {
     "num": 20806,
@@ -2622,7 +2898,10 @@
     "onyomiRomaji": "shou",
     "kunyomi": "とこ、 ゆか",
     "kunyomiRomaji": "toko, yuka",
-    "meaning": "bed, counter for beds, floor, padding, tatami"
+    "meaning": "bed, counter for beds, floor, padding, tatami",
+    "noun": "床",
+    "nounReading": "とこ",
+    "nounMeaning": "bed, bedding, sickbed"
   },
   {
     "num": 27611,
@@ -2631,7 +2910,10 @@
     "onyomiRomaji": "mou",
     "kunyomi": "け",
     "kunyomiRomaji": "ke",
-    "meaning": "fur, hair, feather, down"
+    "meaning": "fur, hair, feather, down",
+    "noun": "毛",
+    "nounReading": "け",
+    "nounMeaning": "hair, fur, wool"
   },
   {
     "num": 32209,
@@ -2640,7 +2922,10 @@
     "onyomiRomaji": "ryoku, roku",
     "kunyomi": "みどり",
     "kunyomiRomaji": "midori",
-    "meaning": "green"
+    "meaning": "green",
+    "noun": "緑",
+    "nounReading": "みどり",
+    "nounMeaning": "green, greenery, verdure"
   },
   {
     "num": 23562,
@@ -2652,7 +2937,10 @@
     "meaning": "revered, valuable, precious, noble, exalted",
     "word": "尊い",
     "wordReading": "たっとい",
-    "wordMeaning": "precious, valuable, priceless"
+    "wordMeaning": "precious, valuable, priceless",
+    "noun": "尊",
+    "nounReading": "とうと",
+    "nounMeaning": "value, preciousness, nobility"
   },
   {
     "num": 31069,
@@ -2676,7 +2964,10 @@
     "meaning": "tender, weakness, gentleness, softness",
     "word": "柔らかい",
     "wordReading": "やわらかい",
-    "wordMeaning": "soft, tender, supple"
+    "wordMeaning": "soft, tender, supple",
+    "noun": "柔",
+    "nounReading": "やわら",
+    "nounMeaning": "judo, jujutsu"
   },
   {
     "num": 27583,
@@ -2685,7 +2976,10 @@
     "onyomiRomaji": "den, ten",
     "kunyomi": "との、 どの",
     "kunyomiRomaji": "tono, dono",
-    "meaning": "Mr., hall, mansion, palace, temple"
+    "meaning": "Mr., hall, mansion, palace, temple",
+    "noun": "殿",
+    "nounReading": "との",
+    "nounMeaning": "feudal lord, mansion, palace"
   },
   {
     "num": 28611,
@@ -2715,7 +3009,10 @@
     "onyomiRomaji": "i, e",
     "kunyomi": "ころも、 きぬ、 ぎ",
     "kunyomiRomaji": "koromo, kinu, gi",
-    "meaning": "garment, clothes, dressing"
+    "meaning": "garment, clothes, dressing",
+    "noun": "衣",
+    "nounReading": "ころも",
+    "nounMeaning": "clothes, garment, gown"
   },
   {
     "num": 32937,
@@ -2724,7 +3021,10 @@
     "onyomiRomaji": "ken",
     "kunyomi": "かた",
     "kunyomiRomaji": "kata",
-    "meaning": "shoulder"
+    "meaning": "shoulder",
+    "noun": "肩",
+    "nounReading": "かた",
+    "nounMeaning": "shoulder"
   },
   {
     "num": 38646,
@@ -2757,7 +3057,10 @@
     "onyomiRomaji": "ka",
     "kunyomi": "に",
     "kunyomiRomaji": "ni",
-    "meaning": "baggage, shoulder-pole load, bear (a burden), shoulder (a gun), load"
+    "meaning": "baggage, shoulder-pole load, bear (a burden), shoulder (a gun), load",
+    "noun": "荷",
+    "nounReading": "に",
+    "nounMeaning": "load, baggage, cargo"
   },
   {
     "num": 27850,
@@ -2778,7 +3081,10 @@
     "onyomiRomaji": "kou, ou",
     "kunyomi": "き、 こ",
     "kunyomiRomaji": "ki, ko",
-    "meaning": "yellow"
+    "meaning": "yellow",
+    "noun": "黄",
+    "nounReading": "き",
+    "nounMeaning": "yellow"
   },
   {
     "num": 29976,
@@ -2832,7 +3138,10 @@
     "onyomiRomaji": "un",
     "kunyomi": "くも、 ぐも",
     "kunyomiRomaji": "kumo, gumo",
-    "meaning": "cloud"
+    "meaning": "cloud",
+    "noun": "雲",
+    "nounReading": "くも",
+    "nounMeaning": "cloud"
   },
   {
     "num": 25496,
@@ -2901,7 +3210,10 @@
     "onyomiRomaji": "nyuu",
     "kunyomi": "ちち、 ち",
     "kunyomiRomaji": "chichi, chi",
-    "meaning": "milk, breasts"
+    "meaning": "milk, breasts",
+    "noun": "乳",
+    "nounReading": "ちち",
+    "nounMeaning": "milk, breast"
   },
   {
     "num": 24651,
@@ -2913,7 +3225,10 @@
     "meaning": "romance, in love, yearn for, miss, darling",
     "word": "恋う",
     "wordReading": "こう",
-    "wordMeaning": "to love"
+    "wordMeaning": "to love",
+    "noun": "恋",
+    "nounReading": "こい",
+    "nounMeaning": "(romantic) love"
   },
   {
     "num": 32005,
@@ -2925,7 +3240,10 @@
     "meaning": "crimson, deep red",
     "word": "紅い",
     "wordReading": "あかい",
-    "wordMeaning": "red, crimson, scarlet"
+    "wordMeaning": "red, crimson, scarlet",
+    "noun": "紅",
+    "nounReading": "くれない",
+    "nounMeaning": "deep red, crimson, rouge"
   },
   {
     "num": 37066,
@@ -2943,7 +3261,10 @@
     "onyomiRomaji": "you",
     "kunyomi": "こし",
     "kunyomiRomaji": "koshi",
-    "meaning": "loins, hips, waist, low wainscoting"
+    "meaning": "loins, hips, waist, low wainscoting",
+    "noun": "腰",
+    "nounReading": "こし",
+    "nounMeaning": "lower back, waist, hips"
   },
   {
     "num": 28845,
@@ -2952,7 +3273,10 @@
     "onyomiRomaji": "tan",
     "kunyomi": "すみ",
     "kunyomiRomaji": "sumi",
-    "meaning": "charcoal, coal"
+    "meaning": "charcoal, coal",
+    "noun": "炭",
+    "nounReading": "すみ",
+    "nounMeaning": "charcoal, charred remains"
   },
   {
     "num": 36362,
@@ -2994,7 +3318,10 @@
     "onyomiRomaji": "kai",
     "kunyomi": "かせ",
     "kunyomiRomaji": "kase",
-    "meaning": "contraption, fetter, machine, instrument"
+    "meaning": "contraption, fetter, machine, instrument",
+    "noun": "械",
+    "nounReading": "かせ",
+    "nounMeaning": "shackles, fetters, irons"
   },
   {
     "num": 33756,
@@ -3003,7 +3330,10 @@
     "onyomiRomaji": "sai",
     "kunyomi": "な",
     "kunyomiRomaji": "na",
-    "meaning": "vegetable, side dish, greens"
+    "meaning": "vegetable, side dish, greens",
+    "noun": "菜",
+    "nounReading": "な",
+    "nounMeaning": "greens, vegetables, rape (Brassica napus)"
   },
   {
     "num": 29645,
@@ -3024,7 +3354,10 @@
     "onyomiRomaji": "ran",
     "kunyomi": "たまご",
     "kunyomiRomaji": "tamago",
-    "meaning": "egg, ovum, spawn, roe"
+    "meaning": "egg, ovum, spawn, roe",
+    "noun": "卵",
+    "nounReading": "たまご",
+    "nounMeaning": "eggs, egg, spawn"
   },
   {
     "num": 28246,
@@ -3033,7 +3366,10 @@
     "onyomiRomaji": "ko",
     "kunyomi": "みずうみ",
     "kunyomiRomaji": "mizuumi",
-    "meaning": "lake"
+    "meaning": "lake",
+    "noun": "湖",
+    "nounReading": "みずうみ",
+    "nounMeaning": "lake"
   },
   {
     "num": 21931,
@@ -3057,7 +3393,10 @@
     "meaning": "dry, parch, ebb, recede, interfere",
     "word": "干す",
     "wordReading": "ほす",
-    "wordMeaning": "to air, to dry, to desiccate"
+    "wordMeaning": "to air, to dry, to desiccate",
+    "noun": "干",
+    "nounReading": "ほし",
+    "nounMeaning": "drying, dried"
   },
   {
     "num": 34411,
@@ -3066,7 +3405,10 @@
     "onyomiRomaji": "chuu, ki",
     "kunyomi": "むし",
     "kunyomiRomaji": "mushi",
-    "meaning": "insect, bug, temper"
+    "meaning": "insect, bug, temper",
+    "noun": "虫",
+    "nounReading": "むし",
+    "nounMeaning": "insect, bug, cricket"
   },
   {
     "num": 21047,
@@ -3087,7 +3429,10 @@
     "onyomiRomaji": "tou",
     "kunyomi": "ゆ",
     "kunyomiRomaji": "yu",
-    "meaning": "hot water, bath, hot spring"
+    "meaning": "hot water, bath, hot spring",
+    "noun": "湯",
+    "nounReading": "ゆ",
+    "nounMeaning": "hot water, hot bath, hot spring"
   },
   {
     "num": 28342,
@@ -3108,7 +3453,10 @@
     "onyomiRomaji": "kou",
     "kunyomi": "あらがね",
     "kunyomiRomaji": "aragane",
-    "meaning": "mineral, ore"
+    "meaning": "mineral, ore",
+    "noun": "鉱",
+    "nounReading": "あらがね",
+    "nounMeaning": "ore"
   },
   {
     "num": 28057,
@@ -3117,7 +3465,10 @@
     "onyomiRomaji": "rui, rei",
     "kunyomi": "なみだ",
     "kunyomiRomaji": "namida",
-    "meaning": "tears, sympathy"
+    "meaning": "tears, sympathy",
+    "noun": "涙",
+    "nounReading": "なみだ",
+    "nounMeaning": "tear, tears, lachrymal secretion"
   },
   {
     "num": 21305,
@@ -3126,7 +3477,10 @@
     "onyomiRomaji": "hitsu",
     "kunyomi": "ひき",
     "kunyomiRomaji": "hiki",
-    "meaning": "equal, head, counter for small animals, roll of cloth"
+    "meaning": "equal, head, counter for small animals, roll of cloth",
+    "noun": "匹",
+    "nounReading": "ひき",
+    "nounMeaning": "roll of cloth"
   },
   {
     "num": 23403,
@@ -3135,7 +3489,10 @@
     "onyomiRomaji": "son",
     "kunyomi": "まご",
     "kunyomiRomaji": "mago",
-    "meaning": "grandchild, descendants"
+    "meaning": "grandchild, descendants",
+    "noun": "孫",
+    "nounReading": "まご",
+    "nounMeaning": "grandchild"
   },
   {
     "num": 37613,
@@ -3156,7 +3513,10 @@
     "onyomiRomaji": "shi",
     "kunyomi": "えだ",
     "kunyomiRomaji": "eda",
-    "meaning": "bough, branch, twig, limb, counter for branches"
+    "meaning": "bough, branch, twig, limb, counter for branches",
+    "noun": "枝",
+    "nounReading": "えだ",
+    "nounMeaning": "branch, bough, limb"
   },
   {
     "num": 22615,
@@ -3168,7 +3528,10 @@
     "meaning": "paint, plaster, daub, smear, coating",
     "word": "塗る",
     "wordReading": "ぬる",
-    "wordMeaning": "to paint, to spread, to plaster"
+    "wordMeaning": "to paint, to spread, to plaster",
+    "noun": "塗",
+    "nounReading": "ぬり",
+    "nounMeaning": "coating (esp. lacquering)"
   },
   {
     "num": 36562,
@@ -3177,7 +3540,10 @@
     "onyomiRomaji": "ken",
     "kunyomi": "のき",
     "kunyomiRomaji": "noki",
-    "meaning": "flats, counter for houses, eaves"
+    "meaning": "flats, counter for houses, eaves",
+    "noun": "軒",
+    "nounReading": "のき",
+    "nounMeaning": "eaves"
   },
   {
     "num": 27602,
@@ -3222,7 +3588,10 @@
     "meaning": "icicle, ice, hail, freeze, congeal",
     "word": "氷る",
     "wordReading": "こおる",
-    "wordMeaning": "to freeze, to become frozen, to freeze over"
+    "wordMeaning": "to freeze, to become frozen, to freeze over",
+    "noun": "氷",
+    "nounReading": "こおり",
+    "nounMeaning": "ice"
   },
   {
     "num": 20094,
@@ -3234,7 +3603,10 @@
     "meaning": "drought, dry, desiccate, drink up, heaven",
     "word": "乾く",
     "wordReading": "かわく",
-    "wordMeaning": "to get dry"
+    "wordMeaning": "to get dry",
+    "noun": "乾",
+    "nounReading": "いぬい",
+    "nounMeaning": "northwest"
   },
   {
     "num": 26834,
@@ -3276,7 +3648,10 @@
     "onyomiRomaji": "fun",
     "kunyomi": "デシメートル、 こ、 こな",
     "kunyomiRomaji": "deshimeetoru, ko, kona",
-    "meaning": "flour, powder, dust"
+    "meaning": "flour, powder, dust",
+    "noun": "粉",
+    "nounReading": "こな",
+    "nounMeaning": "flour, meal, powder"
   },
   {
     "num": 31992,
@@ -3285,7 +3660,10 @@
     "onyomiRomaji": "shi",
     "kunyomi": "いと",
     "kunyomiRomaji": "ito",
-    "meaning": "thread"
+    "meaning": "thread",
+    "noun": "糸",
+    "nounReading": "いと",
+    "nounMeaning": "thread, yarn, string"
   },
   {
     "num": 32191,
@@ -3294,7 +3672,10 @@
     "onyomiRomaji": "men",
     "kunyomi": "わた",
     "kunyomiRomaji": "wata",
-    "meaning": "cotton"
+    "meaning": "cotton",
+    "noun": "綿",
+    "nounReading": "わた",
+    "nounMeaning": "cotton plant (Gossypium spp.), batting, wadding"
   },
   {
     "num": 27735,
@@ -3303,7 +3684,10 @@
     "onyomiRomaji": "kan",
     "kunyomi": "あせ",
     "kunyomiRomaji": "ase",
-    "meaning": "sweat, perspire"
+    "meaning": "sweat, perspire",
+    "noun": "汗",
+    "nounReading": "あせ",
+    "nounMeaning": "sweat, perspiration, moisture"
   },
   {
     "num": 37509,
@@ -3312,7 +3696,10 @@
     "onyomiRomaji": "dou",
     "kunyomi": "あかがね",
     "kunyomiRomaji": "akagane",
-    "meaning": "copper"
+    "meaning": "copper",
+    "noun": "銅",
+    "nounReading": "あかがね",
+    "nounMeaning": "copper (Cu), bronze (medal)"
   },
   {
     "num": 28287,
@@ -3333,7 +3720,10 @@
     "onyomiRomaji": "bin, hei",
     "kunyomi": "かめ",
     "kunyomiRomaji": "kame",
-    "meaning": "bottle, vial, jar, jug, vat"
+    "meaning": "bottle, vial, jar, jug, vat",
+    "noun": "瓶",
+    "nounReading": "かめ",
+    "nounMeaning": "earthenware pot"
   },
   {
     "num": 21682,
@@ -3366,7 +3756,10 @@
     "onyomiRomaji": "kan",
     "kunyomi": "かま",
     "kunyomiRomaji": "kama",
-    "meaning": "tin can, container, jar radical (no. 121)"
+    "meaning": "tin can, container, jar radical (no. 121)",
+    "noun": "缶",
+    "nounReading": "かま",
+    "nounMeaning": "boiler"
   },
   {
     "num": 38587,
@@ -3384,7 +3777,10 @@
     "onyomiRomaji": "shi",
     "kunyomi": "あぶら",
     "kunyomiRomaji": "abura",
-    "meaning": "fat, grease, tallow, lard, rosin"
+    "meaning": "fat, grease, tallow, lard, rosin",
+    "noun": "脂",
+    "nounReading": "あぶら",
+    "nounMeaning": "fat, tallow, lard"
   },
   {
     "num": 33976,
@@ -3405,7 +3801,10 @@
     "onyomiRomaji": "ki",
     "kunyomi": "はだ",
     "kunyomiRomaji": "hada",
-    "meaning": "texture, skin, body, grain"
+    "meaning": "texture, skin, body, grain",
+    "noun": "肌",
+    "nounReading": "はだ",
+    "nounMeaning": "skin"
   },
   {
     "num": 32789,
@@ -3441,7 +3840,10 @@
     "meaning": "mud, mire, adhere to, be attached to",
     "word": "泥む",
     "wordReading": "なずむ",
-    "wordMeaning": "to cling to (e.g. old customs), to adhere to, to stick to"
+    "wordMeaning": "to cling to (e.g. old customs), to adhere to, to stick to",
+    "noun": "泥",
+    "nounReading": "どろ",
+    "nounMeaning": "mud, (wet) dirt, thief"
   },
   {
     "num": 38533,
@@ -3450,7 +3852,10 @@
     "onyomiRomaji": "guu",
     "kunyomi": "すみ",
     "kunyomiRomaji": "sumi",
-    "meaning": "corner, nook"
+    "meaning": "corner, nook",
+    "noun": "隅",
+    "nounReading": "すみ",
+    "nounMeaning": "corner, nook, recess"
   },
   {
     "num": 28783,
@@ -3462,7 +3867,10 @@
     "meaning": "lamp, a light, light, counter for lights",
     "word": "灯す",
     "wordReading": "ともす",
-    "wordMeaning": "to light (a candle / lamp / etc.), to turn on (a light)"
+    "wordMeaning": "to light (a candle / lamp / etc.), to turn on (a light)",
+    "noun": "灯",
+    "nounReading": "ひ",
+    "nounMeaning": "light, lamp"
   },
   {
     "num": 36763,
@@ -3474,7 +3882,10 @@
     "meaning": "spicy, bitter, hot, acrid",
     "word": "辛い",
     "wordReading": "からい",
-    "wordMeaning": "spicy, hot, salty"
+    "wordMeaning": "spicy, hot, salty",
+    "noun": "辛",
+    "nounReading": "かのと",
+    "nounMeaning": "8th in rank, eighth sign of the Chinese calendar"
   },
   {
     "num": 30952,
@@ -3495,7 +3906,10 @@
     "onyomiRomaji": "baku",
     "kunyomi": "むぎ",
     "kunyomiRomaji": "mugi",
-    "meaning": "barley, wheat"
+    "meaning": "barley, wheat",
+    "noun": "麦",
+    "nounReading": "むぎ",
+    "nounMeaning": "wheat, barley, oat (oats)"
   },
   {
     "num": 22995,
@@ -3513,7 +3927,10 @@
     "onyomiRomaji": "tou",
     "kunyomi": "つつ",
     "kunyomiRomaji": "tsutsu",
-    "meaning": "cylinder, pipe, tube, gun barrel, sleeve"
+    "meaning": "cylinder, pipe, tube, gun barrel, sleeve",
+    "noun": "筒",
+    "nounReading": "つつ",
+    "nounMeaning": "pipe, tube, cylinder"
   },
   {
     "num": 40763,
@@ -3522,7 +3939,10 @@
     "onyomiRomaji": "bi",
     "kunyomi": "はな",
     "kunyomiRomaji": "hana",
-    "meaning": "nose, snout"
+    "meaning": "nose, snout",
+    "noun": "鼻",
+    "nounReading": "はな",
+    "nounMeaning": "nose"
   },
   {
     "num": 31890,
@@ -3531,7 +3951,10 @@
     "onyomiRomaji": "ryuu",
     "kunyomi": "つぶ",
     "kunyomiRomaji": "tsubu",
-    "meaning": "grains, drop, counter for tiny particles"
+    "meaning": "grains, drop, counter for tiny particles",
+    "noun": "粒",
+    "nounReading": "つぶ",
+    "nounMeaning": "grain, bead, drop"
   },
   {
     "num": 35422,
@@ -3540,7 +3963,10 @@
     "onyomiRomaji": "shi",
     "kunyomi": "ことば",
     "kunyomiRomaji": "kotoba",
-    "meaning": "part of speech, words, poetry"
+    "meaning": "part of speech, words, poetry",
+    "noun": "詞",
+    "nounReading": "ことば",
+    "nounMeaning": "language, dialect, word"
   },
   {
     "num": 32963,
@@ -3561,7 +3987,10 @@
     "meaning": "tatami mat, counter for tatami mats, fold, shut up, do away with",
     "word": "畳む",
     "wordReading": "たたむ",
-    "wordMeaning": "to fold (clothes / umbrella), to close (a shop / business)"
+    "wordMeaning": "to fold (clothes / umbrella), to close (a shop / business)",
+    "noun": "畳",
+    "nounReading": "たたみ",
+    "nounMeaning": "tatami mat, Japanese straw floor coverings"
   },
   {
     "num": 26426,
@@ -3570,7 +3999,10 @@
     "onyomiRomaji": "ki",
     "kunyomi": "つくえ",
     "kunyomiRomaji": "tsukue",
-    "meaning": "desk, table"
+    "meaning": "desk, table",
+    "noun": "机",
+    "nounReading": "つくえ",
+    "nounMeaning": "desk"
   },
   {
     "num": 33178,
@@ -3579,7 +4011,10 @@
     "onyomiRomaji": "fu",
     "kunyomi": "はだ",
     "kunyomiRomaji": "hada",
-    "meaning": "skin, body, grain, texture, disposition"
+    "meaning": "skin, body, grain, texture, disposition",
+    "noun": "膚",
+    "nounReading": "はだ",
+    "nounMeaning": "skin"
   },
   {
     "num": 28655,
@@ -3621,7 +4056,10 @@
     "onyomiRomaji": "kai",
     "kunyomi": "はい",
     "kunyomiRomaji": "hai",
-    "meaning": "ashes, puckery juice, cremate"
+    "meaning": "ashes, puckery juice, cremate",
+    "noun": "灰",
+    "nounReading": "はい",
+    "nounMeaning": "ash, ashes"
   },
   {
     "num": 33747,
@@ -3672,7 +4110,10 @@
     "onyomiRomaji": "shuu",
     "kunyomi": "ふね、 ふな、 ぶね",
     "kunyomiRomaji": "fune, funa, bune",
-    "meaning": "boat, ship"
+    "meaning": "boat, ship",
+    "noun": "舟",
+    "nounReading": "ふね",
+    "nounMeaning": "ship, boat, watercraft"
   },
   {
     "num": 35997,
@@ -3681,7 +4122,10 @@
     "onyomiRomaji": "bai",
     "kunyomi": "かい",
     "kunyomiRomaji": "kai",
-    "meaning": "shellfish"
+    "meaning": "shellfish",
+    "noun": "貝",
+    "nounReading": "かい",
+    "nounMeaning": "shellfish, seashell, shell"
   },
   {
     "num": 31526,
@@ -3711,7 +4155,10 @@
     "onyomiRomaji": "bei",
     "kunyomi": "さら",
     "kunyomiRomaji": "sara",
-    "meaning": "dish, a helping, plate"
+    "meaning": "dish, a helping, plate",
+    "noun": "皿",
+    "nounReading": "さら",
+    "nounMeaning": "plate, dish, platter"
   },
   {
     "num": 32943,
@@ -3777,7 +4224,10 @@
     "meaning": "drip, drop",
     "word": "滴る",
     "wordReading": "したたる",
-    "wordMeaning": "to drip, to drop, to trickle"
+    "wordMeaning": "to drip, to drop, to trickle",
+    "noun": "滴",
+    "nounReading": "しずく",
+    "nounMeaning": "drop (e.g. of water), drip"
   },
   {
     "num": 20282,

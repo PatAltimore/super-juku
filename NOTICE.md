@@ -61,3 +61,7 @@ Stephen Kraus in [yomitan-jlpt-vocab](https://github.com/stephenmk/yomitan-jlpt-
 reading of a word, grouped by level (a word on several lists keeps its easiest level). There
 is no official JLPT vocabulary list, so these levels are an estimate, and words not on the
 lists have no level.
+
+The single-kanji nouns (`noun`, `nounReading`, `nounMeaning`) come from the same JMdict data, read
+from the jmdict-simplified JSON conversion: for each N2 kanji, a noun entry written with only
+that kanji whose reading is one of the kanji's kun'yomi, with up to three English glosses.

@@ -92,6 +92,8 @@
     cardWordBlock: document.getElementById("cardWordBlock"),
     cardWord: document.getElementById("cardWord"),
     typeWordBlock: document.getElementById("typeWordBlock"),
+    typeNounBlock: document.getElementById("typeNounBlock"),
+    typeNoun: document.getElementById("typeNoun"),
     typeWord: document.getElementById("typeWord"),
     cardSections: document.getElementById("cardSections"),
     typeLegacyRows: document.getElementById("typeLegacyRows"),
@@ -202,6 +204,8 @@
     screenType: document.getElementById("screen-type"),
     modeTypeBtn: document.getElementById("modeTypeBtn"),
     typeProgress: document.getElementById("typeProgress"),
+    typeScore: document.getElementById("typeScore"),
+    customTypeScore: document.getElementById("customTypeScore"),
     typeCard: document.getElementById("typeCard"),
     questionTypeBadge: document.getElementById("questionTypeBadge"),
     typeKanji: document.getElementById("typeKanji"),
@@ -328,6 +332,7 @@
   let customStudyFlipped = false;
   let customTypeDeck = null;
   let customTypeIndex = 0;
+  let customScore = { attempted: new Set(), right: 0, wrong: 0 };
   let customTypeAnswering = true;
   let customTypeDone = 0;
   let customTypeTotal = 0;
@@ -1039,8 +1044,16 @@
   // A kanji and the word (verb or adjective) that goes with it are scheduled
   // separately: the kanji (its meaning and onyomi) under its number, the word
   // (its reading and meaning) under "w<number>".
-  const groupOfType = (type) => (type === "wordReading" || type === "wordMeaning" ? "word" : "kanji");
-  const srsKeyOf = (num, group) => (group === "word" ? `w${num}` : String(num));
+  // A kanji, the word (verb or adjective) that goes with it, and the noun made
+  // of just that kanji (read as a kunyomi) are scheduled separately: the kanji
+  // under its number, the word under "w<number>" and the noun under "n<number>".
+  const groupOfType = (type) =>
+    type === "wordReading" || type === "wordMeaning"
+      ? "word"
+      : type === "nounReading" || type === "nounMeaning"
+      ? "noun"
+      : "kanji";
+  const srsKeyOf = (num, group) => (group === "word" ? `w${num}` : group === "noun" ? `n${num}` : String(num));
 
   function gradeBuiltinSrs(kanjiNum, correct, group = "kanji") {
     const cardKey = srsKeyOf(kanjiNum, group);
@@ -1134,6 +1147,8 @@
           onyomi: Array.isArray(val.onyomi) ? val.onyomi : [],
           kunyomi: Array.isArray(val.kunyomi) ? val.kunyomi : [],
           wordMeaning: Array.isArray(val.wordMeaning) ? val.wordMeaning : [],
+          nounReading: Array.isArray(val.nounReading) ? val.nounReading : [],
+          nounMeaning: Array.isArray(val.nounMeaning) ? val.nounMeaning : [],
         };
       }
     });
@@ -2630,6 +2645,7 @@
     });
     customTypeMode = mode;
     customTypeIndex = 0;
+    customScore = { attempted: new Set(), right: 0, wrong: 0 };
     customTypeDone = 0;
     customTypeTotal = questions.length;
     customQuizKnown = 0;
@@ -2712,6 +2728,7 @@
         ? `${idx + 1} / ${customTypeCards.length} · 新規${getUnreviewedCustomCards(deck).length}`
         : `${customTypeDone} / ${customTypeTotal}`;
     els.customTypeInput.focus();
+    updateCustomScore(false);
   }
 
   function updateCustomTypeFeedbackResult(correct, raw, fuzzy) {
@@ -2770,6 +2787,7 @@
     customTypeAnswering = false;
     pendingCustomTypeCorrect = correct;
     pendingCustomTypeRawAnswer = raw.trim();
+    updateCustomScore(true);
     lockAnswerInput(els.customTypeInput, true);
     els.customTypeSubmitBtn.textContent = "次へ";
 
@@ -2792,9 +2810,28 @@
     }
   }
 
+  function customQuestionKey() {
+    return `${customTypeCards[customTypeIndex].front}|${customTypeAsked[customTypeIndex].label}`;
+  }
+
+  function updateCustomScore(answeredNow) {
+    let pending = null;
+    if (answeredNow && customTypeCards[customTypeIndex] && !customScore.attempted.has(customQuestionKey())) {
+      pending = pendingCustomTypeCorrect;
+    }
+    renderScore(els.customTypeScore, customScore.right, customScore.wrong, pending);
+  }
+
   function advanceCustomTypeCard() {
     window.clearTimeout(customTypeAutoAdvanceTimer);
     customTypeAutoAdvanceTimer = null;
+    // Each question counts once, by its first answer.
+    const scoreKey = customQuestionKey();
+    if (!customScore.attempted.has(scoreKey)) {
+      customScore.attempted.add(scoreKey);
+      if (pendingCustomTypeCorrect) customScore.right++;
+      else customScore.wrong++;
+    }
     if (customTypeMode !== "quiz") {
       if (pendingCustomTypeCorrect) {
         customTypeDone++;
@@ -2852,6 +2889,7 @@
       if (customTypeMode === "quiz") customQuizKnown++;
     }
     pendingCustomTypeCorrect = true;
+    updateCustomScore(true);
     updateCustomTypeFeedbackResult(true, pendingCustomTypeRawAnswer, !addToCard);
     els.customAddAnswerBtn.hidden = true;
     els.customAddAnswerRow.hidden = true;
@@ -3295,6 +3333,10 @@
         const word = srsOf(item, "word");
         if (word && word.lastSeen && isDue(word, today)) units.push({ item, part: "word" });
       }
+      if (item.noun && !item.deckId) {
+        const noun = srsOf(item, "noun");
+        if (noun && noun.lastSeen && isDue(noun, today)) units.push({ item, part: "noun" });
+      }
     });
     return units;
   }
@@ -3555,14 +3597,30 @@
       ...batch
         .filter((item) => item.word)
         .map((item) => ({
-          word: true,
+          kind: "word",
           view: {
             front: item.word,
             kanji: item.word,
             wordEntry: true,
+            entryKind: "word",
             parent: item,
             meaning: item.wordMeaning,
             wordReading: item.wordReading,
+          },
+        })),
+      // the noun made of just the kanji, read as a kunyomi
+      ...batch
+        .filter((item) => item.noun)
+        .map((item) => ({
+          kind: "noun",
+          view: {
+            front: item.noun,
+            kanji: item.noun,
+            wordEntry: true,
+            entryKind: "noun",
+            parent: item,
+            meaning: item.nounMeaning,
+            wordReading: item.nounReading,
           },
         })),
     ];
@@ -3574,7 +3632,7 @@
   const termText = (item) => item.front || item.kanji;
 
   function studyReadingParts(item) {
-    if (item.wordEntry) return item.wordReading ? [["読み方", item.wordReading]] : [];
+    if (item.wordEntry) return item.wordReading ? [[item.entryKind === "noun" ? "訓読み" : "読み方", item.wordReading]] : [];
     if (!item.sections) {
       const parts = [];
       if (item.onyomi) parts.push(["音読み", item.onyomi]);
@@ -3688,7 +3746,7 @@
   }
 
   function mnemonicKey(item, tab) {
-    const base = item.wordEntry ? `${leechKey(item.parent)}|word` : leechKey(item);
+    const base = item.wordEntry ? `${leechKey(item.parent)}|${item.entryKind}` : leechKey(item);
     return `${base}|${tab}`;
   }
 
@@ -3724,8 +3782,9 @@
     const item = entry.view;
     const tabs = studyTabsFor(item);
     if (!tabs.some(([id]) => id === study.tab)) study.tab = "meaning";
-    setQuestionTone(els.screenLessonStudy, study.tab === "readings" ? "reading" : "meaning");
-    els.studyProgress.textContent = `${entry.word ? "単語 " : ""}${study.index + 1} / ${study.entries.length}`;
+    // Readings are pink for a kanji's 音読み, teal for the 訓読み of a word or noun.
+    setQuestionTone(els.screenLessonStudy, study.tab === "readings" ? (entry.kind ? "kun" : "reading") : "meaning");
+    els.studyProgress.textContent = `${entry.kind === "word" ? "単語 " : entry.kind === "noun" ? "名詞 " : ""}${study.index + 1} / ${study.entries.length}`;
     els.studyTerm.textContent = termText(item);
     els.studyGloss.textContent = studyGloss(item);
     els.studyTabs.innerHTML = tabs
@@ -3735,18 +3794,19 @@
       )
       .join("");
     els.studyPanel.innerHTML = studyPanelHtml(item, study.tab);
-    const chips = (words) =>
+    const chips = (kind) =>
       study.entries
         .map((e, i) => ({ e, i }))
-        .filter(({ e }) => Boolean(e.word) === words)
+        .filter(({ e }) => e.kind === kind)
         .map(
           ({ e, i }) =>
-            `<button class="study-chip${words ? " study-chip-word" : ""}${i === study.index ? " active" : ""}" type="button" data-index="${i}">${escapeHtml(termText(e.view))}</button>`
+            `<button class="study-chip${kind ? ` study-chip-${kind}` : ""}${i === study.index ? " active" : ""}" type="button" data-index="${i}">${escapeHtml(termText(e.view))}</button>`
         )
         .join("");
-    els.studyStrip.innerHTML =
-      `<div class="study-strip-row">${chips(false)}</div>` +
-      (study.entries.some((e) => e.word) ? `<div class="study-strip-row">${chips(true)}</div>` : "");
+    els.studyStrip.innerHTML = [undefined, "word", "noun"]
+      .filter((kind) => !kind || study.entries.some((e) => e.kind === kind))
+      .map((kind) => `<div class="study-strip-row">${chips(kind)}</div>`)
+      .join("");
     const last = study.index === study.entries.length - 1;
     els.studyPrevBtn.disabled = study.index === 0;
     els.studyNextBtn.disabled = last;
@@ -3823,7 +3883,9 @@
     // Past the last tab (→) or the first (←) the arrow goes on to the next or
     // previous term, which opens on its meaning.
     if (!next) {
-      studyMove(step);
+      // → past the last tab of the last term starts the quiz.
+      if (step > 0 && study.index === study.entries.length - 1) studyAdvance();
+      else studyMove(step);
       return;
     }
     study.tab = next[0];
@@ -3853,11 +3915,12 @@
     els.screenLessonStudy.classList.add("typing");
     window.setTimeout(() => field.scrollIntoView({ block: "center" }), 150);
   });
-  // Enter finishes the note (Shift+Enter starts a new line): it is already
-  // saved as it was typed, so the field just lets go of the cursor.
+  // Enter (Shift+Enter starts a new line) or ↓ finishes the note: it is
+  // already saved as it was typed, so the field just lets go of the cursor.
   els.studyPanel.addEventListener("keydown", (event) => {
     const field = event.target.closest(".study-mnemonic-input");
-    if (!field || event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+    if (!field || event.shiftKey || event.isComposing) return;
+    if (event.key !== "Enter" && event.key !== "ArrowDown") return;
     event.preventDefault();
     field.blur();
   });
@@ -3890,8 +3953,11 @@
   });
 
   // ←/→ switch between Meaning, Readings and Examples (→ on the last tab and ←
-  // on the first move to the next or previous term); ↓, Enter or Space goes
-  // to the next term (and from the last one into the quiz) and ↑ to the previous.
+  // on the first move to the next or previous term, and → on the last term's
+  // last tab starts the quiz); ↓, Enter or Space goes
+  // to the next term (and from the last one into the quiz). ↑ puts the cursor
+  // in the mnemonic box (↓ or Enter leaves it); on Examples, which has no box,
+  // ↑ goes to the previous term.
   document.addEventListener("keydown", (event) => {
     if (!study || els.screenLessonStudy.hidden) return;
     if (event.ctrlKey || event.metaKey || event.altKey) return;
@@ -3899,7 +3965,15 @@
     const actions = {
       ArrowLeft: () => studyShiftTab(-1),
       ArrowRight: () => studyShiftTab(1),
-      ArrowUp: () => studyMove(-1),
+      ArrowUp: () => {
+        const field = els.studyPanel.querySelector(".study-mnemonic-input");
+        if (!field) {
+          studyMove(-1);
+          return;
+        }
+        field.focus();
+        field.setSelectionRange(field.value.length, field.value.length);
+      },
       ArrowDown: studyAdvance,
       Enter: studyAdvance,
       " ": studyAdvance,
@@ -3927,6 +4001,7 @@
       wrong: 0,
       mistakes: [],
       leechCounted: new Set(),
+      attempted: new Set(),
     };
     // A kanji and its word are each graded once per session: wrong as soon as
     // any of their questions is missed, right after all of them are answered
@@ -3990,7 +4065,14 @@
   // What the right answer to a question was, for the report card.
   function expectedAnswerText(item, type) {
     if (item.sections) return item.sections[sectionIndex(type)].value;
-    return { meaning: item.meaning, onyomi: item.onyomi, wordReading: item.wordReading, wordMeaning: item.wordMeaning }[type] || "";
+    return {
+      meaning: item.meaning,
+      onyomi: item.onyomi,
+      wordReading: item.wordReading,
+      wordMeaning: item.wordMeaning,
+      nounReading: item.nounReading,
+      nounMeaning: item.nounMeaning,
+    }[type] || "";
   }
 
   function reportCardHtml(mistakes) {
@@ -4314,7 +4396,7 @@
     const overallAccuracy = totalCompleted
       ? Math.round((totalRight / totalCompleted) * 100)
       : 0;
-    const kanjiKeys = Object.keys(stats.perCard).filter((key) => !key.startsWith("w"));
+    const kanjiKeys = Object.keys(stats.perCard).filter((key) => /^\d+$/.test(key));
     const cardsAttempted = kanjiKeys.length;
 
     let known = 0;
@@ -4512,7 +4594,7 @@
       placeholder: "Answer",
     },
     onyomi: {
-      label: "読み方",
+      label: "音読み",
       badgeClass: "qt-onyomi",
       placeholder: "答え",
     },
@@ -4527,9 +4609,21 @@
       badgeClass: "",
       placeholder: "Answer",
     },
+    // The noun made of just the kanji, read as a kunyomi.
+    nounReading: {
+      label: "訓読み",
+      badgeClass: "qt-kunyomi",
+      placeholder: "答え",
+    },
+    nounMeaning: {
+      label: "Noun meaning",
+      badgeClass: "",
+      placeholder: "Answer",
+    },
   };
 
   const isWordType = (type) => type === "wordReading" || type === "wordMeaning";
+  const isNounType = (type) => type === "nounReading" || type === "nounMeaning";
 
   // Where a question type's added answers are kept.
   const answerBucket = (type) => (type === "wordReading" ? "kunyomi" : type);
@@ -4592,11 +4686,15 @@
   function setQuestionTone(screen, kind) {
     screen.classList.toggle("q-reading", kind === "reading");
     screen.classList.toggle("q-meaning", kind === "meaning");
+    screen.classList.toggle("q-kun", kind === "kun");
   }
 
   function questionKind(item, type) {
     if (item.sections) return kindOfLabel(item.sections[sectionIndex(type)].label);
-    return type === "onyomi" || type === "wordReading" ? "reading" : "meaning";
+    if (type === "onyomi") return "reading";
+    // 訓読み: the word's and the noun's readings
+    if (type === "wordReading" || type === "nounReading") return "kun";
+    return "meaning";
   }
 
   function typeConfig(item, type) {
@@ -4740,13 +4838,15 @@
     els.typeMeaning.hidden = !full && type !== "meaning";
     els.typeWordBlock.hidden = !item.word || (!full && !isWordType(type));
     if (item.word) els.typeWord.textContent = `${item.word}（${item.wordReading}）${item.wordMeaning}`;
+    els.typeNounBlock.hidden = !item.noun || (!full && !isNounType(type));
+    if (item.noun) els.typeNoun.textContent = `${item.noun}（${item.nounReading}）${item.nounMeaning}`;
   }
 
   // F shows everything about the card after a miss, and F again hides it.
   // M after a miss shows (or hides) the mnemonic written for what was asked:
   // the meaning's for a meaning question, the readings' for a reading question.
   function mnemonicText(base, kind) {
-    const saved = mnemonics[`${base}|${kind === "reading" ? "readings" : "meaning"}`];
+    const saved = mnemonics[`${base}|${kind === "reading" || kind === "kun" ? "readings" : "meaning"}`];
     return saved ? saved.text.trim() : "";
   }
 
@@ -4763,7 +4863,12 @@
   function showTypeMnemonic() {
     const item = queue[0];
     if (!item) return;
-    const base = !item.sections && isWordType(currentQuestionType) ? `${leechKey(item)}|word` : leechKey(item);
+    const base =
+      !item.sections && isWordType(currentQuestionType)
+        ? `${leechKey(item)}|word`
+        : !item.sections && isNounType(currentQuestionType)
+        ? `${leechKey(item)}|noun`
+        : leechKey(item);
     toggleMnemonic(els.typeMnemonic, mnemonicText(base, questionKind(item, currentQuestionType)));
   }
 
@@ -4806,18 +4911,19 @@
     }
   });
 
-  // `part` limits a kanji to its own questions ("kanji") or its word's
-  // ("word"); "all" asks both.
+  // `part` limits a kanji to its own questions ("kanji"), its word's ("word")
+  // or its noun's ("noun"); "all" asks everything.
   function availableQuestionTypes(item, part = "all") {
     if (item.sections) {
       return item.sections.map((s, i) => (s.value ? `s${i}` : null)).filter(Boolean);
     }
     const types = [];
-    if (part !== "word") {
+    if (part === "all" || part === "kanji") {
       types.push("meaning");
       if (item.onyomi) types.push("onyomi");
     }
-    if (part !== "kanji" && item.word) types.push("wordReading", "wordMeaning");
+    if ((part === "all" || part === "word") && item.word) types.push("wordReading", "wordMeaning");
+    if ((part === "all" || part === "noun") && item.noun) types.push("nounReading", "nounMeaning");
     return types;
   }
 
@@ -4861,7 +4967,7 @@
       if (mode) wanakana.bind(els.typeInput, { IMEMode: mode });
     } else if (type === "onyomi") {
       wanakana.bind(els.typeInput, { IMEMode: "toKatakana" });
-    } else if (type === "wordReading") {
+    } else if (type === "wordReading" || type === "nounReading") {
       wanakana.bind(els.typeInput, { IMEMode: "toHiragana" });
     }
   }
@@ -4883,6 +4989,10 @@
     const set = new Set();
     if (type === "wordReading") {
       set.add(normalize(item.wordReading));
+    } else if (type === "nounReading") {
+      set.add(normalize(item.nounReading));
+    } else if (type === "nounMeaning") {
+      splitOutsideParens(item.nounMeaning, ";,/").forEach((part) => glossVariants(part).forEach((v) => set.add(v)));
     } else if (type === "wordMeaning") {
       splitOutsideParens(item.wordMeaning, ";,/").forEach((part) => glossVariants(part).forEach((v) => set.add(v)));
     } else if (type === "meaning") {
@@ -4916,6 +5026,31 @@
     mode = "type";
     showScreen("type");
     renderType();
+  }
+
+  // The running score in the corner: ✓ right, ✕ wrong and the percentage,
+  // counting each question once by its first answer (as the summary does).
+  // `pending` adds the question just answered, before it has been moved on from.
+  function renderScore(el, right, wrong, pending) {
+    if (pending === true) right++;
+    else if (pending === false) wrong++;
+    const answered = right + wrong;
+    const percent = answered ? `${Math.round((right / answered) * 100)}%` : "—";
+    el.innerHTML =
+      `<span class="score-right">✓ ${right}</span><span class="score-wrong">✕ ${wrong}</span><span class="score-percent">${percent}</span>`;
+    el.hidden = false;
+  }
+
+  function updateTypeScore(answeredNow) {
+    if (mode !== "lesson-type" || !lessonSession) {
+      els.typeScore.hidden = true;
+      return;
+    }
+    let pending = null;
+    if (answeredNow && queue[0] && !lessonSession.attempted.has(`${queue[0].num}:${currentQuestionType}`)) {
+      pending = pendingTypeCorrect;
+    }
+    renderScore(els.typeScore, lessonSession.right, lessonSession.wrong, pending);
   }
 
   function renderType() {
@@ -4966,6 +5101,7 @@
         ? `${lessonSession.kind === "all" ? lessonSession.seen : lessonSession.right} / ${lessonSession.total}`
         : `${masteredCount} / ${totalCount} · 残り${queue.length}`;
     els.typeInput.focus();
+    updateTypeScore(false);
     if (mode === "type") saveState();
   }
 
@@ -5011,11 +5147,12 @@
     const item = queue[0];
     const raw = els.typeInput.value;
     const accepted = buildAnswersForType(item, currentQuestionType);
-    const { correct, fuzzy } = matchAnswer(raw, accepted, item.sections ? true : currentQuestionType === "meaning" || currentQuestionType === "wordMeaning");
+    const { correct, fuzzy } = matchAnswer(raw, accepted, item.sections ? true : currentQuestionType === "meaning" || currentQuestionType === "wordMeaning" || currentQuestionType === "nounMeaning");
 
     typeAnswering = false;
     pendingTypeCorrect = correct;
     pendingTypeRawAnswer = raw.trim();
+    updateTypeScore(true);
     lockAnswerInput(els.typeInput, true);
     els.typeSubmitBtn.textContent = "次へ";
 
@@ -5070,9 +5207,15 @@
       if (!all || isItemStudied(item)) recordItemResult(item, pendingTypeCorrect, false);
       if (pendingTypeCorrect && (all || lessonSession.kind === "review" || lessonSession.kind === "leech")) addReviewPoint();
       gradeLessonTerm(item, pendingTypeCorrect, type);
-      lessonSession.seen++;
-      if (pendingTypeCorrect) lessonSession.right++;
-      else lessonSession.wrong++;
+      // The summary counts each question once, by its first answer: a question
+      // missed and later answered right still counts as incorrect only.
+      const questionKey = `${item.num}:${type}`;
+      if (!lessonSession.attempted.has(questionKey)) {
+        lessonSession.attempted.add(questionKey);
+        lessonSession.seen++;
+        if (pendingTypeCorrect) lessonSession.right++;
+        else lessonSession.wrong++;
+      }
     } else {
       recordItemResult(item, pendingTypeCorrect);
     }
@@ -5102,6 +5245,7 @@
       addCustomAnswer(item.num, answerBucket(currentQuestionType), pendingTypeRawAnswer);
     }
     pendingTypeCorrect = true;
+    updateTypeScore(true);
     updateTypeFeedbackResult(true, pendingTypeRawAnswer);
     renderTypeCustomAnswers(item, currentQuestionType);
     els.addAnswerBtn.hidden = true;
@@ -5123,6 +5267,7 @@
     e.stopPropagation();
     if (queue.length === 0 || typeAnswering || pendingTypeCorrect || !pendingTypeRawAnswer) return;
     pendingTypeCorrect = true;
+    updateTypeScore(true);
     updateTypeFeedbackResult(true, pendingTypeRawAnswer, true);
     els.addAnswerBtn.hidden = true;
     els.addAnswerRow.hidden = true;
@@ -5233,6 +5378,8 @@
       meaning: mergeAnswerLists((a && a.meaning) || [], (b && b.meaning) || []),
       onyomi: mergeAnswerLists((a && a.onyomi) || [], (b && b.onyomi) || []),
       kunyomi: mergeAnswerLists((a && a.kunyomi) || [], (b && b.kunyomi) || []),
+      nounReading: mergeAnswerLists((a && a.nounReading) || [], (b && b.nounReading) || []),
+      nounMeaning: mergeAnswerLists((a && a.nounMeaning) || [], (b && b.nounMeaning) || []),
     };
   }
 
