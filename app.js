@@ -3865,8 +3865,12 @@
     const item = entry.view;
     const tabs = studyTabsFor(item);
     if (!tabs.some(([id]) => id === study.tab)) study.tab = "meaning";
-    // Readings are pink for a kanji's 音読み, teal for the 訓読み of a word or noun.
-    setQuestionTone(els.screenLessonStudy, study.tab === "readings" ? (entry.kind ? "kun" : "reading") : "meaning");
+    // Pink for the kanji itself, purple for its word and noun; a custom deck's
+    // readings are pink and its meanings purple.
+    setQuestionTone(
+      els.screenLessonStudy,
+      item.sections ? (study.tab === "readings" ? "reading" : "meaning") : entry.kind ? "meaning" : "reading"
+    );
     els.studyProgress.textContent = `${entry.kind === "word" ? "単語 " : entry.kind === "noun" ? "名詞 " : ""}${study.index + 1} / ${study.entries.length}`;
     els.studyTerm.textContent = termText(item);
     els.studyGloss.textContent = studyGloss(item);
@@ -4769,15 +4773,21 @@
   function setQuestionTone(screen, kind) {
     screen.classList.toggle("q-reading", kind === "reading");
     screen.classList.toggle("q-meaning", kind === "meaning");
-    screen.classList.toggle("q-kun", kind === "kun");
   }
 
+  // Which note a question uses: the readings' or the meaning's.
   function questionKind(item, type) {
     if (item.sections) return kindOfLabel(item.sections[sectionIndex(type)].label);
-    if (type === "onyomi") return "reading";
-    // 訓読み: the word's and the noun's readings
-    if (type === "wordReading" || type === "nounReading") return "kun";
-    return "meaning";
+    return type === "onyomi" || type === "wordReading" || type === "nounReading" ? "reading" : "meaning";
+  }
+
+  // The colour of the screen. For the N2 kanji it follows what is asked about:
+  // pink for the kanji itself (音読み and its meaning), purple for its word or
+  // noun (their readings and meanings). A custom deck's readings are pink and
+  // its meanings purple.
+  function questionTone(item, type) {
+    if (item.sections) return kindOfLabel(item.sections[sectionIndex(type)].label);
+    return groupOfType(type) === "kanji" ? "reading" : "meaning";
   }
 
   function typeConfig(item, type) {
@@ -5166,7 +5176,7 @@
     const config = typeConfig(item, currentQuestionType);
 
     els.questionTypeBadge.hidden = false;
-    setQuestionTone(els.screenType, questionKind(item, currentQuestionType));
+    setQuestionTone(els.screenType, questionTone(item, currentQuestionType));
     els.questionTypeBadge.textContent = config.label;
     els.questionTypeBadge.className =
       "question-type-badge" + (config.badgeClass ? ` ${config.badgeClass}` : "");

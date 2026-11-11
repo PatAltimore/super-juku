@@ -2894,15 +2894,14 @@ button.edit-row {
   }
 }
 
-/* Colours for what is asked: the area above the answer bar is pink for
-   readings and purple for meanings. */
+/* Colours for what is asked about: the area above the answer bar is pink for
+   a kanji itself (and a custom deck's readings) and purple for its word and
+   noun (and a custom deck's meanings). */
 [data-theme="dark"] .screen.q-reading { --q-bg: #e5189a; }
 [data-theme="dark"] .screen.q-meaning { --q-bg: #a02fe2; }
-[data-theme="dark"] .screen.q-kun { --q-bg: #0f9b8e; }
 
 [data-theme="dark"] .screen:has(.type-card).q-reading,
-[data-theme="dark"] .screen:has(.type-card).q-meaning,
-[data-theme="dark"] .screen:has(.type-card).q-kun {
+[data-theme="dark"] .screen:has(.type-card).q-meaning {
   background: var(--q-bg);
   transition: background-color 0.15s ease;
 }
@@ -2913,8 +2912,7 @@ button.edit-row {
    sits around the middle of the screen so the eyes stay there. */
 @media (min-width: 700px) and (min-height: 520px) {
   [data-theme="dark"] .screen:has(.type-card).q-reading,
-  [data-theme="dark"] .screen:has(.type-card).q-meaning,
-[data-theme="dark"] .screen:has(.type-card).q-kun {
+  [data-theme="dark"] .screen:has(.type-card).q-meaning {
     background: var(--bg);
   }
 
@@ -3005,7 +3003,6 @@ button.edit-row {
 
 .screen-study.q-reading { --q-bg: #e5189a; }
 .screen-study.q-meaning { --q-bg: #a02fe2; }
-.screen-study.q-kun { --q-bg: #0f9b8e; }
 
 .study-hero {
   flex: 0 0 auto;
