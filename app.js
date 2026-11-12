@@ -726,16 +726,59 @@
   }
 
   // The next 6:00 in the zone that falls on the zone's following calendar day.
-  function nextMissDueAt(nowMs) {
-    const offset = zoneOffsetMs(nowMs, MISS_RETURN_ZONE);
-    const local = new Date(nowMs + offset);
-    const wall = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate() + 1, MISS_RETURN_HOUR);
-    const first = wall - zoneOffsetMs(wall - offset, MISS_RETURN_ZONE);
+  // The instant of 6:00 in the zone for a wall-clock time given as if UTC.
+  function sixAmInstant(wall) {
+    const first = wall - zoneOffsetMs(wall, MISS_RETURN_ZONE);
     return wall - zoneOffsetMs(first, MISS_RETURN_ZONE);
   }
 
+  // 6:00 in the zone on the day `daysAhead` after the zone's day of `nowMs`
+  // (0 = that same day). Every review is delivered at that time of day.
+  function dueAtOnDay(nowMs, daysAhead) {
+    const local = new Date(nowMs + zoneOffsetMs(nowMs, MISS_RETURN_ZONE));
+    return sixAmInstant(
+      Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate() + daysAhead, MISS_RETURN_HOUR)
+    );
+  }
+
+  const nextMissDueAt = (nowMs) => dueAtOnDay(nowMs, 1);
+
   // Terms already missed today, before misses had a return time, get one too
   // so they leave today's due list as well.
+  // Every review is delivered at 6:00 (Pacific) on its day: schedules made
+  // earlier, with another time of day or only a date, are moved to that time.
+  function alignDueTimesTo6am() {
+    const fix = (entry) => {
+      if (!entry) return false;
+      let dueAt = null;
+      if (entry.dueAt) dueAt = dueAtOnDay(entry.dueAt, 0);
+      else if (entry.due) {
+        const [y, m, d] = String(entry.due).split("-").map(Number);
+        if (y && m && d) dueAt = sixAmInstant(Date.UTC(y, m - 1, d, MISS_RETURN_HOUR));
+      }
+      if (dueAt === null || dueAt === entry.dueAt) return false;
+      entry.dueAt = dueAt;
+      return true;
+    };
+    let statsChanged = false;
+    Object.values(stats.perCard || {}).forEach((entry) => {
+      if (fix(entry)) statsChanged = true;
+    });
+    if (statsChanged) saveStats();
+    let decksChanged = false;
+    customDecks.forEach((deck) => {
+      let changed = false;
+      Object.values(deck.srs || {}).forEach((entry) => {
+        if (fix(entry)) changed = true;
+      });
+      if (changed) {
+        deck.updatedAt = new Date().toISOString();
+        decksChanged = true;
+      }
+    });
+    if (decksChanged) saveCustomDecks();
+  }
+
   function migrateTodaysMisses() {
     const today = dateKey(new Date());
     const dueAt = nextMissDueAt(Date.now());
@@ -770,9 +813,7 @@
   function stampDue(entry, correct, atMs) {
     if (!entry) return;
     if (correct) {
-      const when = new Date(atMs);
-      when.setDate(when.getDate() + BOX_INTERVALS_DAYS[Math.min(entry.box || 0, MAX_BOX)]);
-      entry.dueAt = when.getTime();
+      entry.dueAt = dueAtOnDay(atMs, BOX_INTERVALS_DAYS[Math.min(entry.box || 0, MAX_BOX)]);
     } else {
       entry.dueAt = nextMissDueAt(atMs);
     }
@@ -792,12 +833,10 @@
     let due;
     let dueAt; // the moment the term is due again
     if (correct) {
-      // Due again exactly one interval after this answer, to the minute.
+      // Due again one interval later, at 6:00 that morning.
       nextBox = Math.min(box + 1, MAX_BOX);
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + BOX_INTERVALS_DAYS[nextBox]);
-      dueAt = dueDate.getTime();
-      due = dateKey(dueDate);
+      dueAt = dueAtOnDay(Date.now(), BOX_INTERVALS_DAYS[nextBox]);
+      due = dateKey(new Date(dueAt));
     } else {
       nextBox = box; // a miss keeps the level; it only comes back sooner
       dueAt = nextMissDueAt(Date.now());
@@ -6397,6 +6436,7 @@
   saveCustomAnswers();
   customDecks = loadCustomDecks();
   migrateTodaysMisses();
+  alignDueTimesTo6am();
   kanjiRemovals = loadJson(KANJI_REMOVALS_KEY, {}) || {};
   leeches = loadJson(LEECHES_KEY, {}) || {};
   mnemonics = loadJson(MNEMONICS_KEY, {}) || {};
