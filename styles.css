@@ -3499,3 +3499,37 @@ button.edit-row {
   font: inherit;
   font-size: 1rem;
 }
+
+/* On a laptop the term bubbles run in one line (kanji, then words, then
+   nouns) and the 次へ button is a small one in the bottom right corner, so the
+   bottom of the study screen takes one row instead of several. */
+@media (min-width: 700px) {
+  .screen-study {
+    position: relative;
+  }
+
+  .study-strip {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 28px;
+    padding: 8px 150px 12px;
+  }
+
+  .study-strip-row {
+    flex-wrap: nowrap;
+  }
+
+  .study-actions {
+    position: absolute;
+    right: 18px;
+    bottom: 14px;
+    padding: 0;
+  }
+
+  .study-actions .primary-btn {
+    width: auto;
+    padding: 8px 20px;
+    font-size: 0.95rem;
+  }
+}
