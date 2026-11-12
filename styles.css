@@ -708,6 +708,9 @@ body {
 }
 
 .term-tile {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2895,13 +2898,15 @@ button.edit-row {
 }
 
 /* Colours for what is asked about: the area above the answer bar is pink for
-   a kanji itself (and a custom deck's readings) and purple for its word and
-   noun (and a custom deck's meanings). */
+   a kanji itself (and a custom deck's readings), purple for its word (and a
+   custom deck's meanings) and teal for its noun. */
 [data-theme="dark"] .screen.q-reading { --q-bg: #e5189a; }
 [data-theme="dark"] .screen.q-meaning { --q-bg: #a02fe2; }
+[data-theme="dark"] .screen.q-noun { --q-bg: #0f9b8e; }
 
 [data-theme="dark"] .screen:has(.type-card).q-reading,
-[data-theme="dark"] .screen:has(.type-card).q-meaning {
+[data-theme="dark"] .screen:has(.type-card).q-meaning,
+[data-theme="dark"] .screen:has(.type-card).q-noun {
   background: var(--q-bg);
   transition: background-color 0.15s ease;
 }
@@ -2912,7 +2917,8 @@ button.edit-row {
    sits around the middle of the screen so the eyes stay there. */
 @media (min-width: 700px) and (min-height: 520px) {
   [data-theme="dark"] .screen:has(.type-card).q-reading,
-  [data-theme="dark"] .screen:has(.type-card).q-meaning {
+  [data-theme="dark"] .screen:has(.type-card).q-meaning,
+  [data-theme="dark"] .screen:has(.type-card).q-noun {
     background: var(--bg);
   }
 
@@ -3003,6 +3009,7 @@ button.edit-row {
 
 .screen-study.q-reading { --q-bg: #e5189a; }
 .screen-study.q-meaning { --q-bg: #a02fe2; }
+.screen-study.q-noun { --q-bg: #0f9b8e; }
 
 .study-hero {
   flex: 0 0 auto;
@@ -3418,4 +3425,77 @@ button.edit-row {
   font: inherit;
   font-size: 1rem;
   line-height: 1.4;
+}
+
+/* ---------- added answers in 編集 ---------- */
+
+.edit-answers {
+  flex: 0 0 auto;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.edit-answers.has-answers {
+  border-color: var(--text);
+  color: var(--text);
+}
+
+.answer-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.answer-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.answer-chip button {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--danger, #ff8f86);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.answer-none {
+  margin-bottom: 6px;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+.answer-add {
+  display: flex;
+  gap: 6px;
+}
+
+.answer-add input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
 }

@@ -173,6 +173,10 @@
     termSearchInput: document.getElementById("termSearchInput"),
     termSearchResults: document.getElementById("termSearchResults"),
     termSearchClose: document.getElementById("termSearchClose"),
+    answersModal: document.getElementById("answersModal"),
+    answersModalTitle: document.getElementById("answersModalTitle"),
+    answersBody: document.getElementById("answersBody"),
+    answersModalClose: document.getElementById("answersModalClose"),
     noteModal: document.getElementById("noteModal"),
     noteModalTitle: document.getElementById("noteModalTitle"),
     noteFields: document.getElementById("noteFields"),
@@ -1728,6 +1732,132 @@
     return fields;
   }
 
+  // ---------- added answers of a term, from 編集 ----------
+  // The answers added with 答えを追加 while answering, listed per question so
+  // they can be looked at, added by hand and removed. A slot is one question:
+  // { label, list(), add(text), remove(text) }.
+
+  function answerSlotsFor(item, deck) {
+    if (item.sections) {
+      return item.sections.map((section) => ({
+        label: section.label,
+        list: () => getCustomDeckAnswers(deck, item.front, section.label),
+        add: (text) => {
+          addCustomDeckAnswer(deck, item.front, section.label, text);
+          deck.updatedAt = new Date().toISOString();
+          saveCustomDecks();
+        },
+        remove: (text) => {
+          const entry = (deck.answers && deck.answers[item.front]) || {};
+          const list = (entry[section.label] || []).filter((a) => a !== text);
+          deck.answers = { ...(deck.answers || {}), [item.front]: { ...entry, [section.label]: list } };
+          deck.updatedAt = new Date().toISOString();
+          saveCustomDecks();
+        },
+      }));
+    }
+    const slot = (label, bucket) => ({
+      label,
+      list: () => getCustomAnswers(item.num, bucket),
+      add: (text) => addCustomAnswer(item.num, bucket, text),
+      remove: (text) => {
+        const entry = customAnswers[String(item.num)] || {};
+        customAnswers[String(item.num)] = { ...entry, [bucket]: (entry[bucket] || []).filter((a) => a !== text) };
+        saveCustomAnswers();
+      },
+    });
+    const slots = [slot("Meaning", "meaning")];
+    if (item.onyomi) slots.push(slot("音読み", "onyomi"));
+    if (item.word) {
+      slots.push(slot("単語の読み方", answerBucket("wordReading")));
+      slots.push(slot("Word meaning", "wordMeaning"));
+    }
+    if (item.noun) {
+      slots.push(slot("訓読み", "nounReading"));
+      slots.push(slot("Noun meaning", "nounMeaning"));
+    }
+    return slots;
+  }
+
+  function editAnswersButton(slots) {
+    const has = slots.some((s) => s.list().length);
+    return `<button class="edit-answers${has ? " has-answers" : ""}" data-action="edit-answers" type="button" aria-label="追加した答え">答え</button>`;
+  }
+
+  let answersContext = null; // { title, slots }
+
+  function renderAnswersModal() {
+    els.answersModalTitle.textContent = answersContext.title;
+    els.answersBody.innerHTML = answersContext.slots
+      .map((slot, s) => {
+        const list = slot.list();
+        return `<div class="answer-slot" data-slot="${s}">
+          <div class="note-field-label">${escapeHtml(slot.label)}</div>
+          ${
+            list.length
+              ? `<div class="answer-chips">${list
+                  .map(
+                    (a, i) =>
+                      `<span class="answer-chip">${escapeHtml(a)}<button type="button" data-action="remove-answer" data-index="${i}" aria-label="${escapeHtml(a)}を削除">✕</button></span>`
+                  )
+                  .join("")}</div>`
+              : `<div class="answer-none">追加した答えはありません</div>`
+          }
+          <div class="answer-add">
+            <input type="text" placeholder="答えを追加" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false">
+            <button class="secondary-btn" type="button" data-action="add-answer">追加</button>
+          </div>
+        </div>`;
+      })
+      .join("");
+  }
+
+  function openAnswersModal(title, slots) {
+    answersContext = { title, slots };
+    renderAnswersModal();
+    els.answersModal.hidden = false;
+  }
+
+  function closeAnswersModal() {
+    els.answersModal.hidden = true;
+    answersContext = null;
+    renderDeckEdit(); // refresh which rows have added answers
+  }
+
+  function addAnswerFromInput(slotEl) {
+    const input = slotEl.querySelector("input");
+    const text = input.value.trim();
+    if (!text) return;
+    answersContext.slots[Number(slotEl.dataset.slot)].add(text);
+    renderAnswersModal();
+  }
+
+  els.answersBody.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-action]");
+    if (!button || !answersContext) return;
+    const slotEl = button.closest(".answer-slot");
+    const slot = answersContext.slots[Number(slotEl.dataset.slot)];
+    if (button.dataset.action === "remove-answer") {
+      const answer = slot.list()[Number(button.dataset.index)];
+      if (answer !== undefined) slot.remove(answer);
+      renderAnswersModal();
+    } else if (button.dataset.action === "add-answer") {
+      addAnswerFromInput(slotEl);
+    }
+  });
+  els.answersBody.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" || event.isComposing || !event.target.closest(".answer-add input")) return;
+    event.preventDefault();
+    addAnswerFromInput(event.target.closest(".answer-slot"));
+  });
+  els.answersModalClose.addEventListener("click", closeAnswersModal);
+  els.answersModal.addEventListener("click", (event) => {
+    if (event.target === els.answersModal) closeAnswersModal();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !els.answersModal.hidden) closeAnswersModal();
+  });
+
   function editNoteButton(fields) {
     const has = fields.some((f) => mnemonics[f.key] && mnemonics[f.key].text.trim());
     return `<button class="edit-note${has ? " has-note" : ""}" data-action="edit-note" type="button" aria-label="メモ">メモ</button>`;
@@ -1784,6 +1914,7 @@
           <span class="edit-front">${escapeHtml(item.kanji)}</span>
           <span class="edit-sub">${escapeHtml([item.onyomi || item.kunyomi, item.meaning].filter(Boolean).join(" · "))}</span>
           ${editNoteButton(noteFieldsFor(item))}
+          ${editAnswersButton(answerSlotsFor(item))}
           <button class="edit-delete" data-action="delete-card" type="button" aria-label="${escapeHtml(item.kanji)}を削除">✕</button>
         </div>`;
       })
@@ -1838,6 +1969,7 @@
             ${card.tags ? `<span class="edit-tags">${termTagsHtml(card.tags)}</span>` : ""}
           </span>
           ${editNoteButton(noteFieldsFor(deckCardItem(deck, card)))}
+          ${editAnswersButton(answerSlotsFor(deckCardItem(deck, card), deck))}
           <button class="edit-delete" data-action="delete-card" type="button" aria-label="${escapeHtml(card.front)}を削除">✕</button>
         </div>`;
           })
@@ -1896,6 +2028,19 @@
       editingDeckId = open.dataset.editDeck;
       hideEditUndo();
       renderDeckEdit();
+      return;
+    }
+    const answers = event.target.closest("[data-action='edit-answers']");
+    if (answers) {
+      const row = answers.closest(".edit-row");
+      if (editingDeckId === KANJI_DECK_ID) {
+        const item = n2Kanji.find((k) => k.num === Number(row.dataset.num));
+        if (item) openAnswersModal(item.kanji, answerSlotsFor(item));
+      } else {
+        const deck = editingDeckId && customDeckById(editingDeckId);
+        const card = deck && deck.cards[Number(row.dataset.index)];
+        if (card) openAnswersModal(card.front, answerSlotsFor(deckCardItem(deck, card), deck));
+      }
       return;
     }
     const note = event.target.closest("[data-action='edit-note']");
@@ -3392,6 +3537,16 @@
     return todaysNums().map((num) => kanjiByNum.get(num));
   }
 
+  // Sets one term's selection (rather than toggling it) and returns the state.
+  function setLessonSelected(num, on) {
+    const today = ensureTodaysLesson();
+    const at = today.nums.indexOf(num);
+    if (on && at === -1) today.nums.push(num);
+    else if (!on && at !== -1) today.nums.splice(at, 1);
+    saveLessonHistory();
+    return on;
+  }
+
   function toggleLessonSelection(num) {
     const today = ensureTodaysLesson();
     const at = today.nums.indexOf(num);
@@ -3869,7 +4024,15 @@
     // readings are pink and its meanings purple.
     setQuestionTone(
       els.screenLessonStudy,
-      item.sections ? (study.tab === "readings" ? "reading" : "meaning") : entry.kind ? "meaning" : "reading"
+      item.sections
+        ? study.tab === "readings"
+          ? "reading"
+          : "meaning"
+        : entry.kind === "noun"
+        ? "noun"
+        : entry.kind
+        ? "meaning"
+        : "reading"
     );
     els.studyProgress.textContent = `${entry.kind === "word" ? "単語 " : entry.kind === "noun" ? "名詞 " : ""}${study.index + 1} / ${study.entries.length}`;
     els.studyTerm.textContent = termText(item);
@@ -4264,13 +4427,100 @@
     els.termChart.querySelectorAll(".term-tile.selected").forEach((tile) => tile.classList.remove("selected"));
     updateLessonSelection();
   });
+  // Quick selection: Shift+click selects (or deselects) everything from the
+  // last term clicked to this one; on a touch screen, touching a term and
+  // holding for a moment starts a drag that selects (or deselects) every term
+  // the finger passes over.
+  let lessonAnchor = null; // the last term clicked
+  let lessonDragSuppressClick = false;
+
+  function setTileSelected(tile, on) {
+    setLessonSelected(Number(tile.dataset.num), on);
+    tile.classList.toggle("selected", on);
+  }
+
+  els.termChart.addEventListener("mousedown", (event) => {
+    if (event.shiftKey) event.preventDefault(); // no text selection while ranging
+  });
+
   els.termChart.addEventListener("click", (event) => {
     const tile = event.target.closest(".term-tile");
     if (!tile) return;
-    const on = toggleLessonSelection(Number(tile.dataset.num));
-    tile.classList.toggle("selected", on);
+    if (lessonDragSuppressClick) {
+      lessonDragSuppressClick = false;
+      return;
+    }
+    const tiles = Array.from(els.termChart.querySelectorAll(".term-tile"));
+    const anchor = lessonAnchor && tiles.find((t) => t.dataset.num === lessonAnchor);
+    if (event.shiftKey && anchor && anchor !== tile) {
+      const from = tiles.indexOf(anchor);
+      const to = tiles.indexOf(tile);
+      const on = anchor.classList.contains("selected");
+      tiles.slice(Math.min(from, to), Math.max(from, to) + 1).forEach((t) => setTileSelected(t, on));
+    } else {
+      setTileSelected(tile, !tile.classList.contains("selected"));
+    }
+    lessonAnchor = tile.dataset.num;
     updateLessonSelection();
   });
+
+  const LESSON_DRAG_HOLD_MS = 250;
+  const LESSON_DRAG_SLOP_PX = 10;
+  let lessonDrag = null; // { timer, startX, startY, active, on }
+
+  function lessonDragEnd() {
+    if (!lessonDrag) return;
+    window.clearTimeout(lessonDrag.timer);
+    if (lessonDrag.active) lessonDragSuppressClick = true;
+    lessonDrag = null;
+  }
+
+  els.termChart.addEventListener(
+    "touchstart",
+    (event) => {
+      const tile = event.target.closest(".term-tile");
+      if (!tile || event.touches.length !== 1) return;
+      const touch = event.touches[0];
+      lessonDrag = { startX: touch.clientX, startY: touch.clientY, active: false, on: false };
+      lessonDrag.timer = window.setTimeout(() => {
+        if (!lessonDrag) return;
+        lessonDrag.active = true;
+        lessonDrag.on = !tile.classList.contains("selected");
+        setTileSelected(tile, lessonDrag.on);
+        lessonAnchor = tile.dataset.num;
+        updateLessonSelection();
+        if (navigator.vibrate) navigator.vibrate(15);
+      }, LESSON_DRAG_HOLD_MS);
+    },
+    { passive: true }
+  );
+
+  els.termChart.addEventListener(
+    "touchmove",
+    (event) => {
+      if (!lessonDrag) return;
+      const touch = event.touches[0];
+      if (!lessonDrag.active) {
+        // Moving before the hold is up means the player is scrolling.
+        if (Math.hypot(touch.clientX - lessonDrag.startX, touch.clientY - lessonDrag.startY) > LESSON_DRAG_SLOP_PX) {
+          window.clearTimeout(lessonDrag.timer);
+          lessonDrag = null;
+        }
+        return;
+      }
+      event.preventDefault(); // dragging, not scrolling
+      const over = document.elementFromPoint(touch.clientX, touch.clientY);
+      const tile = over && over.closest(".term-tile");
+      if (tile && els.termChart.contains(tile) && tile.classList.contains("selected") !== lessonDrag.on) {
+        setTileSelected(tile, lessonDrag.on);
+        lessonAnchor = tile.dataset.num;
+        updateLessonSelection();
+      }
+    },
+    { passive: false }
+  );
+  els.termChart.addEventListener("touchend", lessonDragEnd);
+  els.termChart.addEventListener("touchcancel", lessonDragEnd);
   els.startReviewBtn.addEventListener("click", () => {
     const units = getReviewUnits();
     if (units.length) startReview(units);
@@ -4773,6 +5023,7 @@
   function setQuestionTone(screen, kind) {
     screen.classList.toggle("q-reading", kind === "reading");
     screen.classList.toggle("q-meaning", kind === "meaning");
+    screen.classList.toggle("q-noun", kind === "noun");
   }
 
   // Which note a question uses: the readings' or the meaning's.
@@ -4782,12 +5033,14 @@
   }
 
   // The colour of the screen. For the N2 kanji it follows what is asked about:
-  // pink for the kanji itself (音読み and its meaning), purple for its word or
-  // noun (their readings and meanings). A custom deck's readings are pink and
-  // its meanings purple.
+  // pink for the kanji itself (音読み and its meaning), purple for its word and
+  // teal for its noun (their readings and meanings). A custom deck's readings
+  // are pink and its meanings purple.
   function questionTone(item, type) {
     if (item.sections) return kindOfLabel(item.sections[sectionIndex(type)].label);
-    return groupOfType(type) === "kanji" ? "reading" : "meaning";
+    // the noun made of just the kanji (訓読み and Noun meaning) is teal
+    const group = groupOfType(type);
+    return group === "kanji" ? "reading" : group === "noun" ? "noun" : "meaning";
   }
 
   function typeConfig(item, type) {
