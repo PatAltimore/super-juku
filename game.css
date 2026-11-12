@@ -1,0 +1,488 @@
+/* タイピング (game.html). Tiles use the app's question colours: pink for a
+   kanji itself, purple for its word and noun. */
+:root {
+  --tone-pink: #e5189a;
+  --tone-purple: #a02fe2;
+}
+
+a.game-link { text-decoration: none; }
+
+.tone-chip {
+  display: inline-block;
+  padding: 0 8px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.tone-chip.tone-pink { background: var(--tone-pink); }
+.tone-chip.tone-purple { background: var(--tone-purple); margin-left: 8px; }
+
+/* ---------- setup ---------- */
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 0.95rem;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.legend-tile.tile {
+  position: static;
+  flex: 0 0 auto;
+  flex-direction: row;
+  gap: 6px;
+  padding: 4px 14px;
+  box-shadow: none;
+}
+
+.legend-term {
+  font-family: "Shippori Mincho", serif;
+  font-weight: 800;
+  font-size: 1.3rem;
+  line-height: 1.2;
+}
+
+.legend-colours {
+  gap: 6px;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+.legend-colours .tone-chip.tone-purple { margin-left: 10px; }
+
+.game-setup {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 8px 16px 24px;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.game-intro {
+  margin: 0;
+  color: var(--text-dim);
+  line-height: 1.9;
+  font-size: 0.95rem;
+}
+
+.game-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.game-field-label {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+
+.game-field select {
+  font: inherit;
+  font-size: 1rem;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.seg {
+  display: flex;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 4px;
+}
+
+.seg button {
+  flex: 1;
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 9px 4px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.seg button.active {
+  background: var(--gold);
+  color: #1c1c1c;
+  font-weight: 700;
+}
+
+.game-note {
+  margin: 0;
+  min-height: 1.4em;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.game-start {
+  flex: 0 0 auto;
+  min-height: 64px;
+  --mode-color: #c4c4c4;
+}
+.game-start .mode-label,
+.game-results .mode-label,
+.pause-box .mode-label { font-size: 1.2rem; font-weight: 700; }
+.game-start:disabled { opacity: 0.5; cursor: default; }
+
+/* ---------- play ---------- */
+.game-hud {
+  gap: 10px;
+}
+
+.hud-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+}
+
+.hud-score {
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold-soft);
+}
+
+.hud-combo {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  min-height: 1em;
+}
+
+.hud-counts {
+  display: flex;
+  gap: 10px;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.hud-right { color: var(--success); }
+.hud-wrong { color: var(--danger); }
+
+.field {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  margin: 0 8px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.12);
+  touch-action: none;
+}
+
+.field.flash { animation: field-flash 0.45s ease-out; }
+@keyframes field-flash {
+  from { box-shadow: inset 0 -40px 40px -20px var(--danger); }
+  to { box-shadow: inset 0 0 0 0 transparent; }
+}
+
+.danger-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--danger);
+  opacity: 0.7;
+}
+
+.tile {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 70%;
+  padding: 6px 14px 8px;
+  border-radius: 14px;
+  color: #fff;
+  background: var(--surface-2);
+  box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.6);
+  will-change: transform;
+  pointer-events: none;
+  transition: opacity 0.3s ease, scale 0.3s ease;
+}
+/* Colour (--tone) says what is asked about; shape says what to type.
+   Reading: a solid round bubble with あ in a circle.
+   Meaning: a dark square box outlined in the colour, with A in a square. */
+.tile.tone-pink { --tone: var(--tone-pink); --tone-light: #ff86d2; }
+.tile.tone-purple { --tone: var(--tone-purple); --tone-light: #d29bff; }
+.tile.tone-plain { --tone: var(--surface-2); --tone-light: var(--text); }
+
+.tile.kind-reading {
+  background: var(--tone);
+  border-radius: 999px;
+  padding: 8px 22px 10px;
+}
+
+.tile.kind-meaning,
+.tile.kind-other {
+  background: #14121c;
+  border: 3px solid var(--tone);
+  border-radius: 3px;
+  color: var(--tone-light);
+}
+
+.tile-head {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tile-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35em;
+  height: 1.35em;
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1;
+  font-family: "Noto Sans JP", sans-serif;
+}
+
+/* あ: a white circle with the colour inside. A: a coloured square. */
+.kind-reading .tile-badge {
+  border-radius: 50%;
+  background: #fff;
+  color: var(--tone, var(--tone-pink));
+}
+.kind-meaning .tile-badge,
+.kind-other .tile-badge {
+  border-radius: 2px;
+  background: var(--tone, var(--tone-purple));
+  color: #fff;
+}
+
+.tile-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+.tile-term {
+  font-family: "Shippori Mincho", serif;
+  font-weight: 800;
+  font-size: 2rem;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.tile-answer {
+  display: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  max-width: 14em;
+}
+
+.tile.target {
+  outline: 3px solid var(--gold-soft);
+  outline-offset: 2px;
+}
+
+.tile.hit {
+  opacity: 0;
+  scale: 1.35;
+}
+
+.tile.missed {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+  animation: tile-shake 0.35s ease;
+}
+.tile.missed .tile-answer { display: block; }
+
+@keyframes tile-shake {
+  0%, 100% { translate: 0; }
+  25% { translate: -6px; }
+  75% { translate: 6px; }
+}
+
+.float-points {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-weight: 700;
+  color: var(--gold-soft);
+  pointer-events: none;
+  animation: float-up 0.8s ease-out forwards;
+  z-index: 30;
+  translate: -50% 0;
+}
+@keyframes float-up {
+  from { opacity: 1; margin-top: 0; }
+  to { opacity: 0; margin-top: -48px; }
+}
+
+.countdown {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Shippori Mincho", serif;
+  font-size: 5rem;
+  font-weight: 800;
+  color: var(--gold-soft);
+  pointer-events: none;
+  z-index: 40;
+}
+
+.pause-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass-bg);
+  backdrop-filter: blur(4px);
+}
+
+.pause-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(280px, 80%);
+}
+.pause-box .mode-btn { flex: 0 0 auto; min-height: 56px; --mode-color: #c4c4c4; }
+.pause-title { text-align: center; font-size: 1.4rem; font-weight: 700; }
+.mode-btn.mode-btn-quiet { --mode-color: #9a9a9a; }
+
+.game-input {
+  position: relative;
+  flex: 0 0 auto;
+  padding: 10px 8px 12px;
+}
+
+.game-input input {
+  width: 100%;
+  font: inherit;
+  font-size: 1.3rem;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 2px solid var(--gold);
+  background: var(--surface);
+  color: var(--text);
+  user-select: text;
+}
+.game-input input:focus { outline: none; box-shadow: 0 0 0 3px rgba(var(--card-border-glow-rgb), 0.35); }
+
+.kana-preview {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  translate: 0 -50%;
+  color: var(--text-dim);
+  font-size: 1.1rem;
+  pointer-events: none;
+}
+
+.game-input.shake { animation: tile-shake 0.3s ease; }
+.game-input.shake input { border-color: var(--danger); }
+
+/* ---------- results ---------- */
+.game-results {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 8px 16px 24px;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.result-score {
+  text-align: center;
+  font-size: 3.2rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold-soft);
+}
+.result-score.new-best { text-shadow: 0 0 18px rgba(var(--kanji-glow-rgb), 0.6); }
+
+.result-line {
+  text-align: center;
+  color: var(--text-dim);
+}
+
+.result-buttons {
+  display: flex;
+  gap: 10px;
+}
+.result-buttons .mode-btn { min-height: 56px; --mode-color: #c4c4c4; }
+.result-buttons .mode-btn-quiet { --mode-color: #9a9a9a; }
+.result-buttons .mode-btn:disabled { opacity: 0.45; cursor: default; }
+.result-buttons .mode-label { font-size: 1rem !important; white-space: nowrap; }
+
+.result-heading {
+  margin: 8px 0 0;
+  font-size: 1.05rem;
+}
+
+.miss-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.miss {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: var(--surface);
+  border-left: 6px solid var(--border);
+}
+.miss.tone-pink { --tone: var(--tone-pink); border-left-color: var(--tone-pink); }
+.miss.tone-purple { --tone: var(--tone-purple); border-left-color: var(--tone-purple); }
+.miss .tile-badge { margin-right: 5px; }
+
+.miss-term {
+  font-family: "Shippori Mincho", serif;
+  font-weight: 800;
+  font-size: 1.6rem;
+  white-space: nowrap;
+}
+
+.miss-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.miss-label { display: flex; align-items: center; font-size: 0.75rem; color: var(--text-dim); font-weight: 700; }
+.miss-answer { font-size: 0.95rem; }
+
+@media (max-width: 420px) {
+  .hud-counts { gap: 6px; font-size: 0.78rem; }
+  .tile-term { font-size: 1.7rem; }
+}
