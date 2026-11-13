@@ -402,6 +402,27 @@
 
   const CONN_OPTIONS = { serialization: "raw", reliable: true };
 
+  // ICE servers for every connection. STUN finds a direct route; a relay (TURN)
+  // carries the traffic when no direct route exists (some networks block it).
+  // PeerJS's own free relays no longer work, so a relay has to be added here:
+  // paste the entries from a TURN provider as { urls, username, credential }.
+  // These are the app's own Metered relay credentials: they sit in public code,
+  // so they can be replaced in the Metered dashboard if they are ever misused.
+  const STUN_SERVERS = [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun.cloudflare.com:3478" }];
+  const RELAY_SERVERS = [
+    {
+      urls: [
+        "turns:global.relay.metered.ca:443?transport=tcp",
+        "turn:global.relay.metered.ca:443?transport=tcp",
+        "turn:global.relay.metered.ca:80",
+        "turn:global.relay.metered.ca:80?transport=tcp",
+      ],
+      username: "d005b9764f97011b37806187",
+      credential: "8tP536/EgW6YHYlK",
+    },
+  ];
+  const PEER_OPTIONS = { config: { iceServers: [...STUN_SERVERS, ...RELAY_SERVERS] } };
+
   // Stage reports let the UI show where a connection attempt stops.
   function reporter(handlers) {
     return (text) => {
@@ -743,7 +764,7 @@
 
     function guest() {
       if (stopped) return;
-      peer = new root.Peer();
+      peer = new root.Peer(PEER_OPTIONS);
       peer.on("open", () => {
         stage("nearby device found");
         const c = peer.connect(roomId, CONN_OPTIONS);
@@ -785,7 +806,7 @@
 
     function claim() {
       if (stopped) return;
-      peer = new root.Peer(roomId);
+      peer = new root.Peer(roomId, PEER_OPTIONS);
       peer.on("open", () => stage("waiting for nearby device"));
       peer.on("connection", (c) => {
         if (verifying || (shared.busy && shared.busy !== roomId)) {
@@ -994,7 +1015,7 @@
     }
 
     function open() {
-      peer = new root.Peer(peerIdFor(options.deviceId));
+      peer = new root.Peer(peerIdFor(options.deviceId), PEER_OPTIONS);
       peer.on("open", () => {
         stage("server reached");
         report();
