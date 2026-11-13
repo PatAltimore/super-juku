@@ -3,6 +3,7 @@
 :root {
   --tone-pink: #e5189a;
   --tone-purple: #a02fe2;
+  --tone-teal: #0f9b8e;
 }
 
 a.game-link { text-decoration: none; }
@@ -17,6 +18,7 @@ a.game-link { text-decoration: none; }
 }
 .tone-chip.tone-pink { background: var(--tone-pink); }
 .tone-chip.tone-purple { background: var(--tone-purple); margin-left: 8px; }
+.tone-chip.tone-teal { background: var(--tone-teal); margin-left: 8px; }
 
 /* ---------- setup ---------- */
 .legend {
@@ -33,13 +35,17 @@ a.game-link { text-decoration: none; }
 }
 
 .legend-tile.tile {
-  position: static;
+  position: relative;
   flex: 0 0 auto;
   flex-direction: row;
+  width: auto;
+  min-height: 0;
   gap: 6px;
-  padding: 4px 14px;
-  box-shadow: none;
+  padding: 2px 8px;
+  border-width: 5px;
 }
+.legend-tile .tile-head { padding: 0; }
+.legend-row { flex-wrap: wrap; }
 
 .legend-term {
   font-family: "Shippori Mincho", serif;
@@ -53,7 +59,8 @@ a.game-link { text-decoration: none; }
   color: var(--text-dim);
   font-size: 0.9rem;
 }
-.legend-colours .tone-chip.tone-purple { margin-left: 10px; }
+.legend-colours .tone-chip.tone-purple,
+.legend-colours .tone-chip.tone-teal { margin-left: 10px; }
 
 .game-setup {
   flex: 1;
@@ -205,101 +212,108 @@ a.game-link { text-decoration: none; }
   opacity: 0.7;
 }
 
+/* Karuta cards: tall paper cards with a thick coloured border, the term in
+   dark ink running top to bottom. The border colour (--tone) says what is
+   asked about; the badge says what to type: あ in a circle for a reading, A in
+   a square for a meaning (a meaning card also has a thin rule inside its
+   border). */
 .tile {
+  --paper: #f8f4e6;
+  --tone: #8a8478;
   position: absolute;
   top: 0;
   left: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 96px;
+  min-height: 140px;
   max-width: 70%;
-  padding: 6px 14px 8px;
-  border-radius: 14px;
-  color: #fff;
-  background: var(--surface-2);
-  box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.6);
+  padding: 0 0 8px;
+  border: 7px solid var(--tone);
+  border-radius: 3px;
+  background: linear-gradient(#fbf9f0 55%, #f0e7d0);
+  color: #2b2233;
+  box-shadow: 0 5px 10px -3px rgba(0, 0, 0, 0.55);
   will-change: transform;
   pointer-events: none;
   transition: opacity 0.3s ease, scale 0.3s ease;
 }
-/* Colour (--tone) says what is asked about; shape says what to type.
-   Reading: a solid round bubble with あ in a circle.
-   Meaning: a dark square box outlined in the colour, with A in a square. */
-.tile.tone-pink { --tone: var(--tone-pink); --tone-light: #ff86d2; }
-.tile.tone-purple { --tone: var(--tone-purple); --tone-light: #d29bff; }
-.tile.tone-plain { --tone: var(--surface-2); --tone-light: var(--text); }
-
-.tile.kind-reading {
-  background: var(--tone);
-  border-radius: 999px;
-  padding: 8px 22px 10px;
-}
+.tile.tone-pink { --tone: var(--tone-pink); }
+.tile.tone-purple { --tone: var(--tone-purple); }
+.tile.tone-teal { --tone: var(--tone-teal); }
 
 .tile.kind-meaning,
 .tile.kind-other {
-  background: #14121c;
-  border: 3px solid var(--tone);
-  border-radius: 3px;
-  color: var(--tone-light);
+  box-shadow:
+    inset 0 0 0 3px #fbf9f0,
+    inset 0 0 0 5px var(--tone),
+    0 5px 10px -3px rgba(0, 0, 0, 0.55);
 }
 
 .tile-head {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 2px;
+  padding: 7px 6px 0;
+  text-align: center;
 }
 
 .tile-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
   width: 1.35em;
   height: 1.35em;
   font-size: 0.8rem;
   font-weight: 800;
   line-height: 1;
   font-family: "Noto Sans JP", sans-serif;
-}
-
-/* あ: a white circle with the colour inside. A: a coloured square. */
-.kind-reading .tile-badge {
-  border-radius: 50%;
-  background: #fff;
-  color: var(--tone, var(--tone-pink));
-}
-.kind-meaning .tile-badge,
-.kind-other .tile-badge {
-  border-radius: 2px;
-  background: var(--tone, var(--tone-purple));
+  background: var(--tone, var(--text-dim));
   color: #fff;
 }
+.kind-reading .tile-badge { border-radius: 50%; }
+.kind-meaning .tile-badge,
+.kind-other .tile-badge { border-radius: 2px; }
 
 .tile-label {
-  font-size: 0.7rem;
+  font-size: 0.66rem;
   font-weight: 700;
-  opacity: 0.9;
-  white-space: nowrap;
+  line-height: 1.15;
+  color: #4a3f5a;
 }
 
 .tile-term {
   font-family: "Shippori Mincho", serif;
   font-weight: 800;
-  font-size: 2rem;
+  font-size: var(--term-size, 2rem);
   line-height: 1.15;
+  padding: 4px 8px;
+  margin: auto 0;
   white-space: nowrap;
+}
+.tile-term.vertical {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 0.08em;
 }
 
 .tile-answer {
   display: none;
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 0.78rem;
+  font-weight: 700;
   text-align: center;
-  max-width: 14em;
+  max-width: 100%;
+  padding: 0 6px;
+  overflow-wrap: anywhere;
+  color: #7a1414;
 }
 
 .tile.target {
   outline: 3px solid var(--gold-soft);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 
 .tile.hit {
@@ -308,9 +322,7 @@ a.game-link { text-decoration: none; }
 }
 
 .tile.missed {
-  background: var(--danger);
   border-color: var(--danger);
-  color: #fff;
   animation: tile-shake 0.35s ease;
 }
 .tile.missed .tile-answer { display: block; }
@@ -465,6 +477,7 @@ a.game-link { text-decoration: none; }
 }
 .miss.tone-pink { --tone: var(--tone-pink); border-left-color: var(--tone-pink); }
 .miss.tone-purple { --tone: var(--tone-purple); border-left-color: var(--tone-purple); }
+.miss.tone-teal { --tone: var(--tone-teal); border-left-color: var(--tone-teal); }
 .miss .tile-badge { margin-right: 5px; }
 
 .miss-term {
@@ -484,5 +497,5 @@ a.game-link { text-decoration: none; }
 
 @media (max-width: 420px) {
   .hud-counts { gap: 6px; font-size: 0.78rem; }
-  .tile-term { font-size: 1.7rem; }
+  .tile-term { font-size: calc(var(--term-size, 2rem) * 0.85); }
 }

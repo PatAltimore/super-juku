@@ -1,15 +1,19 @@
 // タイピング: terms fall from the top of the screen and are cleared by typing
 // their reading or meaning before they reach the bottom; a term that reaches
 // the bottom counts as wrong. Tiles use the app's question colours: pink for
-// the kanji itself (音読み and meaning), purple for its word and noun; a custom
-// deck's readings are pink and its meanings purple.
+// the kanji itself (音読み and meaning), purple for its word, teal for its
+// noun; a custom deck's readings are pink and its meanings purple. Each term
+// is a karuta card with a border in that colour, its term running top to bottom.
 (() => {
   "use strict";
 
   const SETTINGS_KEY = "kanjiFlashN2.settings.v1";
   const CUSTOM_DECKS_KEY = "kanjiFlashN2.customDecks.v1";
   const GAME_KEY = "kanjiFlashN2.fallingGame.v1";
+  const LEECHES_KEY = "kanjiFlashN2.leeches.v1";
+  const KANJI_REMOVALS_KEY = "kanjiFlashN2.kanjiRemovals.v1";
   const N2_DECK = "n2-kanji";
+  const LEECH_DECK = "leech";
 
   const READING_LABEL_PATTERN = /読み|よみ|reading|kana|ふりがな/i;
   const MEANING_LABEL_PATTERN = /意味|いみ|meaning|definition|english/i;
@@ -177,6 +181,11 @@
 
   let n2Deck = null;
   const customDecks = (loadJson(CUSTOM_DECKS_KEY, []) || []).filter((d) => d && Array.isArray(d.cards));
+  // Leeches (リーチ), across all decks: { "n2|<num>" or "<deckId>|<front>": { leech, ... } }.
+  const leeches = loadJson(LEECHES_KEY, {}) || {};
+  // N2 kanji removed in 編集: { num: { removed } }.
+  const kanjiRemovals = loadJson(KANJI_REMOVALS_KEY, {}) || {};
+  const visibleKanji = () => (n2Deck || []).filter((k) => !(kanjiRemovals[k.num] && kanjiRemovals[k.num].removed));
 
   function kanjiQuestions(e) {
     const qs = [];
@@ -192,7 +201,7 @@
         answers: kind === "reading" ? readingAnswers(value) : meaningAnswers(value),
       });
     };
-    // Pink: the kanji itself. Purple: its word and its noun.
+    // Pink: the kanji itself. Purple: its word. Teal: its noun (as in the app).
     add("onyomi", e.kanji, "音読み", "pink", "reading", e.onyomi);
     add("meaning", e.kanji, "Meaning", "pink", "meaning", e.meaning);
     if (e.word) {
@@ -200,15 +209,16 @@
       add("wordMeaning", e.word, "Word meaning", "purple", "meaning", e.wordMeaning);
     }
     if (e.noun) {
-      add("nounReading", e.noun, "訓読み", "purple", "reading", e.nounReading);
-      add("nounMeaning", e.noun, "Noun meaning", "purple", "meaning", e.nounMeaning);
+      add("nounReading", e.noun, "訓読み", "teal", "reading", e.nounReading);
+      add("nounMeaning", e.noun, "Noun meaning", "teal", "meaning", e.nounMeaning);
     }
     return qs;
   }
 
-  function customQuestions(deck) {
+  function customQuestions(deck, keepCard) {
     const qs = [];
     deck.cards.forEach((card, ci) => {
+      if (keepCard && !keepCard(card)) return;
       (card.sections || []).forEach((s, si) => {
         if (!s || !s.value || !String(s.value).trim()) return;
         const value = String(s.value);
@@ -231,8 +241,46 @@
     return qs;
   }
 
+  // Every question of each current leech that still exists in its deck, as
+  // in the app's own リーチ review. `terms` counts the leeches found.
+  function leechQuestions() {
+    const qs = [];
+    let terms = 0;
+    const customFronts = new Map();
+    Object.keys(leeches).forEach((key) => {
+      if (!leeches[key] || !leeches[key].leech) return;
+      const sep = key.indexOf("|");
+      const owner = key.slice(0, sep);
+      const id = key.slice(sep + 1);
+      if (owner === "n2") {
+        const e = visibleKanji().find((k) => String(k.num) === id);
+        if (e) {
+          terms++;
+          qs.push(...kanjiQuestions(e));
+        }
+      } else if (customDecks.some((d) => d.id === owner)) {
+        if (!customFronts.has(owner)) customFronts.set(owner, new Set());
+        customFronts.get(owner).add(id);
+      }
+    });
+    customFronts.forEach((fronts, deckId) => {
+      const deck = customDecks.find((d) => d.id === deckId);
+      const found = new Set();
+      qs.push(
+        ...customQuestions(deck, (card) => {
+          if (!fronts.has(card.front)) return false;
+          found.add(card.front);
+          return true;
+        })
+      );
+      terms += found.size;
+    });
+    return { qs, terms };
+  }
+
   function questionsFor(deckId) {
-    if (deckId === N2_DECK) return (n2Deck || []).flatMap(kanjiQuestions);
+    if (deckId === N2_DECK) return visibleKanji().flatMap(kanjiQuestions);
+    if (deckId === LEECH_DECK) return leechQuestions().qs;
     const deck = customDecks.find((d) => d.id === deckId);
     return deck ? customQuestions(deck) : [];
   }
@@ -261,7 +309,13 @@
 
   function renderDeckSelect() {
     els.deckSelect.innerHTML = "";
-    const options = [{ id: N2_DECK, name: "N2 漢字" }, ...customDecks.map((d) => ({ id: d.id, name: d.name || "デッキ" }))];
+    // The leech count needs the N2 deck, so it shows once that has loaded.
+    const leechName = n2Deck ? `リーチ（${leechQuestions().terms}）` : "リーチ";
+    const options = [
+      { id: N2_DECK, name: "N2 漢字" },
+      ...customDecks.map((d) => ({ id: d.id, name: d.name || "デッキ" })),
+      { id: LEECH_DECK, name: leechName },
+    ];
     options.forEach((o) => {
       const opt = document.createElement("option");
       opt.value = o.id;
@@ -290,10 +344,12 @@
     const n = filteredQuestions().length;
     const best = prefs.best[prefs.deck];
     els.deckNote.textContent = n
-      ? `${n} 問から ${Math.min(n, prefs.count)} 問` + (best ? ` · ベスト ${best.toLocaleString()}` : "")
-      : n2Deck || prefs.deck !== N2_DECK
-        ? "このデッキには出せる問題がありません。"
-        : "読み込み中…";
+      ? (prefs.count === "all" ? `全 ${n} 問` : `${n} 問から ${Math.min(n, prefs.count)} 問`) + (best ? ` · ベスト ${best.toLocaleString()}` : "")
+      : !n2Deck && (prefs.deck === N2_DECK || prefs.deck === LEECH_DECK)
+        ? "読み込み中…"
+        : prefs.deck === LEECH_DECK
+          ? "リーチのカードはありません。"
+          : "このデッキには出せる問題がありません。";
     els.startBtn.disabled = n === 0;
   }
 
@@ -303,7 +359,8 @@
     renderSetupNote();
   });
   bindSeg(els.typeSeg, "type");
-  bindSeg(els.countSeg, "count", Number);
+  // 全部: every question of the deck, once each.
+  bindSeg(els.countSeg, "count", (v) => (v === "all" ? "all" : Number(v)));
   bindSeg(els.speedSeg, "speed");
 
   // ---------- the game ----------
@@ -340,7 +397,7 @@
   }
 
   function startRound(questions) {
-    newGame(shuffle(questions).slice(0, prefs.count));
+    newGame(prefs.count === "all" ? shuffle(questions) : shuffle(questions).slice(0, prefs.count));
   }
 
   function runCountdown() {
@@ -404,15 +461,22 @@
   function spawn() {
     const q = game.queue.shift();
     const el = document.createElement("div");
-    // Colour: what is asked about. Shape, fill and badge: what to type, a
-    // solid round bubble with あ for a reading, an outlined square box with A
-    // for a meaning.
+    // Border colour: what is asked about. Badge: what to type, あ in a circle
+    // for a reading, A in a square for a meaning.
     el.className = `tile tone-${q.tone} kind-${q.kind}`;
     el.innerHTML =
       '<span class="tile-head"><span class="tile-badge"></span><span class="tile-label"></span></span><span class="tile-term"></span><span class="tile-answer"></span>';
     el.querySelector(".tile-badge").textContent = kindBadge(q);
     el.querySelector(".tile-label").textContent = q.label;
-    el.querySelector(".tile-term").textContent = q.term;
+    const termEl = el.querySelector(".tile-term");
+    termEl.textContent = q.term;
+    // Japanese runs top to bottom, as on a karuta card; other text stays flat.
+    if (/^[぀-ヿ一-鿿々〆ー]+$/.test(q.term)) {
+      termEl.classList.add("vertical");
+      const n = [...q.term].length;
+      if (n >= 6) el.style.setProperty("--term-size", "1.2rem");
+      else if (n >= 4) el.style.setProperty("--term-size", "1.55rem");
+    }
     el.querySelector(".tile-answer").textContent = q.display;
     els.field.appendChild(el);
     const w = el.offsetWidth;
@@ -694,10 +758,12 @@
     .then((r) => r.json())
     .then((data) => {
       n2Deck = Array.isArray(data) ? data : [];
+      renderDeckSelect();
       renderSetupNote();
     })
     .catch(() => {
       n2Deck = [];
+      renderDeckSelect();
       renderSetupNote();
     });
 })();
