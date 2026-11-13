@@ -158,6 +158,10 @@
     syncGroupTitle: document.getElementById("syncGroupTitle"),
     syncSasHint: document.getElementById("syncSasHint"),
     syncStatus: document.getElementById("syncStatus"),
+    syncCode: document.getElementById("syncCode"),
+    syncCodeStatus: document.getElementById("syncCodeStatus"),
+    syncCodeCopyBtn: document.getElementById("syncCodeCopyBtn"),
+    syncCodeImportBtn: document.getElementById("syncCodeImportBtn"),
     syncTech: document.getElementById("syncTech"),
     syncRoomTech: document.getElementById("syncRoomTech"),
     syncNearbyStatus: document.getElementById("syncNearbyStatus"),
@@ -6231,6 +6235,90 @@
     }
     return true;
   }
+
+  // ---------- manual sync by code ----------
+  // For when two devices can't reach each other. The code is this device's sync
+  // state (what device sync sends), compressed and as text. Importing one
+  // merges it the same way a connection would, so counts are never doubled.
+
+  const SYNC_CODE_RE = /^KFS([01]):([A-Za-z0-9+/=_-]+)$/;
+
+  function bytesToBase64(bytes) {
+    let binary = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    return btoa(binary);
+  }
+
+  const base64ToBytes = (text) => Uint8Array.from(atob(text), (c) => c.charCodeAt(0));
+
+  async function encodeSyncCode(state) {
+    let bytes = new TextEncoder().encode(JSON.stringify(state));
+    let tag = "0";
+    if (typeof CompressionStream !== "undefined") {
+      const packed = new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip"));
+      bytes = new Uint8Array(await new Response(packed).arrayBuffer());
+      tag = "1";
+    }
+    return `KFS${tag}:${bytesToBase64(bytes)}`;
+  }
+
+  async function decodeSyncCode(code) {
+    const match = SYNC_CODE_RE.exec(code.replace(/\s+/g, ""));
+    if (!match) throw new Error("Not a sync code");
+    let bytes = base64ToBytes(match[2]);
+    if (match[1] === "1") {
+      if (typeof DecompressionStream === "undefined") throw new Error("This browser can't read this code");
+      const unpacked = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+      bytes = new Uint8Array(await new Response(unpacked).arrayBuffer());
+    }
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+
+  function setCodeStatus(text, tone) {
+    els.syncCodeStatus.textContent = text;
+    els.syncCodeStatus.className = "sync-hint" + (tone ? ` sync-${tone}` : "");
+  }
+
+  async function fillOwnSyncCode() {
+    const code = await encodeSyncCode(buildSyncState());
+    els.syncCode.value = code;
+    els.syncCode.focus();
+    els.syncCode.select();
+    return code;
+  }
+
+  els.syncCodeCopyBtn.addEventListener("click", async () => {
+    try {
+      const code = await fillOwnSyncCode();
+      try {
+        await navigator.clipboard.writeText(code);
+        setCodeStatus("コードをコピーしました。もう一方の端末の欄に貼り付けて「取り込む」を押してください。", "ok");
+      } catch (err) {
+        setCodeStatus("コードを選択しました。コピーして、もう一方の端末の欄に貼り付けてください。", "ok");
+      }
+    } catch (err) {
+      setCodeStatus("コードを作れませんでした。", "bad");
+    }
+  });
+
+  els.syncCodeImportBtn.addEventListener("click", async () => {
+    const text = els.syncCode.value.trim();
+    if (!text) {
+      setCodeStatus("別の端末のコードを欄に貼り付けてください。", "bad");
+      return;
+    }
+    try {
+      const changed = applySyncState(await decodeSyncCode(text));
+      await fillOwnSyncCode();
+      setCodeStatus(
+        (changed ? "取り込みました。" : "新しい内容はありませんでした。") +
+          "欄には、いまのこの端末のコードが入っています。もう一方の端末にも反映するには、これをコピーしてそちらで取り込んでください。",
+        "ok"
+      );
+    } catch (err) {
+      setCodeStatus("コードを読み取れませんでした。最後までコピーできているか確認してください。", "bad");
+    }
+  });
 
   function startSyncSession() {
     const group = loadSyncGroup();

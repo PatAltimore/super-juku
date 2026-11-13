@@ -3533,3 +3533,27 @@ button.edit-row {
     font-size: 0.95rem;
   }
 }
+
+/* ---------- manual sync code ---------- */
+
+.sync-manual-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sync-code {
+  width: 100%;
+  resize: vertical;
+  padding: 8px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8rem;
+  word-break: break-all;
+}
+
+.sync-hint.sync-ok { color: var(--success); }
+.sync-hint.sync-bad { color: var(--danger); }
