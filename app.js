@@ -158,11 +158,14 @@
     syncGroupTitle: document.getElementById("syncGroupTitle"),
     syncSasHint: document.getElementById("syncSasHint"),
     syncStatus: document.getElementById("syncStatus"),
-    syncCode: document.getElementById("syncCode"),
     syncCodeStatus: document.getElementById("syncCodeStatus"),
-    syncCodeCopyBtn: document.getElementById("syncCodeCopyBtn"),
-    syncCodeImportBtn: document.getElementById("syncCodeImportBtn"),
-    syncCodePasteBtn: document.getElementById("syncCodePasteBtn"),
+    syncQrScanBtn: document.getElementById("syncQrScanBtn"),
+    qrCanvas: document.getElementById("qrCanvas"),
+    qrProgress: document.getElementById("qrProgress"),
+    scanModal: document.getElementById("scanModal"),
+    scanVideo: document.getElementById("scanVideo"),
+    scanProgress: document.getElementById("scanProgress"),
+    scanModalClose: document.getElementById("scanModalClose"),
     syncTech: document.getElementById("syncTech"),
     syncRoomTech: document.getElementById("syncRoomTech"),
     syncNearbyStatus: document.getElementById("syncNearbyStatus"),
@@ -6088,6 +6091,8 @@
   }
 
   function stopSyncActivity() {
+    stopInlineQr();
+    closeScan();
     resolveSyncVerify(false);
     if (syncPairing) {
       syncPairing.cancel();
@@ -6280,81 +6285,182 @@
     els.syncCodeStatus.className = "sync-hint" + (tone ? ` sync-${tone}` : "");
   }
 
-  // The code goes into the box; on a computer it is also selected. On a touch
-  // screen the box is left alone, so the keyboard doesn't open.
-  async function fillOwnSyncCode() {
-    const code = await encodeSyncCode(buildSyncState());
-    els.syncCode.value = code;
-    if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
-      els.syncCode.focus();
-      els.syncCode.select();
-    }
-    return code;
-  }
-
-  async function copyToClipboard(text) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch (err) {
-      return false;
-    }
-  }
-
-  els.syncCodeCopyBtn.addEventListener("click", async () => {
-    try {
-      const code = await fillOwnSyncCode();
-      setCodeStatus(
-        (await copyToClipboard(code))
-          ? "コードをコピーしました。もう一方の端末で「コピーしたコードを取り込む」を押してください。"
-          : "コードを欄に出しました。欄を長押ししてコピーし、もう一方の端末で取り込んでください。",
-        "ok"
-      );
-    } catch (err) {
-      setCodeStatus("コードを作れませんでした。", "bad");
-    }
-  });
-
-  // Merges a pasted code, then puts this device's updated code in the box and
-  // on the clipboard, ready to be imported on the other device.
+  // Merges a scanned code, then shows this device's updated code for the other
+  // device to scan.
   async function importSyncCode(text) {
     try {
       const changed = applySyncState(await decodeSyncCode(text));
-      const copied = await copyToClipboard(await fillOwnSyncCode());
-      setCodeStatus(
-        (changed ? "取り込みました。" : "新しい内容はありませんでした。") +
-          (copied
-            ? "更新後のコードをコピーしました。もう一方の端末でも「コピーしたコードを取り込む」を押してください。"
-            : "欄に更新後のコードが入っています。欄を長押ししてコピーし、もう一方の端末で取り込んでください。"),
-        "ok"
-      );
+      setCodeStatus((changed ? "取り込みました。" : "新しい内容はありませんでした。") + "もう一方の端末でも読み取ってください。", "ok");
+      startInlineQr();
     } catch (err) {
-      setCodeStatus("コードを読み取れませんでした。最後までコピーできているか確認してください。", "bad");
+      setCodeStatus("コードを読み取れませんでした。もう一度試してください。", "bad");
     }
   }
 
-  els.syncCodeImportBtn.addEventListener("click", () => {
-    const text = els.syncCode.value.trim();
-    if (!text) {
-      setCodeStatus("別の端末のコードを欄に貼り付けてください。", "bad");
-      return;
-    }
-    importSyncCode(text);
-  });
+  // ---------- manual sync by QR code ----------
+  // The sync code is far bigger than one QR code holds, so it is cut into
+  // frames that are shown one after another, over and over. The other device
+  // films the screen, collects the frames in any order and, with all of them,
+  // imports the code.
 
-  els.syncCodePasteBtn.addEventListener("click", async () => {
-    let text = "";
+  const QR_CHUNK_CHARS = 400;
+  const QR_FRAME_MS = 450;
+  const QR_LIB_SRC = "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js";
+  const QR_LIB_SRI = "sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k";
+  const QR_SCAN_SRC = "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js";
+  const QR_SCAN_SRI = "sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx";
+  const QR_FRAME_RE = /^KFQ:([0-9a-z]{4}):(\d+):(\d+):(.+)$/;
+
+  const loadedScripts = new Map();
+  function loadScriptOnce(src, integrity) {
+    if (!loadedScripts.has(src)) {
+      loadedScripts.set(
+        src,
+        new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = src;
+          script.integrity = integrity;
+          script.crossOrigin = "anonymous";
+          script.onload = () => resolve();
+          script.onerror = () => {
+            loadedScripts.delete(src);
+            reject(new Error("Could not load " + src));
+          };
+          document.head.appendChild(script);
+        })
+      );
+    }
+    return loadedScripts.get(src);
+  }
+
+  // The frames of one code: "KFQ:<code id>:<number>:<of>:<piece>".
+  function qrFramesFor(code) {
+    const alphabet = "0123456789abcdefghijklmnopqrstuvwxyz";
+    const id = Array.from(crypto.getRandomValues(new Uint8Array(4)), (b) => alphabet[b % alphabet.length]).join("");
+    const total = Math.ceil(code.length / QR_CHUNK_CHARS);
+    return Array.from({ length: total }, (_, i) =>
+      `KFQ:${id}:${i}:${total}:${code.slice(i * QR_CHUNK_CHARS, (i + 1) * QR_CHUNK_CHARS)}`
+    );
+  }
+
+  function drawQr(canvas, text) {
+    const qr = qrcode(0, "L");
+    qr.addData(text);
+    qr.make();
+    const count = qr.getModuleCount();
+    const quiet = 4;
+    const cell = Math.max(1, Math.floor(canvas.width / (count + quiet * 2)));
+    const side = cell * (count + quiet * 2);
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const offset = Math.floor((canvas.width - side) / 2) + cell * quiet;
+    ctx.fillStyle = "#000";
+    for (let r = 0; r < count; r++) {
+      for (let c = 0; c < count; c++) {
+        if (qr.isDark(r, c)) ctx.fillRect(offset + c * cell, offset + r * cell, cell, cell);
+      }
+    }
+  }
+
+  let qrShowTimer = null;
+  let qrShowToken = 0;
+
+  // The sync screen always shows this device's code as QR frames, one after
+  // another, so the other device can scan it without any button being pressed.
+  function stopInlineQr() {
+    qrShowToken++;
+    window.clearInterval(qrShowTimer);
+    qrShowTimer = null;
+  }
+
+  async function startInlineQr() {
+    stopInlineQr();
+    const token = qrShowToken;
+    els.qrProgress.textContent = "準備中…";
     try {
-      text = (await navigator.clipboard.readText()).trim();
+      await loadScriptOnce(QR_LIB_SRC, QR_LIB_SRI);
+      const frames = qrFramesFor(await encodeSyncCode(buildSyncState()));
+      if (token !== qrShowToken) return;
+      let index = 0;
+      const show = () => {
+        drawQr(els.qrCanvas, frames[index]);
+        els.qrProgress.textContent = `${index + 1} / ${frames.length}`;
+        index = (index + 1) % frames.length;
+      };
+      show();
+      if (frames.length > 1) qrShowTimer = window.setInterval(show, QR_FRAME_MS);
     } catch (err) {
-      setCodeStatus("クリップボードを読めませんでした。貼り付けの許可を確認するか、欄を長押しして貼り付け、「欄のコードを取り込む」を押してください。", "bad");
+      if (token === qrShowToken) els.qrProgress.textContent = "QRコードを作れませんでした。接続を確認してください。";
+    }
+  }
+
+  let scanStream = null;
+  let scanRaf = null;
+
+  function closeScan() {
+    if (scanRaf) window.cancelAnimationFrame(scanRaf);
+    scanRaf = null;
+    if (scanStream) scanStream.getTracks().forEach((track) => track.stop());
+    scanStream = null;
+    els.scanVideo.srcObject = null;
+    els.scanModal.hidden = true;
+  }
+
+  async function openScan() {
+    els.scanProgress.textContent = "カメラを準備中…";
+    els.scanModal.hidden = false;
+    try {
+      await loadScriptOnce(QR_SCAN_SRC, QR_SCAN_SRI);
+      scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+    } catch (err) {
+      els.scanProgress.textContent = "カメラを使えませんでした。ブラウザのカメラの許可を確認してください。";
       return;
     }
-    if (!text) {
-      setCodeStatus("クリップボードが空です。もう一方の端末でコードをコピーしてください。", "bad");
-      return;
-    }
-    importSyncCode(text);
+    els.scanVideo.srcObject = scanStream;
+    await els.scanVideo.play().catch(() => {});
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    let codeId = null;
+    let pieces = new Map();
+    let total = 0;
+    els.scanProgress.textContent = "QRコードにカメラを向けてください";
+
+    const tick = () => {
+      if (!scanStream) return;
+      if (els.scanVideo.readyState >= 2 && els.scanVideo.videoWidth) {
+        const scale = Math.min(1, 640 / els.scanVideo.videoWidth);
+        canvas.width = Math.round(els.scanVideo.videoWidth * scale);
+        canvas.height = Math.round(els.scanVideo.videoHeight * scale);
+        ctx.drawImage(els.scanVideo, 0, 0, canvas.width, canvas.height);
+        const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const found = jsQR(image.data, canvas.width, canvas.height, { inversionAttempts: "dontInvert" });
+        const match = found && QR_FRAME_RE.exec(found.data);
+        if (match) {
+          if (match[1] !== codeId) {
+            codeId = match[1];
+            pieces = new Map();
+          }
+          total = Number(match[3]);
+          pieces.set(Number(match[2]), match[4]);
+          els.scanProgress.textContent = `読み取り中 ${pieces.size} / ${total}`;
+          if (pieces.size === total) {
+            const code = Array.from({ length: total }, (_, i) => pieces.get(i)).join("");
+            closeScan();
+            importSyncCode(code);
+            return;
+          }
+        }
+      }
+      scanRaf = window.requestAnimationFrame(tick);
+    };
+    scanRaf = window.requestAnimationFrame(tick);
+  }
+
+  els.syncQrScanBtn.addEventListener("click", openScan);
+  els.scanModalClose.addEventListener("click", closeScan);
+  els.scanModal.addEventListener("click", (event) => {
+    if (event.target === els.scanModal) closeScan();
   });
 
   function startSyncSession() {
@@ -6415,6 +6521,8 @@
     setSyncStatus("");
     if (loadSyncGroup()) startSyncSession();
     startNearby(); // in a group: admits newcomers; otherwise finds a device to join
+    setCodeStatus("");
+    startInlineQr();
   });
 
   els.syncSasYesBtn.addEventListener("click", () => resolveSyncVerify(true));
