@@ -20,11 +20,10 @@
 
   // Seconds a tile takes to fall the height of the field at the start.
   const FALL_SECONDS = { slow: 15, normal: 10.5, fast: 7 };
-  const MAX_ON_SCREEN = 6;
+  // About this many terms on screen at a time, and never more than the cap.
+  const TARGET_ON_SCREEN = 2;
+  const MAX_ON_SCREEN = 3;
   const MAX_SPEEDUP = 1.8;
-  // Each tile falls at its own speed: from this much slower to this much
-  // faster than the tier's speed (skewed so most are near the middle).
-  const SPEED_SPREAD = { min: 0.65, max: 1.5 };
 
   const $ = (id) => document.getElementById(id);
   const els = {
@@ -436,8 +435,7 @@
     const fieldH = els.field.clientHeight;
     const fall = FALL_SECONDS[prefs.speed] || FALL_SECONDS.normal;
     const speed = (fieldH / fall) * speedUp();
-    // About three terms on screen at a time.
-    const gap = fall / speedUp() / 3.2;
+    const gap = fall / speedUp() / (TARGET_ON_SCREEN + 0.2);
     const live = game.tiles.filter((t) => !t.dead);
     if (game.queue.length && live.length < MAX_ON_SCREEN && (live.length === 0 || game.clock - game.lastSpawn >= gap)) {
       spawn();
@@ -445,7 +443,7 @@
 
     game.tiles.forEach((t) => {
       if (t.dead) return;
-      t.y += speed * t.pace * dt;
+      t.y += speed * dt;
       t.el.style.transform = `translate(${t.x}px, ${t.y}px)`;
       if (t.y + t.h >= fieldH) miss(t);
     });
@@ -483,21 +481,15 @@
     const h = el.offsetHeight;
     const fieldW = els.field.clientWidth;
     const maxX = Math.max(8, fieldW - w - 8);
-    // Average of two randoms: most tiles near the middle, a few very slow or fast.
-    const r = (Math.random() + Math.random()) / 2;
-    const pace = SPEED_SPREAD.min + r * (SPEED_SPREAD.max - SPEED_SPREAD.min);
-    // Keep away from tiles still near the top and from slower tiles it would
-    // catch up with on the way down.
+    // Keep away from tiles still near the top.
     const overlaps = (t, x) => Math.abs(t.x - x) < Math.max(t.w, w);
     let x = 8 + Math.random() * (maxX - 8);
     for (let i = 0; i < 12; i++) {
-      const crowded = game.tiles.some((t) => !t.dead && (t.y < h * 1.6 || t.pace < pace) && overlaps(t, x));
+      const crowded = game.tiles.some((t) => !t.dead && t.y < h * 1.6 && overlaps(t, x));
       if (!crowded) break;
       x = 8 + Math.random() * (maxX - 8);
     }
-    // Faster tiles are drawn on top, in case one still passes another.
-    el.style.zIndex = String(Math.round(pace * 10));
-    const tile = { q, el, x, y: -h, w, h, pace, dead: false };
+    const tile = { q, el, x, y: -h, w, h, dead: false };
     el.style.transform = `translate(${x}px, ${-h}px)`;
     game.tiles.push(tile);
     game.lastSpawn = game.clock;
@@ -541,6 +533,8 @@
     game.wrong++;
     game.results.push({ q: tile.q, correct: false });
     tile.el.classList.add("missed");
+    // The answer makes the card taller: keep its whole height in the field.
+    tile.h = tile.el.offsetHeight;
     tile.y = els.field.clientHeight - tile.h;
     tile.el.style.transform = `translate(${tile.x}px, ${tile.y}px)`;
     els.field.classList.remove("flash");

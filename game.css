@@ -44,7 +44,10 @@ a.game-link { text-decoration: none; }
   padding: 2px 8px;
   border-width: 5px;
 }
-.legend-tile .tile-head { padding: 0; }
+.legend-tile .tile-head {
+  order: 0;
+  padding: 0;
+}
 .legend-row { flex-wrap: wrap; }
 
 .legend-term {
@@ -215,8 +218,7 @@ a.game-link { text-decoration: none; }
 /* Karuta cards: tall paper cards with a thick coloured border, the term in
    dark ink running top to bottom. The border colour (--tone) says what is
    asked about; the badge says what to type: あ in a circle for a reading, A in
-   a square for a meaning (a meaning card also has a thin rule inside its
-   border). */
+   a square for a meaning. */
 .tile {
   --paper: #f8f4e6;
   --tone: #8a8478;
@@ -229,7 +231,7 @@ a.game-link { text-decoration: none; }
   width: 96px;
   min-height: 140px;
   max-width: 70%;
-  padding: 0 0 8px;
+  padding: 0;
   border: 7px solid var(--tone);
   border-radius: 3px;
   background: linear-gradient(#fbf9f0 55%, #f0e7d0);
@@ -243,20 +245,15 @@ a.game-link { text-decoration: none; }
 .tile.tone-purple { --tone: var(--tone-purple); }
 .tile.tone-teal { --tone: var(--tone-teal); }
 
-.tile.kind-meaning,
-.tile.kind-other {
-  box-shadow:
-    inset 0 0 0 3px #fbf9f0,
-    inset 0 0 0 5px var(--tone),
-    0 5px 10px -3px rgba(0, 0, 0, 0.55);
-}
-
+/* The question type sits at the bottom of the paper: cards slide in bottom
+   edge first, so it is the first thing seen. */
 .tile-head {
+  order: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 7px 6px 0;
+  padding: 0 6px 7px;
   text-align: center;
 }
 
@@ -292,6 +289,7 @@ a.game-link { text-decoration: none; }
   line-height: 1.15;
   padding: 4px 8px;
   margin: auto 0;
+  order: 1;
   white-space: nowrap;
 }
 .tile-term.vertical {
@@ -306,7 +304,8 @@ a.game-link { text-decoration: none; }
   font-weight: 700;
   text-align: center;
   max-width: 100%;
-  padding: 0 6px;
+  order: 2;
+  padding: 0 6px 6px;
   overflow-wrap: anywhere;
   color: #7a1414;
 }
