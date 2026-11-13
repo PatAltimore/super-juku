@@ -345,6 +345,11 @@
   const PEER_PREFIX = "kanjiflash-";
   const CHUNK_SIZE = 12000;
   const RETRY_MS = 3000;
+  // How long a connection to another device may take before it is dropped and
+  // tried again. Setting up a direct or relayed connection can take well over
+  // ten seconds, so it must not be cut off while the ICE checks are still
+  // running (it used to be, every 6 seconds, which left sync "checking" forever).
+  const CONNECT_TIMEOUT_MS = 40000;
 
   function randomString(alphabet, length) {
     const bytes = new Uint8Array(length);
@@ -869,6 +874,7 @@
     let stopped = false;
     let retryTimer = null;
     let connectTimer = null;
+    const attempts = new Map(); // remote device id -> abandon() for a connection being set up
 
     function connectedCount() {
       let count = 0;
@@ -963,15 +969,15 @@
       const members = options.getMembers();
       Object.keys(members).forEach((id) => {
         if (id === options.deviceId || id < options.deviceId || links.has(id)) return;
-        links.set(id, { conn: null, authed: false, pending: true });
+        const attempt = { conn: null, authed: false, pending: true };
+        links.set(id, attempt);
         const conn = peer.connect(peerIdFor(id), CONN_OPTIONS);
         stage("contacting " + id.slice(0, 4));
-        watchIce(conn, "sync", stage);
-        wire(conn);
-        // Give up on this attempt so it can be retried if it never opens.
-        root.setTimeout(() => {
-          const link = links.get(id);
-          if (link && !link.authed) {
+        // Give up on this attempt so it can be retried if it fails or never opens.
+        const abandon = () => {
+          // Only this attempt's own entry; a newer attempt is left alone.
+          if (attempts.get(id) === abandon) attempts.delete(id);
+          if (links.get(id) === attempt) {
             links.delete(id);
             try {
               conn.close();
@@ -979,7 +985,11 @@
               /* ignore */
             }
           }
-        }, RETRY_MS * 2);
+        };
+        attempts.set(id, abandon);
+        watchIce(conn, "sync", stage, abandon);
+        wire(conn);
+        root.setTimeout(abandon, CONNECT_TIMEOUT_MS);
       });
     }
 
@@ -994,7 +1004,13 @@
       peer.on("connection", (conn) => wire(conn));
       peer.on("error", (err) => {
         if (stopped) return;
-        if (err.type === "peer-unavailable") return; // that member isn't open right now
+        if (err.type === "peer-unavailable") {
+          // That member isn't open right now: drop the attempt so it is tried again soon.
+          attempts.forEach((abandon, id) => {
+            if (String(err.message).includes(peerIdFor(id))) abandon();
+          });
+          return;
+        }
         if (err.type === "unavailable-id") {
           // This device's id is still registered from a moment ago; retry shortly.
           peer.destroy();
