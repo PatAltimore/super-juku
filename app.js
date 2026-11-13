@@ -162,6 +162,7 @@
     syncCodeStatus: document.getElementById("syncCodeStatus"),
     syncCodeCopyBtn: document.getElementById("syncCodeCopyBtn"),
     syncCodeImportBtn: document.getElementById("syncCodeImportBtn"),
+    syncCodePasteBtn: document.getElementById("syncCodePasteBtn"),
     syncTech: document.getElementById("syncTech"),
     syncRoomTech: document.getElementById("syncRoomTech"),
     syncNearbyStatus: document.getElementById("syncNearbyStatus"),
@@ -6279,45 +6280,81 @@
     els.syncCodeStatus.className = "sync-hint" + (tone ? ` sync-${tone}` : "");
   }
 
+  // The code goes into the box; on a computer it is also selected. On a touch
+  // screen the box is left alone, so the keyboard doesn't open.
   async function fillOwnSyncCode() {
     const code = await encodeSyncCode(buildSyncState());
     els.syncCode.value = code;
-    els.syncCode.focus();
-    els.syncCode.select();
+    if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      els.syncCode.focus();
+      els.syncCode.select();
+    }
     return code;
+  }
+
+  async function copyToClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (err) {
+      return false;
+    }
   }
 
   els.syncCodeCopyBtn.addEventListener("click", async () => {
     try {
       const code = await fillOwnSyncCode();
-      try {
-        await navigator.clipboard.writeText(code);
-        setCodeStatus("コードをコピーしました。もう一方の端末の欄に貼り付けて「取り込む」を押してください。", "ok");
-      } catch (err) {
-        setCodeStatus("コードを選択しました。コピーして、もう一方の端末の欄に貼り付けてください。", "ok");
-      }
+      setCodeStatus(
+        (await copyToClipboard(code))
+          ? "コードをコピーしました。もう一方の端末で「コピーしたコードを取り込む」を押してください。"
+          : "コードを欄に出しました。欄を長押ししてコピーし、もう一方の端末で取り込んでください。",
+        "ok"
+      );
     } catch (err) {
       setCodeStatus("コードを作れませんでした。", "bad");
     }
   });
 
-  els.syncCodeImportBtn.addEventListener("click", async () => {
-    const text = els.syncCode.value.trim();
-    if (!text) {
-      setCodeStatus("別の端末のコードを欄に貼り付けてください。", "bad");
-      return;
-    }
+  // Merges a pasted code, then puts this device's updated code in the box and
+  // on the clipboard, ready to be imported on the other device.
+  async function importSyncCode(text) {
     try {
       const changed = applySyncState(await decodeSyncCode(text));
-      await fillOwnSyncCode();
+      const copied = await copyToClipboard(await fillOwnSyncCode());
       setCodeStatus(
         (changed ? "取り込みました。" : "新しい内容はありませんでした。") +
-          "欄には、いまのこの端末のコードが入っています。もう一方の端末にも反映するには、これをコピーしてそちらで取り込んでください。",
+          (copied
+            ? "更新後のコードをコピーしました。もう一方の端末でも「コピーしたコードを取り込む」を押してください。"
+            : "欄に更新後のコードが入っています。欄を長押ししてコピーし、もう一方の端末で取り込んでください。"),
         "ok"
       );
     } catch (err) {
       setCodeStatus("コードを読み取れませんでした。最後までコピーできているか確認してください。", "bad");
     }
+  }
+
+  els.syncCodeImportBtn.addEventListener("click", () => {
+    const text = els.syncCode.value.trim();
+    if (!text) {
+      setCodeStatus("別の端末のコードを欄に貼り付けてください。", "bad");
+      return;
+    }
+    importSyncCode(text);
+  });
+
+  els.syncCodePasteBtn.addEventListener("click", async () => {
+    let text = "";
+    try {
+      text = (await navigator.clipboard.readText()).trim();
+    } catch (err) {
+      setCodeStatus("クリップボードを読めませんでした。貼り付けの許可を確認するか、欄を長押しして貼り付け、「欄のコードを取り込む」を押してください。", "bad");
+      return;
+    }
+    if (!text) {
+      setCodeStatus("クリップボードが空です。もう一方の端末でコードをコピーしてください。", "bad");
+      return;
+    }
+    importSyncCode(text);
   });
 
   function startSyncSession() {

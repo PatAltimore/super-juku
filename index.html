@@ -651,12 +651,13 @@
 
       <div class="sync-card" id="syncManual">
         <div class="sync-card-title">コードで同期（手動）</div>
-        <div class="sync-hint">自動で同期できないときに使います。片方の端末で「この端末のコードをコピー」を押し、もう一方の端末の下の欄に貼り付けて「取り込む」を押してください。取り込むと、こちらも更新されたコードが出るので、それを最初の端末にも貼り付けると、両方がそろいます。</div>
+        <div class="sync-hint">自動で同期できないときに使います。片方の端末で「この端末のコードをコピー」を押し、もう一方の端末で「コピーしたコードを取り込む」を押してください。取り込むと、更新されたコードが自動でコピーされるので、最初の端末でも「コピーしたコードを取り込む」を押すと、両方がそろいます。キーボードは使いません。</div>
         <div class="sync-manual-buttons">
           <button class="secondary-btn" id="syncCodeCopyBtn" type="button">この端末のコードをコピー</button>
-          <button class="secondary-btn" id="syncCodeImportBtn" type="button">取り込む</button>
+          <button class="secondary-btn" id="syncCodePasteBtn" type="button">コピーしたコードを取り込む</button>
         </div>
-        <textarea class="sync-code" id="syncCode" rows="4" placeholder="ここに別の端末のコードを貼り付け" spellcheck="false" autocapitalize="off" autocorrect="off" autocomplete="off"></textarea>
+        <textarea class="sync-code" id="syncCode" rows="4" inputmode="none" placeholder="（スマホでは上のボタンだけで使えます。手で貼り付けるときは、ここを長押し）" spellcheck="false" autocapitalize="off" autocorrect="off" autocomplete="off"></textarea>
+        <button class="secondary-btn" id="syncCodeImportBtn" type="button">欄のコードを取り込む</button>
         <div class="sync-hint" id="syncCodeStatus" role="status" aria-live="polite"></div>
       </div>
 
