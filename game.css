@@ -215,8 +215,8 @@ a.game-link { text-decoration: none; }
   opacity: 0.7;
 }
 
-/* Karuta cards: tall paper cards with a thick coloured border, the term in
-   dark ink running top to bottom. The border colour (--tone) says what is
+/* Karuta-style cards: wide paper cards with a thick coloured border, the term
+   in dark ink. The border colour (--tone) says what is
    asked about; the badge says what to type: あ in a circle for a reading, A in
    a square for a meaning. */
 .tile {
@@ -228,8 +228,7 @@ a.game-link { text-decoration: none; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 96px;
-  min-height: 140px;
+  min-width: 150px;
   max-width: 70%;
   padding: 0;
   border: 7px solid var(--tone);
@@ -250,10 +249,11 @@ a.game-link { text-decoration: none; }
 .tile-head {
   order: 3;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 2px;
-  padding: 0 6px 7px;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 8px 7px;
   text-align: center;
 }
 
@@ -276,36 +276,31 @@ a.game-link { text-decoration: none; }
 .kind-other .tile-badge { border-radius: 2px; }
 
 .tile-label {
-  font-size: 0.66rem;
+  font-size: 0.7rem;
   font-weight: 700;
   line-height: 1.15;
+  white-space: nowrap;
   color: #4a3f5a;
 }
 
 .tile-term {
   font-family: "Shippori Mincho", serif;
   font-weight: 800;
-  font-size: var(--term-size, 2rem);
+  font-size: 2rem;
   line-height: 1.15;
   padding: 4px 8px;
   margin: auto 0;
   order: 1;
   white-space: nowrap;
 }
-.tile-term.vertical {
-  writing-mode: vertical-rl;
-  text-orientation: upright;
-  letter-spacing: 0.08em;
-}
-
 .tile-answer {
   display: none;
   font-size: 0.78rem;
   font-weight: 700;
   text-align: center;
-  max-width: 100%;
+  max-width: 14em;
   order: 2;
-  padding: 0 6px 6px;
+  padding: 0 8px 6px;
   overflow-wrap: anywhere;
   color: #7a1414;
 }
@@ -496,5 +491,5 @@ a.game-link { text-decoration: none; }
 
 @media (max-width: 420px) {
   .hud-counts { gap: 6px; font-size: 0.78rem; }
-  .tile-term { font-size: calc(var(--term-size, 2rem) * 0.85); }
+  .tile-term { font-size: 1.7rem; }
 }

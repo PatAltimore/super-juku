@@ -3,7 +3,7 @@
 // the bottom counts as wrong. Tiles use the app's question colours: pink for
 // the kanji itself (音読み and meaning), purple for its word, teal for its
 // noun; a custom deck's readings are pink and its meanings purple. Each term
-// is a karuta card with a border in that colour, its term running top to bottom.
+// is a wide karuta-style card with a border in that colour.
 (() => {
   "use strict";
 
@@ -466,15 +466,7 @@
       '<span class="tile-head"><span class="tile-badge"></span><span class="tile-label"></span></span><span class="tile-term"></span><span class="tile-answer"></span>';
     el.querySelector(".tile-badge").textContent = kindBadge(q);
     el.querySelector(".tile-label").textContent = q.label;
-    const termEl = el.querySelector(".tile-term");
-    termEl.textContent = q.term;
-    // Japanese runs top to bottom, as on a karuta card; other text stays flat.
-    if (/^[぀-ヿ一-鿿々〆ー]+$/.test(q.term)) {
-      termEl.classList.add("vertical");
-      const n = [...q.term].length;
-      if (n >= 6) el.style.setProperty("--term-size", "1.2rem");
-      else if (n >= 4) el.style.setProperty("--term-size", "1.55rem");
-    }
+    el.querySelector(".tile-term").textContent = q.term;
     el.querySelector(".tile-answer").textContent = q.display;
     els.field.appendChild(el);
     const w = el.offsetWidth;
