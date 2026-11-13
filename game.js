@@ -10,6 +10,7 @@
   const SETTINGS_KEY = "kanjiFlashN2.settings.v1";
   const CUSTOM_DECKS_KEY = "kanjiFlashN2.customDecks.v1";
   const GAME_KEY = "kanjiFlashN2.fallingGame.v1";
+  const CUSTOM_ANSWERS_KEY = "kanjiFlashN2.customAnswers.v1";
   const LEECHES_KEY = "kanjiFlashN2.leeches.v1";
   const KANJI_REMOVALS_KEY = "kanjiFlashN2.kanjiRemovals.v1";
   const N2_DECK = "n2-kanji";
@@ -176,6 +177,83 @@
 
   const typoThreshold = (len) => (len <= 3 ? 0 : len <= 7 ? 1 : 2);
 
+  // ---------- added answers ----------
+  // Answers added in the app (答えを追加) also count here: per N2 kanji
+  // ({ meaning, onyomi, kunyomi, wordMeaning, nounReading, nounMeaning }) and per
+  // custom-deck card (deck.answers[front][label]). They are scrubbed as they are
+  // read (the saved data is left as it is): non-text, blank and over-long
+  // entries are dropped, odd whitespace and control characters removed, and
+  // duplicates (ignoring case and hiragana/katakana) collapsed.
+
+  function scrubAnswerList(list) {
+    if (!Array.isArray(list)) return [];
+    const seen = new Set();
+    const out = [];
+    list.forEach((a) => {
+      if (typeof a !== "string") return;
+      const t = a
+        .normalize("NFC")
+        .replace(/[\u0000-\u001f\u007f\u200b-\u200d\ufeff]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (!t || t.length > 200) return;
+      const key = toHira(t.toLowerCase());
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push(t);
+    });
+    return out;
+  }
+
+  // The app's older flat list is sorted by script: katakana is an onyomi,
+  // hiragana a kunyomi, anything else a meaning.
+  function scrubKanjiAnswers(raw) {
+    const out = {};
+    if (!raw || typeof raw !== "object") return out;
+    Object.keys(raw).forEach((num) => {
+      const val = raw[num];
+      let buckets = null;
+      if (Array.isArray(val)) {
+        buckets = { meaning: [], onyomi: [], kunyomi: [] };
+        val.forEach((a) => {
+          if (typeof a !== "string") return;
+          if (/[゠-ヿ]/.test(a)) buckets.onyomi.push(a);
+          else if (/[぀-ゟ]/.test(a)) buckets.kunyomi.push(a);
+          else buckets.meaning.push(a);
+        });
+      } else if (val && typeof val === "object") {
+        buckets = val;
+      }
+      if (!buckets) return;
+      const clean = {};
+      Object.keys(buckets).forEach((bucket) => {
+        const list = scrubAnswerList(buckets[bucket]);
+        if (list.length) clean[bucket] = list;
+      });
+      if (Object.keys(clean).length) out[num] = clean;
+    });
+    return out;
+  }
+
+  const kanjiAnswers = scrubKanjiAnswers(loadJson(CUSTOM_ANSWERS_KEY, {}));
+
+  // Where the app keeps the answers added to each N2 question type.
+  const ANSWER_BUCKET = { wordReading: "kunyomi" };
+  const kanjiExtras = (num, type) => (kanjiAnswers[String(num)] || {})[ANSWER_BUCKET[type] || type] || [];
+
+  function deckExtras(deck, front, label) {
+    const entry = deck.answers && typeof deck.answers === "object" ? deck.answers[front] : null;
+    return scrubAnswerList(entry && typeof entry === "object" ? entry[label] : null);
+  }
+
+  // Accepted answers for a question: the shown one plus any added ones.
+  function acceptedFor(kind, value, extras) {
+    const make = kind === "reading" ? readingAnswers : meaningAnswers;
+    const set = make(value);
+    extras.forEach((a) => make(a).forEach((x) => set.add(x)));
+    return set;
+  }
+
   // ---------- decks and questions ----------
 
   let n2Deck = null;
@@ -197,7 +275,7 @@
         tone,
         kind,
         display: value,
-        answers: kind === "reading" ? readingAnswers(value) : meaningAnswers(value),
+        answers: acceptedFor(kind, value, kanjiExtras(e.num, id)),
       });
     };
     // Pink: the kanji itself. Purple: its word. Teal: its noun (as in the app).
@@ -225,7 +303,7 @@
         let label = s.label;
         if (kind === "reading") label = "読み方";
         else if (kind === "meaning" && !isKanaOrKanji(value)) label = "Meaning";
-        const answers = kind === "reading" ? readingAnswers(value) : meaningAnswers(value);
+        const answers = acceptedFor(kind, value, deckExtras(deck, card.front, s.label));
         qs.push({
           id: `${deck.id}:${ci}:${si}`,
           term: card.front,

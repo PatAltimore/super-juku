@@ -39,6 +39,7 @@ a.game-link { text-decoration: none; }
   flex: 0 0 auto;
   flex-direction: row;
   width: auto;
+  min-width: 0;
   min-height: 0;
   gap: 6px;
   padding: 2px 8px;
