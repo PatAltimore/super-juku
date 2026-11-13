@@ -137,16 +137,6 @@
     </div>
   </div>
 
-  <!-- SYNC BY QR CODE -->
-  <div class="modal" id="scanModal" role="dialog" aria-modal="true" aria-labelledby="scanModalTitle" hidden>
-    <div class="modal-card qr-modal-card">
-      <div class="modal-title" id="scanModalTitle">QRコードを読み取る</div>
-      <video class="scan-video" id="scanVideo" playsinline muted></video>
-      <div class="qr-progress" id="scanProgress"></div>
-      <button class="primary-btn" id="scanModalClose" type="button">閉じる</button>
-    </div>
-  </div>
-
   <!-- RANK POPUP -->
   <div class="modal" id="rankModal" role="dialog" aria-modal="true" aria-labelledby="rankModalTitle" hidden>
     <div class="modal-card">
@@ -656,21 +646,6 @@
           <div class="sync-card-title" id="syncGroupTitle">同期グループ</div>
           <div class="sync-hint">同じグループのデバイスでこの画面を開くと、自動的に同期されます。スマホやPCを追加するときは、そのデバイスでもこの画面を開くと、グループに追加するか確認が表示されます。</div>
           <button class="primary-btn" id="syncNowBtn" type="button">今すぐ同期</button>
-        </div>
-      </div>
-
-      <div class="sync-card" id="syncManual">
-        <div class="sync-card-title">QRコードで同期（手動）</div>
-        <div class="qr-row">
-          <div class="qr-side">
-            <canvas class="qr-canvas" id="qrCanvas" width="560" height="560"></canvas>
-            <div class="qr-progress" id="qrProgress"></div>
-          </div>
-          <div class="qr-text">
-            <div class="sync-hint">自動で同期できないときに使います。もう一方の端末で「QRコードを読み取る」を押し、このQRコードにカメラを向けてください。読み取ったあと、そちらに出るQRコードをこの端末で読み取ると、両方がそろいます。</div>
-            <button class="secondary-btn" id="syncQrScanBtn" type="button">QRコードを読み取る</button>
-            <div class="sync-hint" id="syncCodeStatus" role="status" aria-live="polite"></div>
-          </div>
         </div>
       </div>
 
