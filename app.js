@@ -372,6 +372,33 @@
   // Shuffles questions, then picks them one at a time, skipping any whose
   // group (the term it asks about) matches the previous pick, so a term's
   // questions don't come back to back unless only that term's are left.
+  // Random order for a review, with all the questions of one term (its
+  // reading and meaning, ...) kept within REVIEW_PAIR_SPAN questions of each
+  // other: the terms are shuffled, packed into blocks of at most that many
+  // questions, and each block is shuffled on its own.
+  const REVIEW_PAIR_SPAN = 30;
+
+  function clusterShuffle(questions, groupOf) {
+    const groups = new Map();
+    questions.forEach((q) => {
+      const key = groupOf(q);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(q);
+    });
+    const ordered = [];
+    let block = [];
+    const flush = () => {
+      ordered.push(...shuffle(block));
+      block = [];
+    };
+    shuffle(Array.from(groups.values())).forEach((group) => {
+      if (block.length && block.length + group.length > REVIEW_PAIR_SPAN) flush();
+      block.push(...group);
+    });
+    flush();
+    return ordered;
+  }
+
   function spreadQuestions(questions, groupOf) {
     const pool = shuffle(questions);
     const ordered = [];
@@ -2901,7 +2928,7 @@
   // questions kept apart where possible.
   function buildTypedQuestions(cards, fullyRandom = false) {
     const questions = cards.flatMap((card) => card.sections.map((section) => ({ card, section })));
-    return fullyRandom ? shuffle(questions) : spreadQuestions(questions, (q) => q.card);
+    return fullyRandom ? clusterShuffle(questions, (q) => q.card.front) : spreadQuestions(questions, (q) => q.card);
   }
 
   function startCustomTypeSession(deck, questions, mode) {
@@ -3913,7 +3940,8 @@
     const questions = list.flatMap(({ item, part }) =>
       availableQuestionTypes(item, part).map((type) => ({ item, type }))
     );
-    return fullyRandom ? shuffle(questions) : spreadQuestions(questions, (q) => q.item);
+    const termKey = (q) => `${q.item.deckId ? q.item.deckId + "|" + q.item.front : q.item.num}:${groupOfType(q.type)}`;
+    return fullyRandom ? clusterShuffle(questions, termKey) : spreadQuestions(questions, (q) => q.item);
   }
 
   // ---------- lesson: study a batch of five, then quiz on it ----------

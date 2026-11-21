@@ -365,3 +365,60 @@
   font-family: "Mochiy Pop One", "Shippori Mincho", sans-serif;
   font-weight: 400;
 }
+
+/* ---------- 組を選ぶ ---------- */
+.pair-toggle {
+  margin-left: 8px;
+  padding: 2px 12px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pair-toggle.active { background: #ff7a12; border-color: #ff7a12; }
+
+.pair-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+}
+.pair-actions { display: flex; gap: 8px; }
+.pair-actions button {
+  flex: 1;
+  padding: 6px 4px;
+  border: 1.5px solid #e58ac8;
+  border-radius: 10px;
+  background: #fff;
+  color: #3a0f2c;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pair-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.pair-chip {
+  padding: 6px 0;
+  border: 2px solid #e58ac8;
+  border-radius: 10px;
+  background: #fff;
+  color: #9a6a88;
+  font-family: "Shippori Mincho", serif;
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.pair-chip.on { background: #ff7a12; border-color: #ff7a12; color: #fff; }

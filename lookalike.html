@@ -50,6 +50,17 @@
         <input type="range" id="timeRange" min="0" max="20" step="1" value="6" aria-label="制限時間">
       </div>
 
+      <div class="game-field">
+        <span class="game-field-label">組を選ぶ <button type="button" class="pair-toggle" id="pairToggle">オフ</button></span>
+        <div class="pair-picker" id="pairPicker" hidden>
+          <div class="pair-actions">
+            <button type="button" id="pairAll">すべて選ぶ</button>
+            <button type="button" id="pairNone">すべて外す</button>
+          </div>
+          <div class="pair-grid" id="pairGrid"></div>
+        </div>
+      </div>
+
       <p class="game-note" id="poolNote"></p>
       <button class="mode-btn game-start" id="startBtn" type="button"><span class="mode-label">スタート</span></button>
     </div>

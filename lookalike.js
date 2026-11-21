@@ -28,6 +28,11 @@
     timeRange: $("timeRange"),
     timeLabel: $("timeLabel"),
     poolNote: $("poolNote"),
+    pairToggle: $("pairToggle"),
+    pairPicker: $("pairPicker"),
+    pairGrid: $("pairGrid"),
+    pairAll: $("pairAll"),
+    pairNone: $("pairNone"),
     startBtn: $("startBtn"),
     quitBtn: $("quitBtn"),
     hudRight: $("hudRight"),
@@ -70,7 +75,8 @@
   document.documentElement.setAttribute("data-theme", appSettings.theme || "dark");
   if (appSettings.fontScale) document.documentElement.style.setProperty("--font-scale", appSettings.fontScale);
 
-  const prefs = Object.assign({ choose: "all", count: 20, time: 6 }, loadJson(PREFS_KEY, {}));
+  const prefs = Object.assign({ choose: "all", count: 20, time: 6, pairSelect: false, excluded: [] }, loadJson(PREFS_KEY, {}));
+  if (!Array.isArray(prefs.excluded)) prefs.excluded = [];
   const savePrefs = () => saveJson(PREFS_KEY, prefs);
 
   // ---------- the kanji pool ----------
@@ -235,13 +241,20 @@
     els.results.hidden = name !== "results";
   }
 
+  // A pair's id is its two kanji in code order, so it is the same either way round.
+  const pairId = (pair) => (pair[0].kanji < pair[1].kanji ? pair[0].kanji + pair[1].kanji : pair[1].kanji + pair[0].kanji);
+
+  // `pairs` are all the lookalike pairs among the lesson-done kanji, `chosen`
+  // the ones to play: all of them, or those left ticked in 組を選ぶ.
   function currentPool() {
     const pool = learnedKanji();
-    return { pool, pairs: pairsOf(pool) };
+    const pairs = pairsOf(pool).sort((a, b) => (pairId(a) < pairId(b) ? -1 : 1));
+    const chosen = prefs.pairSelect ? pairs.filter((p) => !prefs.excluded.includes(pairId(p))) : pairs;
+    return { pool, pairs, chosen };
   }
 
   function start() {
-    const { pairs } = currentPool();
+    const { chosen: pairs } = currentPool();
     if (!pairs.length) return;
     // 全て: every pair once, in random order.
     const queue = prefs.count === "all" ? shuffle(pairs) : null;
@@ -377,15 +390,35 @@
   }
 
   function renderSetup() {
-    const { pool, pairs } = currentPool();
+    const { pool, pairs, chosen } = currentPool();
+    renderPairPicker(pairs);
     if (!pairs.length) {
       els.poolNote.textContent = pool.size
         ? `レッスンを終えた漢字（${pool.size}字）の中に、似た組がまだありません。レッスンを進めると増えます。`
         : "レッスンを終えた漢字がまだありません。レッスンを進めてください。";
     } else {
-      els.poolNote.textContent = `レッスン済み ${pool.size}字 ／ 似た組 ${pairs.length}組`;
+      els.poolNote.textContent =
+        `レッスン済み ${pool.size}字 ／ 似た組 ${pairs.length}組` + (prefs.pairSelect ? ` ／ 選んだ組 ${chosen.length}組` : "");
     }
-    els.startBtn.disabled = !pairs.length;
+    els.startBtn.disabled = !chosen.length;
+  }
+
+  // 組を選ぶ: tick the pairs to play (all ticked at first).
+  function renderPairPicker(pairs) {
+    els.pairToggle.classList.toggle("active", prefs.pairSelect);
+    els.pairToggle.textContent = prefs.pairSelect ? "オン" : "オフ";
+    els.pairPicker.hidden = !prefs.pairSelect || !pairs.length;
+    if (els.pairPicker.hidden) return;
+    els.pairGrid.innerHTML = "";
+    pairs.forEach((pair) => {
+      const id = pairId(pair);
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "pair-chip" + (prefs.excluded.includes(id) ? "" : " on");
+      b.dataset.id = id;
+      b.textContent = pair[0].kanji + pair[1].kanji;
+      els.pairGrid.appendChild(b);
+    });
   }
 
   function bindSeg(seg, key, parse) {
@@ -409,6 +442,30 @@
     prefs.time = Number(els.timeRange.value);
     savePrefs();
     renderTimeLabel();
+  });
+
+  els.pairToggle.addEventListener("click", () => {
+    prefs.pairSelect = !prefs.pairSelect;
+    savePrefs();
+    renderSetup();
+  });
+  els.pairGrid.addEventListener("click", (e) => {
+    const b = e.target.closest(".pair-chip");
+    if (!b) return;
+    const id = b.dataset.id;
+    prefs.excluded = prefs.excluded.includes(id) ? prefs.excluded.filter((x) => x !== id) : [...prefs.excluded, id];
+    savePrefs();
+    renderSetup();
+  });
+  els.pairAll.addEventListener("click", () => {
+    prefs.excluded = [];
+    savePrefs();
+    renderSetup();
+  });
+  els.pairNone.addEventListener("click", () => {
+    prefs.excluded = currentPool().pairs.map(pairId);
+    savePrefs();
+    renderSetup();
   });
 
   els.startBtn.addEventListener("click", start);
