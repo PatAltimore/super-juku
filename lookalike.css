@@ -346,7 +346,9 @@
 }
 #screen-setup.lk-setup .seg button.active { background: #ff7a12; color: #fff; }
 #screen-setup.lk-setup .game-note {
-  padding: 6px 10px;
+  flex: 0 0 auto;
+  line-height: 1.5;
+  padding: 8px 12px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.9);
   color: var(--text);
