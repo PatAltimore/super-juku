@@ -424,3 +424,60 @@
   cursor: pointer;
 }
 .pair-chip.on { background: #ff7a12; border-color: #ff7a12; color: #fff; }
+
+/* ---------- the ミニゲーム menu as channel tiles: a grid of wide, softly
+   rounded tiles with a glossy top, as on a console
+   channel menu. ---------- */
+.game-setup.minigame-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 14px;
+}
+[data-theme] a.minigame-btn.tod,
+[data-theme] a.minigame-btn.bbs {
+  container-type: inline-size;
+  aspect-ratio: 1.8 / 1;
+  min-height: 0;
+  flex: none;
+  padding: 0;
+  border: 2px solid #a8a8a8;
+  border-radius: 14px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+[data-theme] a.minigame-btn.tod:hover,
+[data-theme] a.minigame-btn.bbs:hover { transform: scale(1.03); }
+[data-theme] a.minigame-btn.tod:active,
+[data-theme] a.minigame-btn.bbs:active {
+  transform: scale(0.98);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+/* the gloss */
+a.minigame-btn.tod::after,
+a.minigame-btn.bbs::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 52% 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.04));
+  pointer-events: none;
+}
+/* artwork scaled to the tile */
+[data-theme] a.minigame-btn.bbs {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 112' width='320' height='112'%3E%3Crect x='1' y='1' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='40' y='21' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E土士%3C/text%3E%3Crect x='81' y='1' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='120' y='21' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E末未%3C/text%3E%3Crect x='1' y='29' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='40' y='49' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E己巳%3C/text%3E%3Crect x='81' y='29' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='120' y='49' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E千干%3C/text%3E%3Crect x='161' y='1' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='200' y='21' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E大犬%3C/text%3E%3Crect x='161' y='29' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='200' y='49' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E王玉%3C/text%3E%3Crect x='241' y='1' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='280' y='21' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E日目%3C/text%3E%3Crect x='241' y='29' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='280' y='49' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E牛午%3C/text%3E%3Crect x='1' y='57' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='40' y='77' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E白百%3C/text%3E%3Crect x='81' y='57' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='120' y='77' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E刀力%3C/text%3E%3Crect x='161' y='57' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='200' y='77' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E木本%3C/text%3E%3Crect x='241' y='57' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='280' y='77' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E人入%3C/text%3E%3Crect x='1' y='85' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='40' y='105' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E田由%3C/text%3E%3Crect x='81' y='85' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='120' y='105' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E貝見%3C/text%3E%3Crect x='161' y='85' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='200' y='105' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E夕タ%3C/text%3E%3Crect x='241' y='85' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='280' y='105' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E支友%3C/text%3E%3C/svg%3E") center top / 62cqw auto repeat,
+    linear-gradient(180deg, #e0449f 0%, #c02a84 100%);
+}
+a.minigame-btn.tod .mode-label { font-size: 15cqw; }
+a.minigame-btn.bbs .mode-label {
+  font-size: 8.4cqw;
+  padding: 0.18em 0.7em 0.26em;
+  border-width: 0.18em;
+  border-radius: 0.55em;
+  box-shadow: 0.2em 0.2em 0 #000;
+}
+a.minigame-btn.bbs .mode-label::before,
+a.minigame-btn.bbs .mode-label::after { font-size: 0.8em; }
+@media (max-width: 380px) {
+  .game-setup.minigame-list { gap: 10px; }
+}
