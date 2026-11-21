@@ -36,7 +36,6 @@
     hudTotal: $("hudTotal"),
     timer: $("timer"),
     timerBar: $("timerBar"),
-    clueLabel: $("clueLabel"),
     clueText: $("clueText"),
     choice: [$("choiceL"), $("choiceR")],
     text: [$("textL"), $("textR")],
@@ -158,8 +157,6 @@
 
   // ---------- questions ----------
 
-  const KIND_LABEL = { kanji: "漢字", reading: "読み方", meaning: "意味" };
-
   const shuffle = (list) => {
     const a = list.slice();
     for (let i = a.length - 1; i > 0; i--) {
@@ -186,18 +183,24 @@
     const kinds = ["kanji", "reading", "meaning"];
     const answers = prefs.choose === "all" ? kinds : [prefs.choose];
     const combos = [];
-    answers.forEach((answer) => kinds.filter((clue) => clue !== answer).forEach((clue) => combos.push({ clue, answer })));
+    answers.forEach((answer) =>
+      kinds
+        // A reading as the clue with two meanings to pick from is left out.
+        .filter((clue) => clue !== answer && !(clue === "reading" && answer === "meaning"))
+        .forEach((clue) => combos.push({ clue, answer }))
+    );
     return combos;
   }
 
   let lastPairId = "";
 
-  function makeQuestion(pairs) {
+  // With `fixedPair` the question is about that pair; otherwise a random one.
+  function makeQuestion(pairs, fixedPair) {
     const combos = kindCombos();
     for (let attempt = 0; attempt < 60; attempt++) {
-      const pair = pick(pairs);
+      const pair = fixedPair || pick(pairs);
       const id = pair[0].kanji + pair[1].kanji;
-      if (pairs.length > 1 && id === lastPairId && attempt < 30) continue;
+      if (!fixedPair && pairs.length > 1 && id === lastPairId && attempt < 30) continue;
       const [target, other] = Math.random() < 0.5 ? pair : [pair[1], pair[0]];
       const { clue, answer } = pick(combos);
       const clues = uniqueValues(target, other, clue);
@@ -240,7 +243,9 @@
   function start() {
     const { pairs } = currentPool();
     if (!pairs.length) return;
-    session = { pairs, total: prefs.count, index: 0, right: 0, combo: 0, bestCombo: 0, misses: [], q: null, answered: true, timerId: 0 };
+    // 全て: every pair once, in random order.
+    const queue = prefs.count === "all" ? shuffle(pairs) : null;
+    session = { pairs, queue, total: queue ? queue.length : prefs.count, index: 0, right: 0, combo: 0, bestCombo: 0, misses: [], q: null, answered: true, timerId: 0 };
     showScreen("play");
     nextQuestion();
   }
@@ -253,7 +258,14 @@
   function nextQuestion() {
     clearTimeout(session.advanceId);
     if (session.index >= session.total) return finish();
-    const q = makeQuestion(session.pairs);
+    let q = null;
+    if (session.queue) {
+      // A pair with nothing to tell its two kanji apart is skipped.
+      while (session.queue.length && !q) q = makeQuestion(session.pairs, session.queue.shift());
+      session.total = session.index + (q ? 1 : 0) + session.queue.length;
+    } else {
+      q = makeQuestion(session.pairs);
+    }
     if (!q) return finish();
     session.q = q;
     session.index++;
@@ -262,7 +274,6 @@
     els.hudTotal.textContent = session.total;
     els.hudRight.textContent = session.right;
     els.hudCombo.textContent = session.combo > 1 ? `${session.combo} コンボ` : "";
-    els.clueLabel.textContent = `ヒント：${KIND_LABEL[q.clueKind]}`;
     setText(els.clueText, q.clue, q.clueKind);
     [0, 1].forEach((side) => {
       setText(els.text[side], q.options[side], q.answerKind);
@@ -391,7 +402,7 @@
   }
 
   bindSeg(els.chooseSeg, "choose");
-  bindSeg(els.countSeg, "count", Number);
+  bindSeg(els.countSeg, "count", (v) => (v === "all" ? "all" : Number(v)));
   els.timeRange.value = prefs.time;
   renderTimeLabel();
   els.timeRange.addEventListener("input", () => {
