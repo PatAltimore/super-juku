@@ -11,6 +11,7 @@
   const CUSTOM_DECKS_KEY = "kanjiFlashN2.customDecks.v1";
   const GAME_KEY = "kanjiFlashN2.fallingGame.v1";
   const CUSTOM_ANSWERS_KEY = "kanjiFlashN2.customAnswers.v1";
+  const STATS_KEY = "kanjiFlashN2.stats.v1";
   const LEECHES_KEY = "kanjiFlashN2.leeches.v1";
   const KANJI_REMOVALS_KEY = "kanjiFlashN2.kanjiRemovals.v1";
   const N2_DECK = "n2-kanji";
@@ -35,6 +36,8 @@
     typeSeg: $("typeSeg"),
     countSeg: $("countSeg"),
     speedSeg: $("speedSeg"),
+    levelToggle: $("levelToggle"),
+    levelChips: $("levelChips"),
     deckNote: $("deckNote"),
     startBtn: $("startBtn"),
     field: $("field"),
@@ -82,7 +85,29 @@
   document.documentElement.setAttribute("data-theme", appSettings.theme || "dark");
   if (appSettings.fontScale) document.documentElement.style.setProperty("--font-scale", appSettings.fontScale);
 
-  const prefs = Object.assign({ deck: N2_DECK, type: "all", count: 20, speed: "normal", best: {} }, loadJson(GAME_KEY, {}));
+  // Review levels a question can be drawn from (the app's progress colours):
+  // never studied, learning (box 1-2), then 復習2-6 (box 3-7).
+  const LEVELS = [
+    { id: "new", label: "未学習" },
+    { id: "learning", label: "学習中" },
+    { id: "r2", label: "復習2" },
+    { id: "r3", label: "復習3" },
+    { id: "r4", label: "復習4" },
+    { id: "r5", label: "復習5" },
+    { id: "r6", label: "復習6" },
+  ];
+  const LEVEL_BY_BOX = { 3: "r2", 4: "r3", 5: "r4", 6: "r5", 7: "r6" };
+  const prefs = Object.assign(
+    { deck: N2_DECK, type: "all", count: 20, speed: "normal", best: {}, levelFilter: false, levels: LEVELS.map((l) => l.id) },
+    loadJson(GAME_KEY, {})
+  );
+  if (!Array.isArray(prefs.levels)) prefs.levels = LEVELS.map((l) => l.id);
+  const statsPerCard = (loadJson(STATS_KEY, {}) || {}).perCard || {};
+
+  function levelOf(entry, studied) {
+    if (!entry || !studied) return "new";
+    return LEVEL_BY_BOX[Math.min(entry.box || 0, 7)] || "learning";
+  }
   const savePrefs = () => saveJson(GAME_KEY, prefs);
 
   // Keep the answer bar above a phone's on-screen keyboard.
@@ -268,7 +293,9 @@
     const qs = [];
     const add = (id, term, label, tone, kind, value) => {
       if (!value) return;
+      const entry = statsPerCard[id.startsWith("word") ? `w${e.num}` : id.startsWith("noun") ? `n${e.num}` : String(e.num)];
       qs.push({
+        level: levelOf(entry, Boolean(entry && (entry.lastSeen || entry.right > 0 || entry.wrong > 0))),
         id: `${e.num}:${id}`,
         term,
         label,
@@ -296,6 +323,8 @@
     const qs = [];
     deck.cards.forEach((card, ci) => {
       if (keepCard && !keepCard(card)) return;
+      const entry = deck.srs && deck.srs[card.front];
+      const level = levelOf(entry, Boolean(entry && entry.lastSeen));
       (card.sections || []).forEach((s, si) => {
         if (!s || !s.value || !String(s.value).trim()) return;
         const value = String(s.value);
@@ -305,6 +334,7 @@
         else if (kind === "meaning" && !isKanaOrKanji(value)) label = "Meaning";
         const answers = acceptedFor(kind, value, deckExtras(deck, card.front, s.label));
         qs.push({
+          level,
           id: `${deck.id}:${ci}:${si}`,
           term: card.front,
           label,
@@ -363,7 +393,8 @@
   }
 
   function filteredQuestions() {
-    const all = questionsFor(prefs.deck);
+    let all = questionsFor(prefs.deck);
+    if (prefs.levelFilter) all = all.filter((q) => prefs.levels.includes(q.level));
     return prefs.type === "all" ? all : all.filter((q) => q.kind === prefs.type);
   }
 
@@ -439,6 +470,31 @@
   // 全部: every question of the deck, once each.
   bindSeg(els.countSeg, "count", (v) => (v === "all" ? "all" : Number(v)));
   bindSeg(els.speedSeg, "speed");
+
+  // 習熟度: only draw questions from the chosen review levels.
+  function renderLevelFilter() {
+    els.levelToggle.classList.toggle("active", prefs.levelFilter);
+    els.levelToggle.textContent = prefs.levelFilter ? "オン" : "オフ";
+    els.levelChips.hidden = !prefs.levelFilter;
+    els.levelChips.querySelectorAll("button").forEach((b) => b.classList.toggle("active", prefs.levels.includes(b.dataset.value)));
+  }
+  els.levelChips.innerHTML = LEVELS.map((l) => `<button type="button" class="status-${l.id}" data-value="${l.id}">${l.label}</button>`).join("");
+  els.levelToggle.addEventListener("click", () => {
+    prefs.levelFilter = !prefs.levelFilter;
+    savePrefs();
+    renderLevelFilter();
+    renderSetupNote();
+  });
+  els.levelChips.addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    const id = b.dataset.value;
+    prefs.levels = prefs.levels.includes(id) ? prefs.levels.filter((x) => x !== id) : [...prefs.levels, id];
+    savePrefs();
+    renderLevelFilter();
+    renderSetupNote();
+  });
+  renderLevelFilter();
 
   // ---------- the game ----------
 

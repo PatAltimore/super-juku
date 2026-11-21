@@ -52,6 +52,7 @@ a.game-link { text-decoration: none; }
 .legend-row { flex-wrap: wrap; }
 
 .legend-term {
+  color: #fff;
   font-family: "Shippori Mincho", serif;
   font-weight: 800;
   font-size: 1.3rem;
@@ -216,8 +217,8 @@ a.game-link { text-decoration: none; }
   opacity: 0.7;
 }
 
-/* Karuta-style cards: wide paper cards with a thick coloured border, the term
-   in dark ink. The border colour (--tone) says what is
+/* Black quiz-show bubbles: a black rounded box with a thick coloured border,
+   the term in a light tint of that colour and the question type in white. The border colour (--tone) says what is
    asked about; the badge says what to type: あ in a circle for a reading, A in
    a square for a meaning. */
 .tile {
@@ -232,11 +233,11 @@ a.game-link { text-decoration: none; }
   min-width: 150px;
   max-width: 70%;
   padding: 0;
-  border: 7px solid var(--tone);
-  border-radius: 3px;
-  background: linear-gradient(#fbf9f0 55%, #f0e7d0);
-  color: #2b2233;
-  box-shadow: 0 5px 10px -3px rgba(0, 0, 0, 0.55);
+  border: 4px solid var(--tone);
+  border-radius: 12px;
+  background: #000;
+  color: #fff;
+  box-shadow: 0 5px 12px -3px rgba(0, 0, 0, 0.7);
   will-change: transform;
   pointer-events: none;
   transition: opacity 0.3s ease, scale 0.3s ease;
@@ -281,7 +282,7 @@ a.game-link { text-decoration: none; }
   font-weight: 700;
   line-height: 1.15;
   white-space: nowrap;
-  color: #4a3f5a;
+  color: #fff;
 }
 
 .tile-term {
@@ -293,6 +294,7 @@ a.game-link { text-decoration: none; }
   margin: auto 0;
   order: 1;
   white-space: nowrap;
+  color: #fff;
 }
 .tile-answer {
   display: none;
@@ -303,7 +305,7 @@ a.game-link { text-decoration: none; }
   order: 2;
   padding: 0 8px 6px;
   overflow-wrap: anywhere;
-  color: #7a1414;
+  color: #ff9a9a;
 }
 
 .tile.target {
@@ -493,4 +495,90 @@ a.game-link { text-decoration: none; }
 @media (max-width: 420px) {
   .hud-counts { gap: 6px; font-size: 0.78rem; }
   .tile-term { font-size: 1.7rem; }
+}
+
+/* ---------- review-level filter ---------- */
+.level-toggle {
+  margin-left: 8px;
+  padding: 2px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.level-toggle.active { background: var(--gold); border-color: var(--gold); color: #1c1c1c; }
+.level-chips { flex-wrap: wrap; }
+.level-chips button { flex: 1 0 22%; }
+
+/* Chips in the app's progress colours: tinted when off, filled when on. */
+.level-chips button {
+  border: 2px solid rgb(var(--status-rgb, 138, 144, 153));
+  background: rgba(var(--status-rgb, 138, 144, 153), 0.12);
+  color: var(--text);
+}
+.level-chips button.active {
+  background: rgb(var(--status-rgb, 138, 144, 153));
+  color: #1c1c1c;
+  font-weight: 700;
+}
+
+/* ---------- the type or die look: the menu button's murky green and the
+   gothic logo (faint background words; opaque controls for readability). ---------- */
+#screen-setup {
+  --text: #eef3ee;
+  --text-dim: #a9bcaa;
+  --surface: rgba(8, 18, 10, 0.95);
+  --border: #3b5a3d;
+  color: var(--text);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 420 320' width='420' height='320'%3E%3Cg fill='%2342e07a' font-family='sans-serif' opacity='0.11'%3E%3Ctext x='375' y='24' font-size='14'%3E猫%3C/text%3E%3Ctext x='108' y='286' font-size='14'%3E電車%3C/text%3E%3Ctext x='278' y='126' font-size='14'%3E図書館%3C/text%3E%3Ctext x='192' y='27' font-size='14'%3E桜%3C/text%3E%3Ctext x='11' y='136' font-size='14'%3E台所%3C/text%3E%3Ctext x='376' y='79' font-size='28'%3E時計%3C/text%3E%3Ctext x='376' y='294' font-size='16'%3E財布%3C/text%3E%3Ctext x='370' y='241' font-size='20'%3E窓%3C/text%3E%3Ctext x='191' y='130' font-size='16'%3E傘%3C/text%3E%3Ctext x='188' y='188' font-size='16'%3E海%3C/text%3E%3Ctext x='278' y='292' font-size='12'%3E野菜%3C/text%3E%3Ctext x='103' y='85' font-size='16'%3E学校%3C/text%3E%3Ctext x='17' y='188' font-size='14'%3E約束%3C/text%3E%3Ctext x='293' y='193' font-size='28'%3E季節%3C/text%3E%3Ctext x='99' y='231' font-size='16'%3E空港%3C/text%3E%3Ctext x='278' y='33' font-size='20'%3E靴%3C/text%3E%3Ctext x='2' y='87' font-size='16'%3E机%3C/text%3E%3Ctext x='106' y='22' font-size='20'%3E星%3C/text%3E%3Ctext x='187' y='79' font-size='24'%3E切符%3C/text%3E%3Ctext x='376' y='129' font-size='14'%3E温泉%3C/text%3E%3Ctext x='16' y='33' font-size='24'%3E友達%3C/text%3E%3Ctext x='105' y='194' font-size='16'%3E八百屋%3C/text%3E%3Ctext x='16' y='233' font-size='24'%3E手紙%3C/text%3E%3Ctext x='197' y='291' font-size='12'%3E公園%3C/text%3E%3Ctext x='199' y='232' font-size='14'%3E夕焼け%3C/text%3E%3Ctext x='12' y='298' font-size='24'%3E自転車%3C/text%3E%3Ctext x='105' y='130' font-size='16'%3E弁当%3C/text%3E%3Ctext x='286' y='232' font-size='16'%3E雨%3C/text%3E%3Ctext x='288' y='83' font-size='14'%3E橋%3C/text%3E%3Ctext x='372' y='182' font-size='28'%3E花火%3C/text%3E%3C/g%3E%3C/svg%3E") center top / 420px 320px repeat,
+    radial-gradient(ellipse at 50% 18%, #3b5f3a 0%, #1b2b1c 50%, #080d09 100%);
+}
+#screen-setup .game-intro,
+#screen-setup .game-field-label,
+#screen-setup .game-note { text-shadow: 0 1px 2px #000; }
+
+.tod-logo {
+  font-family: "Pirata One", "Shippori Mincho", serif;
+  font-weight: 400;
+  font-size: 2.3rem;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: transparent;
+  text-shadow: none;
+  filter:
+    drop-shadow(2px 0 0 #000) drop-shadow(-2px 0 0 #000) drop-shadow(0 2px 0 #000) drop-shadow(0 -2px 0 #000)
+    drop-shadow(0 0 3px rgba(225, 235, 215, 0.85)) drop-shadow(0 0 8px rgba(190, 210, 180, 0.45));
+}
+.tod-logo .tod-type,
+.tod-logo .tod-die {
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.tod-logo .tod-type { --g: linear-gradient(180deg, #ffb53a 0%, #f08a2a 50%, #d9622a 100%); background-image: var(--g); }
+.tod-logo .tod-die { --g: linear-gradient(180deg, #ff5a4a 0%, #e0261f 55%, #9a0f16 100%); background-image: var(--g); margin-left: 0.12em; }
+.tod-logo .tod-or { font-size: 0.6em; margin-right: 0.1em; }
+.tod-logo .tod-tall {
+  display: inline-block;
+  transform: scaleY(1.35);
+  transform-origin: top;
+  background-image: var(--g);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* The legend sits on an opaque bubble. */
+#screen-setup .legend {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(8, 18, 10, 0.95);
 }

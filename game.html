@@ -8,7 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>漢</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=Shippori+Mincho:wght@400;600;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="game.css">
 </head>
@@ -19,11 +19,10 @@
   <section class="screen" id="screen-setup">
     <header class="topbar">
       <a class="icon-btn icon-btn-text game-link" href="minigames.html" aria-label="ミニゲーム">戻る</a>
-      <span class="screen-title">type or die</span>
+      <span class="screen-title tod-logo" aria-label="type or die"><span class="tod-type"><span class="tod-tall">t</span>ype</span><span class="tod-die"><span class="tod-or">or</span>di<span class="tod-tall">e</span></span></span>
       <span class="icon-btn-spacer"></span>
     </header>
     <div class="game-setup">
-      <p class="game-intro">言葉が上から落ちてきます。下に着く前に読み方か意味を入力してください。</p>
       <div class="legend">
         <div class="legend-row">
           <span class="legend-tile tile kind-reading tone-pink"><span class="tile-head"><span class="tile-badge">あ</span></span><span class="legend-term">読</span></span>
@@ -72,6 +71,11 @@
           <button type="button" data-value="normal">ふつう</button>
           <button type="button" data-value="fast">はやい</button>
         </div>
+      </div>
+
+      <div class="game-field">
+        <span class="game-field-label">習熟度で選ぶ <button type="button" class="level-toggle" id="levelToggle">オフ</button></span>
+        <div class="seg level-chips" id="levelChips" hidden></div>
       </div>
 
       <p class="game-note" id="deckNote"></p>

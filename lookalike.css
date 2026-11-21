@@ -189,12 +189,13 @@
    orange fading to purple with a dark outline. */
 [data-theme] .minigame-btn.tod {
   --blood: #b01020;
-  min-height: 96px;
+  min-height: 112px;
   overflow: hidden;
   color: #f4a52a;
   border: 2px solid #050805;
   border-top-color: #2e4a2f;
   background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 100' preserveAspectRatio='xMidYMid meet'%3E%3Cpath d='M116.6 50.2Q119.8 51.4 116.3 52.8Q112.8 54.1 122.4 59.7Q132.0 65.4 119.0 61.4Q105.9 57.3 112.0 69.8Q118.0 82.3 110.7 74.1Q103.5 66.0 100.0 68.0Q96.4 70.0 95.8 66.4Q95.3 62.8 88.9 66.7Q82.5 70.6 85.9 63.7Q89.2 56.8 83.7 56.7Q78.3 56.6 84.4 54.6Q90.5 52.7 78.8 47.9Q67.1 43.2 78.5 44.9Q89.9 46.6 82.9 36.7Q75.9 26.9 84.6 33.4Q93.3 39.9 95.6 37.4Q97.9 34.9 99.5 37.5Q101.0 40.0 106.8 32.6Q112.6 25.2 111.7 33.9Q110.8 42.6 115.0 43.2Q119.1 43.7 116.3 46.4Q113.5 49.1 116.6 50.2Z' fill='%2362080f'/%3E%3Cpath d='M121.1 49.2Q125.0 51.0 119.1 51.7Q113.3 52.3 116.9 56.3Q120.5 60.3 115.7 58.2Q110.8 56.1 111.4 61.5Q111.9 66.9 108.5 61.7Q105.2 56.4 102.8 57.8Q100.5 59.2 100.5 56.2Q100.5 53.2 94.5 54.1Q88.6 54.9 93.6 52.2Q98.6 49.6 93.6 47.5Q88.5 45.3 94.7 46.2Q101.0 47.1 99.4 43.6Q97.9 40.0 101.2 42.5Q104.6 45.0 106.4 41.3Q108.3 37.7 109.6 40.7Q111.0 43.7 112.8 44.1Q114.7 44.6 116.0 45.9Q117.3 47.3 121.1 49.2Z' fill='%237d0c18'/%3E%3Cpath d='M83.5 59.0Q86.7 59.8 81.7 60.5Q76.8 61.1 79.0 63.8Q81.2 66.4 78.1 64.4Q75.0 62.4 73.6 66.1Q72.2 69.8 71.6 66.2Q71.1 62.5 69.0 62.8Q66.8 63.1 66.6 61.8Q66.3 60.5 64.1 57.9Q61.9 55.4 66.5 56.5Q71.2 57.6 71.7 54.5Q72.3 51.5 73.8 54.2Q75.3 56.9 76.7 56.4Q78.1 56.0 79.2 57.1Q80.3 58.1 83.5 59.0Z' fill='%2362080f'/%3E%3Cpath d='M142.4 40.8Q145.0 41.6 141.9 42.8Q138.8 44.1 138.6 45.1Q138.3 46.1 136.6 46.5Q134.8 47.0 132.4 49.8Q130.1 52.5 131.1 48.2Q132.1 43.9 128.6 45.1Q125.1 46.3 126.9 44.1Q128.7 41.8 126.9 39.8Q125.1 37.8 128.5 38.9Q131.8 39.9 132.0 38.4Q132.1 36.9 133.9 37.5Q135.6 38.0 139.4 35.7Q143.2 33.4 141.5 36.7Q139.8 39.9 142.4 40.8Z' fill='%23560710'/%3E%3Ccircle cx='100.1' cy='20.7' r='1.3' fill='%236c0a14'/%3E%3Ccircle cx='47.7' cy='88.7' r='3.3' fill='%23560710'/%3E%3Ccircle cx='2.0' cy='61.2' r='1.0' fill='%2362080f'/%3E%3Ccircle cx='123.3' cy='68.9' r='1.4' fill='%23560710'/%3E%3Ccircle cx='117.4' cy='33.3' r='3.5' fill='%23560710'/%3E%3Ccircle cx='63.0' cy='29.5' r='2.7' fill='%2362080f'/%3E%3Ccircle cx='93.2' cy='33.7' r='3.3' fill='%2362080f'/%3E%3Ccircle cx='125.5' cy='32.3' r='1.7' fill='%23560710'/%3E%3Ccircle cx='61.5' cy='81.8' r='3.0' fill='%2362080f'/%3E%3Ccircle cx='157.1' cy='37.5' r='2.4' fill='%236c0a14'/%3E%3Ccircle cx='132.4' cy='22.1' r='3.0' fill='%236c0a14'/%3E%3Ccircle cx='134.3' cy='66.8' r='2.6' fill='%23560710'/%3E%3Ccircle cx='114.8' cy='16.8' r='2.8' fill='%2362080f'/%3E%3Ccircle cx='136.4' cy='79.5' r='2.7' fill='%236c0a14'/%3E%3Ccircle cx='188.4' cy='66.5' r='2.2' fill='%23560710'/%3E%3Ccircle cx='109.9' cy='33.8' r='2.7' fill='%2362080f'/%3E%3Ccircle cx='114.8' cy='67.3' r='1.3' fill='%23560710'/%3E%3Ccircle cx='5.5' cy='36.6' r='3.2' fill='%23560710'/%3E%3Ccircle cx='45.0' cy='94.8' r='2.4' fill='%2362080f'/%3E%3Ccircle cx='73.3' cy='23.6' r='2.2' fill='%23560710'/%3E%3Ccircle cx='41.5' cy='50.9' r='2.6' fill='%23560710'/%3E%3Ccircle cx='122.2' cy='80.9' r='1.9' fill='%23560710'/%3E%3Ccircle cx='59.2' cy='58.2' r='1.7' fill='%2362080f'/%3E%3Ccircle cx='114.7' cy='76.6' r='1.3' fill='%2362080f'/%3E%3Ccircle cx='185.6' cy='38.3' r='1.8' fill='%23560710'/%3E%3Ccircle cx='188.7' cy='19.8' r='1.4' fill='%2362080f'/%3E%3Ccircle cx='36.7' cy='70.8' r='3.4' fill='%2362080f'/%3E%3Ccircle cx='139.2' cy='77.2' r='2.1' fill='%23560710'/%3E%3Ccircle cx='40.3' cy='64.9' r='1.2' fill='%23560710'/%3E%3Ccircle cx='184.0' cy='56.1' r='1.9' fill='%2362080f'/%3E%3Cpath d='M77.4 62.0L59.6 70.0' stroke='%2362080f' stroke-width='2.5' stroke-linecap='round'/%3E%3Cpath d='M126.6 63.4L143.5 70.7' stroke='%2362080f' stroke-width='2.4' stroke-linecap='round'/%3E%3Cpath d='M123.5 58.9L156.8 68.6' stroke='%2362080f' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='M101.2 35.1L102.6 16.5' stroke='%2362080f' stroke-width='2.1' stroke-linecap='round'/%3E%3Cpath d='M127.2 47.2L155.2 42.3' stroke='%2362080f' stroke-width='1.9' stroke-linecap='round'/%3E%3Cpath d='M72.1 52.5L48.6 52.9' stroke='%2362080f' stroke-width='2.3' stroke-linecap='round'/%3E%3Cpath d='M114.1 67.9L123.6 78.5' stroke='%2362080f' stroke-width='1.2' stroke-linecap='round'/%3E%3Cpath d='M123.0 59.2L149.7 67.5' stroke='%2362080f' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='M97.7 64.7L96.1 73.2' stroke='%2362080f' stroke-width='2.6' stroke-linecap='round'/%3E%3Cpath d='M88 62v22' stroke='%2362080f' stroke-width='3.2' stroke-linecap='round'/%3E%3Ccircle cx='88' cy='86' r='2.8' fill='%2362080f'/%3E%3Cpath d='M104 62v30' stroke='%2362080f' stroke-width='3.2' stroke-linecap='round'/%3E%3Ccircle cx='104' cy='94' r='2.8' fill='%2362080f'/%3E%3Cpath d='M116 62v18' stroke='%2362080f' stroke-width='3.2' stroke-linecap='round'/%3E%3Ccircle cx='116' cy='82' r='2.8' fill='%2362080f'/%3E%3C/svg%3E") center / auto 118% no-repeat,
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 66'%3E%3Cg fill='%2342e07a' font-family='sans-serif' opacity='0.26'%3E%3Ctext x='10' y='16' font-size='12'%3E猫%3C/text%3E%3Ctext x='60' y='34' font-size='9'%3E電車%3C/text%3E%3Ctext x='118' y='14' font-size='14'%3E図書館%3C/text%3E%3Ctext x='176' y='38' font-size='10'%3E桜%3C/text%3E%3Ctext x='228' y='18' font-size='15'%3E台所%3C/text%3E%3Ctext x='268' y='40' font-size='9'%3E時計%3C/text%3E%3Ctext x='330' y='16' font-size='11'%3E財布%3C/text%3E%3Ctext x='372' y='36' font-size='14'%3E窓%3C/text%3E%3Ctext x='18' y='60' font-size='9'%3E傘%3C/text%3E%3Ctext x='84' y='70' font-size='13'%3E海%3C/text%3E%3Ctext x='150' y='62' font-size='10'%3E野菜%3C/text%3E%3Ctext x='204' y='76' font-size='12'%3E学校%3C/text%3E%3Ctext x='262' y='66' font-size='15'%3E約束%3C/text%3E%3Ctext x='322' y='80' font-size='9'%3E季節%3C/text%3E%3Ctext x='366' y='64' font-size='10'%3E空港%3C/text%3E%3Ctext x='30' y='108' font-size='13'%3E靴%3C/text%3E%3Ctext x='96' y='104' font-size='10'%3E机%3C/text%3E%3Ctext x='150' y='112' font-size='15'%3E星%3C/text%3E%3Ctext x='196' y='108' font-size='9'%3E切符%3C/text%3E%3Ctext x='246' y='106' font-size='11'%3E温泉%3C/text%3E%3Ctext x='300' y='110' font-size='13'%3E友達%3C/text%3E%3Ctext x='340' y='104' font-size='8'%3E八百屋%3C/text%3E%3C/g%3E%3C/svg%3E") center / cover no-repeat,
     radial-gradient(ellipse at 50% 35%, #3b5f3a 0%, #1b2b1c 55%, #080d09 100%);
   box-shadow:
@@ -211,17 +212,27 @@
 .minigame-btn.tod .mode-label {
   font-family: "Pirata One", "Shippori Mincho", serif;
   font-weight: 400;
-  font-size: 2.5rem;
-  letter-spacing: 0.04em;
+  font-size: 3.4rem;
+  letter-spacing: -0.01em;
   text-transform: uppercase;
-  color: #ffffff;
-  -webkit-text-stroke: 0;
-  text-shadow:
-    0 0 4px #000,
-    0 0 8px #000,
-    0 0 14px #000,
-    0 0 22px #000;
+  /* The cover's lettering: "type" orange, "or die" red, each with a dark
+     outline and a pale halo. */
+  color: transparent;
+  text-shadow: none;
+  /* A thick black outline (shadows in four directions), then the pale halo. */
+  filter:
+    drop-shadow(2px 0 0 #000) drop-shadow(-2px 0 0 #000) drop-shadow(0 2px 0 #000) drop-shadow(0 -2px 0 #000)
+    drop-shadow(0 0 3px rgba(225, 235, 215, 0.85)) drop-shadow(0 0 8px rgba(190, 210, 180, 0.45));
 }
+.minigame-btn.tod .tod-type,
+.minigame-btn.tod .tod-die {
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.minigame-btn.tod .tod-type { --g: linear-gradient(180deg, #ffb53a 0%, #f08a2a 50%, #d9622a 100%); background-image: var(--g); }
+.minigame-btn.tod .tod-die { --g: linear-gradient(180deg, #ff5a4a 0%, #e0261f 55%, #9a0f16 100%); background-image: var(--g); }
+
 
 
 /* そっくりチャンプ: a nod to a certain arcade minigame collection's cover:
@@ -270,3 +281,17 @@
 }
 .minigame-btn.bbs .mode-label::before { content: "★"; top: -12px; left: -8px; }
 .minigame-btn.bbs .mode-label::after { content: "★"; right: -8px; bottom: -8px; }
+
+.minigame-btn.tod .tod-die { margin-left: 0.12em; }
+.minigame-btn.tod .tod-or { font-size: 0.6em; margin-right: 0.1em; }
+
+/* The first and last letters are stretched downward, as on the cover. */
+.minigame-btn.tod .tod-tall {
+  display: inline-block;
+  transform: scaleY(1.35);
+  transform-origin: top;
+  background-image: var(--g);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
