@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2b2b2b">
+<title>ミニゲーム - スーパージュク</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>漢</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Pirata+One&family=Shippori+Mincho:wght@400;600;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="game.css">
+<link rel="stylesheet" href="lookalike.css">
+</head>
+<body>
+<div class="app">
+  <section class="screen">
+    <header class="topbar">
+      <a class="icon-btn icon-btn-text game-link" href="index.html" aria-label="ホーム">戻る</a>
+      <span class="screen-title">ミニゲーム</span>
+      <span class="icon-btn-spacer"></span>
+    </header>
+    <div class="game-setup minigame-list">
+      <a class="mode-btn minigame-btn tod" href="game.html" style="--mode-color: #1fae9a; text-decoration: none;">
+        <span class="mode-label">type or die</span>
+      </a>
+      <a class="mode-btn minigame-btn bbs" href="lookalike.html" style="--mode-color: #d63a4a; text-decoration: none;">
+        <span class="mode-label">そっくりチャンプ</span>
+      </a>
+    </div>
+  </section>
+</div>
+<script>
+(() => {
+  // The same theme and text size as the rest of the app.
+  try {
+    const settings = JSON.parse(localStorage.getItem("kanjiFlashN2.settings.v1") || "{}") || {};
+    document.documentElement.setAttribute("data-theme", settings.theme || "dark");
+    if (settings.fontScale) document.documentElement.style.setProperty("--font-scale", settings.fontScale);
+  } catch (err) {
+    document.documentElement.setAttribute("data-theme", "dark");
+  }
+})();
+</script>
+</body>
+</html>

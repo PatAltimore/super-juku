@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2b2b2b">
+<title>そっくりチャンプ - スーパージュク</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>漢</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="game.css">
+<link rel="stylesheet" href="lookalike.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- SETUP -->
+  <section class="screen" id="screen-setup">
+    <header class="topbar">
+      <a class="icon-btn icon-btn-text game-link" href="minigames.html" aria-label="ミニゲーム">戻る</a>
+      <span class="screen-title">そっくりチャンプ</span>
+      <span class="icon-btn-spacer"></span>
+    </header>
+    <div class="game-setup">
+      <p class="game-intro">そっくりな漢字の組が出ます。ヒントに合う方を、<b class="side-red">左（←）</b>か<b class="side-blue">右（→）</b>で選んでください。レッスンを終えた漢字だけが出ます。</p>
+
+      <div class="game-field">
+        <span class="game-field-label">選ぶもの</span>
+        <div class="seg" id="chooseSeg">
+          <button type="button" data-value="all">すべて</button>
+          <button type="button" data-value="kanji">漢字</button>
+          <button type="button" data-value="reading">読み方</button>
+          <button type="button" data-value="meaning">意味</button>
+        </div>
+      </div>
+
+      <div class="game-field">
+        <span class="game-field-label">問題数</span>
+        <div class="seg" id="countSeg">
+          <button type="button" data-value="10">10</button>
+          <button type="button" data-value="20">20</button>
+          <button type="button" data-value="40">40</button>
+        </div>
+      </div>
+
+      <div class="game-field">
+        <span class="game-field-label">制限時間（1問ごと）：<b id="timeLabel">6秒</b></span>
+        <input type="range" id="timeRange" min="0" max="20" step="1" value="6" aria-label="制限時間">
+      </div>
+
+      <p class="game-note" id="poolNote"></p>
+      <button class="mode-btn game-start" id="startBtn" type="button"><span class="mode-label">スタート</span></button>
+    </div>
+  </section>
+
+  <!-- PLAY -->
+  <section class="screen" id="screen-play" hidden>
+    <header class="topbar game-hud">
+      <button class="icon-btn icon-btn-text" id="quitBtn" type="button" aria-label="やめる">やめる</button>
+      <div class="hud-stats">
+        <span class="hud-score"><span id="hudRight">0</span></span>
+        <span class="hud-combo" id="hudCombo"></span>
+      </div>
+      <div class="hud-counts"><span class="hud-left"><span id="hudNum">0</span> / <span id="hudTotal">0</span></span></div>
+    </header>
+    <div class="lk-play">
+      <div class="lk-timer" id="timer"><i id="timerBar"></i></div>
+      <div class="lk-clue">
+        <div class="lk-clue-label" id="clueLabel"></div>
+        <div class="lk-clue-text" id="clueText"></div>
+      </div>
+      <div class="lk-choices">
+        <button class="lk-choice lk-red" id="choiceL" type="button"><span class="lk-key">←</span><span class="lk-text" id="textL"></span><span class="lk-detail" id="detailL"></span></button>
+        <button class="lk-choice lk-blue" id="choiceR" type="button"><span class="lk-key">→</span><span class="lk-text" id="textR"></span><span class="lk-detail" id="detailR"></span></button>
+      </div>
+      <div class="lk-feedback" id="feedback"></div>
+      <button class="mode-btn lk-next" id="nextBtn" type="button" hidden><span class="mode-label">次へ（Space）</span></button>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="screen" id="screen-results" hidden>
+    <header class="topbar">
+      <a class="icon-btn icon-btn-text game-link" href="minigames.html" aria-label="ミニゲーム">戻る</a>
+      <span class="screen-title">結果</span>
+      <span class="icon-btn-spacer"></span>
+    </header>
+    <div class="game-results">
+      <div class="result-score" id="resultScore">0</div>
+      <div class="result-line" id="resultLine"></div>
+      <div class="result-buttons">
+        <button class="mode-btn" id="againBtn" type="button"><span class="mode-label">もう一度</span></button>
+        <button class="mode-btn mode-btn-quiet" id="setupBtn" type="button"><span class="mode-label">設定</span></button>
+      </div>
+      <h2 class="result-heading" id="missHeading">間違い</h2>
+      <ul class="miss-list" id="missList"></ul>
+    </div>
+  </section>
+
+</div>
+<script src="lookalike.js"></script>
+</body>
+</html>

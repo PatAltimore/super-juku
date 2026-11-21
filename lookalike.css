@@ -1,0 +1,272 @@
+/* そっくりチャンプ (lookalike.html) and the ミニゲーム menu (minigames.html).
+   Left is red, right is blue, as on a quiz-show buzzer pair. */
+:root {
+  --lk-red: #e0344a;
+  --lk-blue: #2f6fe8;
+}
+
+.side-red { color: var(--lk-red); }
+.side-blue { color: var(--lk-blue); }
+
+.minigame-list { gap: 14px; }
+.minigame-btn { min-height: 76px; flex: 0 0 auto; flex-direction: column; gap: 4px; }
+.minigame-btn .mode-label { font-size: 1.4rem; font-weight: 700; }
+.minigame-sub { font-size: 0.85rem; color: inherit; opacity: 0.85; }
+
+#timeRange { width: 100%; accent-color: var(--gold); }
+
+/* ---------- play ---------- */
+.lk-play {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 8px 16px 20px;
+  min-height: 0;
+}
+
+.lk-timer {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.lk-timer i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: var(--gold);
+  transform-origin: left;
+}
+.lk-timer.low i { background: var(--lk-red); }
+.lk-timer.off { visibility: hidden; }
+
+.lk-clue {
+  text-align: center;
+  padding: 10px 8px 2px;
+}
+.lk-clue-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.lk-clue-text {
+  font-family: "Shippori Mincho", serif;
+  font-weight: 800;
+  font-size: clamp(3rem, 14vw, 5.5rem);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.lk-clue-text.is-text {
+  font-family: inherit;
+  font-weight: 700;
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
+}
+
+.lk-choices {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  min-height: 160px;
+}
+
+.lk-choice {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 10px 14px;
+  border: 0;
+  border-radius: 22px;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.3);
+  transition: transform 0.08s, opacity 0.15s, box-shadow 0.08s;
+}
+.lk-choice:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3); }
+.lk-red { background: var(--lk-red); }
+.lk-blue { background: var(--lk-blue); }
+.lk-choice:disabled { cursor: default; }
+.lk-choice.dim { opacity: 0.35; }
+.lk-choice.correct { outline: 5px solid #fff; outline-offset: 3px; }
+.lk-choice.correct::after {
+  content: "✓";
+  position: absolute;
+  top: 8px;
+  right: 14px;
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.lk-key {
+  position: absolute;
+  top: 8px;
+  left: 14px;
+  font-size: 1.3rem;
+  font-weight: 800;
+  opacity: 0.8;
+}
+
+.lk-text {
+  font-family: "Shippori Mincho", serif;
+  font-weight: 800;
+  font-size: clamp(3.4rem, 16vw, 6.5rem);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+.lk-text.is-text {
+  font-family: inherit;
+  font-weight: 700;
+  font-size: clamp(1.3rem, 5vw, 2rem);
+  line-height: 1.35;
+}
+
+.lk-detail {
+  min-height: 1.2em;
+  font-size: 0.85rem;
+  opacity: 0.92;
+  text-align: center;
+}
+
+.lk-feedback {
+  min-height: 1.6em;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+.lk-feedback.ok { color: var(--success); }
+.lk-feedback.bad { color: var(--danger); }
+
+.lk-next { flex: 0 0 auto; min-height: 52px; --mode-color: #c4c4c4; }
+.lk-next[hidden] { display: none; }
+
+@media (max-width: 480px) {
+  .lk-choice { padding-top: 34px; }
+}
+
+/* The minigame menu keeps its colour-coded buttons in every theme, over the
+   home screen's white console pills. */
+[data-theme] .minigame-btn {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--mode-color) 88%, #fff) 0%, var(--mode-color) 100%);
+  border: 1px solid color-mix(in srgb, var(--mode-color) 70%, #000);
+  border-top-color: color-mix(in srgb, var(--mode-color) 60%, #fff);
+  color: #1c1c1c;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.12),
+    0 6px 0 color-mix(in srgb, var(--mode-color) 45%, #000),
+    0 12px 18px -4px rgba(0, 0, 0, 0.5);
+}
+[data-theme] .minigame-btn:active {
+  transform: translateY(5px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.12),
+    0 1px 0 color-mix(in srgb, var(--mode-color) 45%, #000),
+    0 3px 6px -2px rgba(0, 0, 0, 0.4);
+}
+
+/* Stylized (mincho) names on the minigame buttons. */
+.minigame-btn .mode-label {
+  font-family: "Shippori Mincho", serif;
+  font-weight: 800;
+  font-size: 1.9rem;
+  letter-spacing: 0.06em;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+/* type or die: a nod to a certain horror typing game's cover. Murky green
+   dark, a faint wall of terminal text, blood splats and a gothic title in
+   orange fading to purple with a dark outline. */
+[data-theme] .minigame-btn.tod {
+  --blood: #b01020;
+  min-height: 96px;
+  overflow: hidden;
+  color: #f4a52a;
+  border: 2px solid #050805;
+  border-top-color: #2e4a2f;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 66'%3E%3Cg fill='%2342e07a' font-family='sans-serif' opacity='0.26'%3E%3Ctext x='10' y='16' font-size='12'%3E猫%3C/text%3E%3Ctext x='60' y='34' font-size='9'%3E電車%3C/text%3E%3Ctext x='118' y='14' font-size='14'%3E図書館%3C/text%3E%3Ctext x='176' y='38' font-size='10'%3E桜%3C/text%3E%3Ctext x='228' y='18' font-size='15'%3E台所%3C/text%3E%3Ctext x='268' y='40' font-size='9'%3E時計%3C/text%3E%3Ctext x='330' y='16' font-size='11'%3E財布%3C/text%3E%3Ctext x='372' y='36' font-size='14'%3E窓%3C/text%3E%3Ctext x='18' y='60' font-size='9'%3E傘%3C/text%3E%3Ctext x='84' y='70' font-size='13'%3E海%3C/text%3E%3Ctext x='150' y='62' font-size='10'%3E野菜%3C/text%3E%3Ctext x='204' y='76' font-size='12'%3E学校%3C/text%3E%3Ctext x='262' y='66' font-size='15'%3E約束%3C/text%3E%3Ctext x='322' y='80' font-size='9'%3E季節%3C/text%3E%3Ctext x='366' y='64' font-size='10'%3E空港%3C/text%3E%3Ctext x='30' y='108' font-size='13'%3E靴%3C/text%3E%3Ctext x='96' y='104' font-size='10'%3E机%3C/text%3E%3Ctext x='150' y='112' font-size='15'%3E星%3C/text%3E%3Ctext x='196' y='108' font-size='9'%3E切符%3C/text%3E%3Ctext x='246' y='106' font-size='11'%3E温泉%3C/text%3E%3Ctext x='300' y='110' font-size='13'%3E友達%3C/text%3E%3Ctext x='340' y='104' font-size='8'%3E八百屋%3C/text%3E%3C/g%3E%3C/svg%3E") center / cover no-repeat,
+    radial-gradient(ellipse at 50% 35%, #3b5f3a 0%, #1b2b1c 55%, #080d09 100%);
+  box-shadow:
+    inset 0 0 28px rgba(0, 0, 0, 0.85),
+    0 6px 0 #050805,
+    0 12px 18px -4px rgba(0, 0, 0, 0.6);
+}
+[data-theme] .minigame-btn.tod:active {
+  box-shadow:
+    inset 0 0 28px rgba(0, 0, 0, 0.85),
+    0 1px 0 #050805,
+    0 3px 6px -2px rgba(0, 0, 0, 0.5);
+}
+.minigame-btn.tod .mode-label {
+  font-family: "Pirata One", "Shippori Mincho", serif;
+  font-weight: 400;
+  font-size: 2.5rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ffffff;
+  -webkit-text-stroke: 0;
+  text-shadow:
+    0 0 4px #000,
+    0 0 8px #000,
+    0 0 14px #000,
+    0 0 22px #000;
+}
+
+
+/* そっくりチャンプ: a nod to a certain arcade minigame collection's cover:
+   hot pink wall of title tiles, and the name on a chunky orange plaque with a
+   pink rim, black drop shadow and stars. */
+[data-theme] .minigame-btn.bbs {
+  min-height: 112px;
+  overflow: hidden;
+  border: 2px solid #8f1d6a;
+  border-top-color: #ff8ad6;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 112' width='320' height='112'%3E%3Crect x='1' y='1' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='40' y='21' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E土士%3C/text%3E%3Crect x='81' y='1' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='120' y='21' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E末未%3C/text%3E%3Crect x='1' y='29' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='40' y='49' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E己巳%3C/text%3E%3Crect x='81' y='29' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='120' y='49' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E千干%3C/text%3E%3Crect x='161' y='1' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='200' y='21' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E大犬%3C/text%3E%3Crect x='161' y='29' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='200' y='49' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E王玉%3C/text%3E%3Crect x='241' y='1' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='280' y='21' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E日目%3C/text%3E%3Crect x='241' y='29' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='280' y='49' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E牛午%3C/text%3E%3Crect x='1' y='57' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='40' y='77' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E白百%3C/text%3E%3Crect x='81' y='57' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='120' y='77' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E刀力%3C/text%3E%3Crect x='161' y='57' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='200' y='77' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E木本%3C/text%3E%3Crect x='241' y='57' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='280' y='77' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E人入%3C/text%3E%3Crect x='1' y='85' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='40' y='105' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E田由%3C/text%3E%3Crect x='81' y='85' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='120' y='105' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E貝見%3C/text%3E%3Crect x='161' y='85' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='200' y='105' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E夕タ%3C/text%3E%3Crect x='241' y='85' width='78' height='26' rx='3' fill='%23ffffff' fill-opacity='0.13'/%3E%3Ctext x='280' y='105' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='20' fill='%23ffffff' fill-opacity='0.3'%3E支友%3C/text%3E%3C/svg%3E") center top / 320px 112px repeat,
+    linear-gradient(180deg, #e0449f 0%, #c02a84 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 6px 0 #6e1450,
+    0 12px 18px -4px rgba(0, 0, 0, 0.5);
+}
+[data-theme] .minigame-btn.bbs:active {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 1px 0 #6e1450,
+    0 3px 6px -2px rgba(0, 0, 0, 0.4);
+}
+.minigame-btn.bbs .mode-label {
+  position: relative;
+  padding: 4px 22px 6px;
+  border: 3px solid #ff3fd0;
+  border-radius: 16px;
+  background: #ff7a12;
+  color: #ffffff;
+  font-family: "Mochiy Pop One", "Shippori Mincho", sans-serif;
+  font-weight: 400;
+  font-size: 1.7rem;
+  letter-spacing: 0.04em;
+  text-shadow: none;
+  box-shadow: 5px 5px 0 #000;
+}
+.minigame-btn.bbs .mode-label::before,
+.minigame-btn.bbs .mode-label::after {
+  position: absolute;
+  color: #ffffff;
+  font-size: 1.2rem;
+  line-height: 1;
+  text-shadow: 0 0 0 #ff3fd0, 1px 1px 0 #ff3fd0, -1px -1px 0 #ff3fd0, 1px -1px 0 #ff3fd0, -1px 1px 0 #ff3fd0;
+}
+.minigame-btn.bbs .mode-label::before { content: "★"; top: -12px; left: -8px; }
+.minigame-btn.bbs .mode-label::after { content: "★"; right: -8px; bottom: -8px; }

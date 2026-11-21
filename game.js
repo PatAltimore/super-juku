@@ -1,4 +1,4 @@
-// タイピング: terms fall from the top of the screen and are cleared by typing
+// type or die: terms fall from the top of the screen and are cleared by typing
 // their reading or meaning before they reach the bottom; a term that reaches
 // the bottom counts as wrong. Tiles use the app's question colours: pink for
 // the kanji itself (音読み and meaning), purple for its word, teal for its
