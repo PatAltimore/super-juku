@@ -198,29 +198,38 @@
     return combos;
   }
 
-  let lastPairId = "";
+  // One question: `target` is the kanji that is right, `other` its lookalike;
+  // the clue is of kind `clue` and the two choices of kind `answer`.
+  function buildQuestion(pair, target, other, clue, answer) {
+    const clues = uniqueValues(target, other, clue);
+    const rights = uniqueValues(target, other, answer);
+    const wrongs = uniqueValues(other, target, answer);
+    if (!clues.length || !rights.length || !wrongs.length) return null;
+    const right = pick(rights);
+    const wrong = pick(wrongs);
+    const rightSide = Math.random() < 0.5 ? 0 : 1;
+    const options = rightSide === 0 ? [right, wrong] : [wrong, right];
+    return { pair, target, other, clueKind: clue, clue: pick(clues), answerKind: answer, options, rightSide };
+  }
 
-  // With `fixedPair` the question is about that pair; otherwise a random one.
-  function makeQuestion(pairs, fixedPair) {
+  // Every possible question, as in 復習: each pair with either kanji as the
+  // right one, and every kind of clue and choice the 選ぶもの setting allows.
+  // Combinations with nothing to tell the two kanji apart are left out.
+  function allQuestions(pairs) {
     const combos = kindCombos();
-    for (let attempt = 0; attempt < 60; attempt++) {
-      const pair = fixedPair || pick(pairs);
-      const id = pair[0].kanji + pair[1].kanji;
-      if (!fixedPair && pairs.length > 1 && id === lastPairId && attempt < 30) continue;
-      const [target, other] = Math.random() < 0.5 ? pair : [pair[1], pair[0]];
-      const { clue, answer } = pick(combos);
-      const clues = uniqueValues(target, other, clue);
-      const rights = uniqueValues(target, other, answer);
-      const wrongs = uniqueValues(other, target, answer);
-      if (!clues.length || !rights.length || !wrongs.length) continue;
-      lastPairId = id;
-      const right = pick(rights);
-      const wrong = pick(wrongs);
-      const rightSide = Math.random() < 0.5 ? 0 : 1;
-      const options = rightSide === 0 ? [right, wrong] : [wrong, right];
-      return { pair, target, other, clueKind: clue, clue: pick(clues), answerKind: answer, options, rightSide };
-    }
-    return null;
+    const out = [];
+    pairs.forEach((pair) => {
+      [
+        [pair[0], pair[1]],
+        [pair[1], pair[0]],
+      ].forEach(([target, other]) =>
+        combos.forEach(({ clue, answer }) => {
+          const q = buildQuestion(pair, target, other, clue, answer);
+          if (q) out.push(q);
+        })
+      );
+    });
+    return out;
   }
 
   // A short line under a revealed choice: the kanji's reading and meaning.
@@ -255,10 +264,11 @@
 
   function start() {
     const { chosen: pairs } = currentPool();
-    if (!pairs.length) return;
-    // 全て: every pair once, in random order.
-    const queue = prefs.count === "all" ? shuffle(pairs) : null;
-    session = { pairs, queue, total: queue ? queue.length : prefs.count, index: 0, right: 0, combo: 0, bestCombo: 0, misses: [], q: null, answered: true, timerId: 0 };
+    // 全て: every possible question, in random order; otherwise that many of them.
+    const all = shuffle(allQuestions(pairs));
+    const queue = prefs.count === "all" ? all : all.slice(0, prefs.count);
+    if (!queue.length) return;
+    session = { queue, total: queue.length, index: 0, right: 0, combo: 0, bestCombo: 0, misses: [], q: null, answered: true, timerId: 0 };
     showScreen("play");
     nextQuestion();
   }
@@ -270,16 +280,8 @@
 
   function nextQuestion() {
     clearTimeout(session.advanceId);
-    if (session.index >= session.total) return finish();
-    let q = null;
-    if (session.queue) {
-      // A pair with nothing to tell its two kanji apart is skipped.
-      while (session.queue.length && !q) q = makeQuestion(session.pairs, session.queue.shift());
-      session.total = session.index + (q ? 1 : 0) + session.queue.length;
-    } else {
-      q = makeQuestion(session.pairs);
-    }
-    if (!q) return finish();
+    if (!session.queue.length) return finish();
+    const q = session.queue.shift();
     session.q = q;
     session.index++;
     session.answered = false;
@@ -398,7 +400,9 @@
         : "レッスンを終えた漢字がまだありません。レッスンを進めてください。";
     } else {
       els.poolNote.textContent =
-        `レッスン済み ${pool.size}字 ／ 似た組 ${pairs.length}組` + (prefs.pairSelect ? ` ／ 選んだ組 ${chosen.length}組` : "");
+        `レッスン済み ${pool.size}字 ／ 似た組 ${pairs.length}組` +
+        (prefs.pairSelect ? ` ／ 選んだ組 ${chosen.length}組` : "") +
+        ` ／ 全${allQuestions(chosen).length}問`;
     }
     els.startBtn.disabled = !chosen.length;
   }
