@@ -102,6 +102,16 @@
       <span class="screen-title" id="deckPickTitle">デッキを選択</span>
       <span class="icon-btn-spacer"></span>
     </header>
+    <div class="deck-pick-options" id="deckPickOptions" hidden>
+      <div class="settings-label-group">
+        <div class="settings-label">削除した漢字も含める</div>
+        <div class="settings-sub">編集で削除したN2漢字も出題します</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="includeRemovedToggle">
+        <span class="switch-track"><span class="switch-thumb"></span></span>
+      </label>
+    </div>
     <div class="deck-pick-body" id="deckPickList"></div>
   </section>
 
@@ -316,6 +326,7 @@
   <section class="screen" id="screen-type" hidden>
     <header class="topbar">
       <button class="icon-btn" data-back type="button" aria-label="ホームに戻る">←</button>
+      <button class="wrap-btn" id="wrapUpBtn" type="button" hidden>仕上げる</button>
       <span class="progress" id="typeProgress">0 / 0</span>
       <span class="icon-btn-spacer"></span>
       <span class="score-hud" id="typeScore" hidden></span>
@@ -462,6 +473,7 @@
   <section class="screen" id="screen-custom-type" hidden>
     <header class="topbar">
       <button class="icon-btn" id="customTypeBackBtn" type="button" aria-label="デッキ一覧に戻る">◀</button>
+      <button class="wrap-btn" id="customWrapUpBtn" type="button" hidden>仕上げる</button>
       <span class="progress" id="customTypeProgress">0 / 0</span>
       <span class="icon-btn-spacer"></span>
       <span class="score-hud" id="customTypeScore" hidden></span>

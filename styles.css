@@ -3533,3 +3533,44 @@ button.edit-row {
     font-size: 0.95rem;
   }
 }
+
+/* ---------- wrap up (reviews) ---------- */
+
+.wrap-btn {
+  position: absolute;
+  left: 64px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 4px 12px;
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.wrap-btn[hidden] {
+  display: none;
+}
+
+.wrap-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ---------- deck picker options ---------- */
+
+.deck-pick-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 24px 0;
+}
+
+.mnemonic-part + .mnemonic-part {
+  margin-top: 6px;
+}

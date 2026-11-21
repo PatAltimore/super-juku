@@ -360,10 +360,7 @@
     "onyomiRomaji": "shuu, su",
     "kunyomi": "す",
     "kunyomiRomaji": "su",
-    "meaning": "state, province",
-    "noun": "州",
-    "nounReading": "す",
-    "nounMeaning": "sandbank, sandbar"
+    "meaning": "state, province"
   },
   {
     "num": 27494,
@@ -459,10 +456,7 @@
     "onyomiRomaji": "hen",
     "kunyomi": "あた(り)、 ほと(り)、 べ",
     "kunyomiRomaji": "ata(ri), hoto(ri), be",
-    "meaning": "environs, boundary, border, vicinity",
-    "noun": "辺",
-    "nounReading": "ほとり",
-    "nounMeaning": "side (esp. of a waterbody), edge, bank"
+    "meaning": "environs, boundary, border, vicinity"
   },
   {
     "num": 36896,
@@ -618,10 +612,7 @@
     "meaning": "quantity, measure, weight, amount, consider",
     "word": "量る",
     "wordReading": "はかる",
-    "wordMeaning": "to measure, to weigh, to survey",
-    "noun": "量",
-    "nounReading": "はか",
-    "nounMeaning": "progress"
+    "wordMeaning": "to measure, to weigh, to survey"
   },
   {
     "num": 22411,
@@ -696,10 +687,7 @@
     "onyomiRomaji": "kai",
     "kunyomi": "きざはし",
     "kunyomiRomaji": "kizahashi",
-    "meaning": "storey, stair, counter for storeys of a building",
-    "noun": "階",
-    "nounReading": "きざはし",
-    "nounMeaning": "stairs, stairs at the front of a noh stage"
+    "meaning": "storey, stair, counter for storeys of a building"
   },
   {
     "num": 31649,
@@ -720,10 +708,7 @@
     "onyomiRomaji": "hei, hyou",
     "kunyomi": "つわもの",
     "kunyomiRomaji": "tsuwamono",
-    "meaning": "soldier, private, troops, army, warfare",
-    "noun": "兵",
-    "nounReading": "つわもの",
-    "nounMeaning": "soldier, warrior, person of courage"
+    "meaning": "soldier, private, troops, army, warfare"
   },
   {
     "num": 25509,
@@ -747,10 +732,7 @@
     "meaning": "dainty, get thin, taper, slender, narrow",
     "word": "細い",
     "wordReading": "ほそい",
-    "wordMeaning": "thin, slender, fine",
-    "noun": "細",
-    "nounReading": "ほそ",
-    "nounMeaning": "fine thread, hempen cord"
+    "wordMeaning": "thin, slender, fine"
   },
   {
     "num": 21177,
@@ -822,10 +804,7 @@
     "meaning": "old times, old things, old friend, former, ex-",
     "word": "旧い",
     "wordReading": "ふるい",
-    "wordMeaning": "old, aged, ancient",
-    "noun": "旧",
-    "nounReading": "もと",
-    "nounMeaning": "earlier times, the past, previous state"
+    "wordMeaning": "old, aged, ancient"
   },
   {
     "num": 27211,
@@ -1164,10 +1143,7 @@
     "onyomiRomaji": "tetsu",
     "kunyomi": "くろがね",
     "kunyomiRomaji": "kurogane",
-    "meaning": "iron",
-    "noun": "鉄",
-    "nounReading": "くろがね",
-    "nounMeaning": "iron"
+    "meaning": "iron"
   },
   {
     "num": 20816,
@@ -1215,10 +1191,7 @@
     "meaning": "inverted, reverse, opposite, wicked",
     "word": "逆らう",
     "wordReading": "さからう",
-    "wordMeaning": "to go against, to oppose, to disobey",
-    "noun": "逆",
-    "nounReading": "さか",
-    "nounMeaning": "inverse, reverse"
+    "wordMeaning": "to go against, to oppose, to disobey"
   },
   {
     "num": 25563,
@@ -1521,10 +1494,7 @@
     "meaning": "rule, law, follow, based on, model after",
     "word": "則る",
     "wordReading": "のっとる",
-    "wordMeaning": "to follow (a rule / precedent / style / etc.), to conform to, to be in accordance with",
-    "noun": "則",
-    "nounReading": "のり",
-    "nounMeaning": "rule, law, regulation"
+    "wordMeaning": "to follow (a rule / precedent / style / etc.), to conform to, to be in accordance with"
   },
   {
     "num": 20081,
@@ -1914,10 +1884,7 @@
     "meaning": "warm",
     "word": "温かい",
     "wordReading": "あたたかい",
-    "wordMeaning": "warm, mild, (pleasantly) hot",
-    "noun": "温",
-    "nounReading": "ぬく",
-    "nounMeaning": "idiot, dummy, slow person"
+    "wordMeaning": "warm, mild, (pleasantly) hot"
   },
   {
     "num": 23395,
@@ -2397,10 +2364,7 @@
     "meaning": "bake, burning",
     "word": "焼く",
     "wordReading": "やく",
-    "wordMeaning": "to burn, to roast, to broil",
-    "noun": "焼",
-    "nounReading": "やき",
-    "nounMeaning": "roasting, grilling, toasting"
+    "wordMeaning": "to burn, to roast, to broil"
   },
   {
     "num": 31777,
@@ -2475,10 +2439,7 @@
     "meaning": "dilute, thin, weak (tea), pampas grass",
     "word": "薄い",
     "wordReading": "うすい",
-    "wordMeaning": "thin (of an object), pale, light",
-    "noun": "薄",
-    "nounReading": "すすき",
-    "nounMeaning": "Chinese silvergrass (Miscanthus sinensis), maiden grass, susuki grass"
+    "wordMeaning": "thin (of an object), pale, light"
   },
   {
     "num": 32676,
@@ -2490,10 +2451,7 @@
     "meaning": "flock, group, crowd, herd, swarm",
     "word": "群れる",
     "wordReading": "むれる",
-    "wordMeaning": "to crowd, to flock, to swarm",
-    "noun": "群",
-    "nounReading": "むら",
-    "nounMeaning": "gathering"
+    "wordMeaning": "to crowd, to flock, to swarm"
   },
   {
     "num": 31186,
@@ -2529,10 +2487,7 @@
     "meaning": "packed, close, pressed, reprove, rebuke",
     "word": "詰める",
     "wordReading": "つめる",
-    "wordMeaning": "to stuff into, to jam, to cram",
-    "noun": "詰",
-    "nounReading": "つめ",
-    "nounMeaning": "stuffing, packing, endgame"
+    "wordMeaning": "to stuff into, to jam, to cram"
   },
   {
     "num": 21452,
@@ -2667,10 +2622,7 @@
     "meaning": "laid waste, rough, rude, wild",
     "word": "荒らす",
     "wordReading": "あらす",
-    "wordMeaning": "to lay waste, to devastate, to damage",
-    "noun": "荒",
-    "nounReading": "あら",
-    "nounMeaning": "remaining bony parts (of a fish after filleting), flaw (esp. of a person), fault"
+    "wordMeaning": "to lay waste, to devastate, to damage"
   },
   {
     "num": 36015,
@@ -2793,10 +2745,7 @@
     "onyomiRomaji": "dou",
     "kunyomi": "わらべ",
     "kunyomiRomaji": "warabe",
-    "meaning": "juvenile, child",
-    "noun": "童",
-    "nounReading": "わらべ",
-    "nounMeaning": "child"
+    "meaning": "juvenile, child"
   },
   {
     "num": 23453,
@@ -2937,10 +2886,7 @@
     "meaning": "revered, valuable, precious, noble, exalted",
     "word": "尊い",
     "wordReading": "たっとい",
-    "wordMeaning": "precious, valuable, priceless",
-    "noun": "尊",
-    "nounReading": "とうと",
-    "nounMeaning": "value, preciousness, nobility"
+    "wordMeaning": "precious, valuable, priceless"
   },
   {
     "num": 31069,
@@ -2964,10 +2910,7 @@
     "meaning": "tender, weakness, gentleness, softness",
     "word": "柔らかい",
     "wordReading": "やわらかい",
-    "wordMeaning": "soft, tender, supple",
-    "noun": "柔",
-    "nounReading": "やわら",
-    "nounMeaning": "judo, jujutsu"
+    "wordMeaning": "soft, tender, supple"
   },
   {
     "num": 27583,
@@ -2976,10 +2919,7 @@
     "onyomiRomaji": "den, ten",
     "kunyomi": "との、 どの",
     "kunyomiRomaji": "tono, dono",
-    "meaning": "Mr., hall, mansion, palace, temple",
-    "noun": "殿",
-    "nounReading": "との",
-    "nounMeaning": "feudal lord, mansion, palace"
+    "meaning": "Mr., hall, mansion, palace, temple"
   },
   {
     "num": 28611,
@@ -3081,10 +3021,7 @@
     "onyomiRomaji": "kou, ou",
     "kunyomi": "き、 こ",
     "kunyomiRomaji": "ki, ko",
-    "meaning": "yellow",
-    "noun": "黄",
-    "nounReading": "き",
-    "nounMeaning": "yellow"
+    "meaning": "yellow"
   },
   {
     "num": 29976,
@@ -3318,10 +3255,7 @@
     "onyomiRomaji": "kai",
     "kunyomi": "かせ",
     "kunyomiRomaji": "kase",
-    "meaning": "contraption, fetter, machine, instrument",
-    "noun": "械",
-    "nounReading": "かせ",
-    "nounMeaning": "shackles, fetters, irons"
+    "meaning": "contraption, fetter, machine, instrument"
   },
   {
     "num": 33756,
@@ -3393,10 +3327,7 @@
     "meaning": "dry, parch, ebb, recede, interfere",
     "word": "干す",
     "wordReading": "ほす",
-    "wordMeaning": "to air, to dry, to desiccate",
-    "noun": "干",
-    "nounReading": "ほし",
-    "nounMeaning": "drying, dried"
+    "wordMeaning": "to air, to dry, to desiccate"
   },
   {
     "num": 34411,
@@ -3453,10 +3384,7 @@
     "onyomiRomaji": "kou",
     "kunyomi": "あらがね",
     "kunyomiRomaji": "aragane",
-    "meaning": "mineral, ore",
-    "noun": "鉱",
-    "nounReading": "あらがね",
-    "nounMeaning": "ore"
+    "meaning": "mineral, ore"
   },
   {
     "num": 28057,
@@ -3528,10 +3456,7 @@
     "meaning": "paint, plaster, daub, smear, coating",
     "word": "塗る",
     "wordReading": "ぬる",
-    "wordMeaning": "to paint, to spread, to plaster",
-    "noun": "塗",
-    "nounReading": "ぬり",
-    "nounMeaning": "coating (esp. lacquering)"
+    "wordMeaning": "to paint, to spread, to plaster"
   },
   {
     "num": 36562,
@@ -3603,10 +3528,7 @@
     "meaning": "drought, dry, desiccate, drink up, heaven",
     "word": "乾く",
     "wordReading": "かわく",
-    "wordMeaning": "to get dry",
-    "noun": "乾",
-    "nounReading": "いぬい",
-    "nounMeaning": "northwest"
+    "wordMeaning": "to get dry"
   },
   {
     "num": 26834,
@@ -3756,10 +3678,7 @@
     "onyomiRomaji": "kan",
     "kunyomi": "かま",
     "kunyomiRomaji": "kama",
-    "meaning": "tin can, container, jar radical (no. 121)",
-    "noun": "缶",
-    "nounReading": "かま",
-    "nounMeaning": "boiler"
+    "meaning": "tin can, container, jar radical (no. 121)"
   },
   {
     "num": 38587,
@@ -3882,10 +3801,7 @@
     "meaning": "spicy, bitter, hot, acrid",
     "word": "辛い",
     "wordReading": "からい",
-    "wordMeaning": "spicy, hot, salty",
-    "noun": "辛",
-    "nounReading": "かのと",
-    "nounMeaning": "8th in rank, eighth sign of the Chinese calendar"
+    "wordMeaning": "spicy, hot, salty"
   },
   {
     "num": 30952,

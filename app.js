@@ -69,6 +69,8 @@
     screenDeckPick: document.getElementById("screen-deck-pick"),
     deckPickTitle: document.getElementById("deckPickTitle"),
     deckPickList: document.getElementById("deckPickList"),
+    deckPickOptions: document.getElementById("deckPickOptions"),
+    includeRemovedToggle: document.getElementById("includeRemovedToggle"),
     screenDeckEdit: document.getElementById("screen-deck-edit"),
     editDecksBtn: document.getElementById("editDecksBtn"),
     deckEditBackBtn: document.getElementById("deckEditBackBtn"),
@@ -213,6 +215,8 @@
     modeTypeBtn: document.getElementById("modeTypeBtn"),
     typeProgress: document.getElementById("typeProgress"),
     typeScore: document.getElementById("typeScore"),
+    wrapUpBtn: document.getElementById("wrapUpBtn"),
+    customWrapUpBtn: document.getElementById("customWrapUpBtn"),
     customTypeScore: document.getElementById("customTypeScore"),
     typeCard: document.getElementById("typeCard"),
     questionTypeBadge: document.getElementById("questionTypeBadge"),
@@ -341,6 +345,7 @@
   let customTypeDeck = null;
   let customTypeIndex = 0;
   let customScore = { attempted: new Set(), right: 0, wrong: 0 };
+  let customWrapping = false;
   let customTypeAnswering = true;
   let customTypeDone = 0;
   let customTypeTotal = 0;
@@ -2912,6 +2917,7 @@
     });
     customTypeMode = mode;
     customTypeIndex = 0;
+    customWrapping = false;
     customScore = { attempted: new Set(), right: 0, wrong: 0 };
     customTypeDone = 0;
     customTypeTotal = questions.length;
@@ -2972,7 +2978,8 @@
     const idx = customTypeIndex;
     if (idx >= customTypeCards.length) {
       alignCustomDueTimes();
-      showCustomDeckComplete(deck, customTypeMode, customTermState.size);
+      // Cards dropped by Wrap up were never started and are not counted.
+      showCustomDeckComplete(deck, customTypeMode, Array.from(customTermState.values()).filter((state) => state.started).length);
       return;
     }
     const card = customTypeCards[idx];
@@ -2996,6 +3003,7 @@
         : `${customTypeDone} / ${customTypeTotal}`;
     els.customTypeInput.focus();
     updateCustomScore(false);
+    updateCustomWrapUpButton();
   }
 
   function updateCustomTypeFeedbackResult(correct, raw, fuzzy) {
@@ -3089,9 +3097,63 @@
     renderScore(els.customTypeScore, customScore.right, customScore.wrong, pending);
   }
 
+  function updateCustomWrapUpButton() {
+    const on = customTypeMode === "review";
+    els.customWrapUpBtn.hidden = !on;
+    if (!on) return;
+    els.customWrapUpBtn.disabled = customWrapping;
+    els.customWrapUpBtn.textContent = customWrapping ? "仕上げ中" : "仕上げる";
+  }
+
+  // Wrap up for a custom deck's review: only the cards already started are
+  // finished; the rest stay due.
+  function wrapUpCustomReview() {
+    if (customTypeMode !== "review" || customWrapping || !customTypeDeck) return;
+    const answeredPending = !customTypeAnswering && customTypeIndex < customTypeCards.length;
+    const pendingFront = answeredPending ? customTypeCards[customTypeIndex].front : null;
+    const started = (card) => {
+      const state = customTermState.get(card.front);
+      return card.front === pendingFront || Boolean(state && state.started);
+    };
+    let keep = 0;
+    const droppedCards = new Set();
+    for (let i = customTypeIndex + (answeredPending ? 1 : 0); i < customTypeCards.length; i++) {
+      if (started(customTypeCards[i])) keep++;
+      else droppedCards.add(customTypeCards[i].front);
+    }
+    if (!window.confirm(wrapUpMessage(keep, droppedCards.size))) return;
+
+    customWrapping = true;
+    if (answeredPending) advanceCustomTypeCard(); // finish the answer on screen first
+    if (customTypeIndex >= customTypeCards.length) return; // that was the last question
+    const front = customTypeCards[customTypeIndex];
+    const frontSection = customTypeAsked[customTypeIndex];
+    for (let i = customTypeCards.length - 1; i >= customTypeIndex; i--) {
+      if (!started(customTypeCards[i])) {
+        customTypeCards.splice(i, 1);
+        customTypeAsked.splice(i, 1);
+      }
+    }
+    customTypeTotal = customTypeDone + (customTypeCards.length - customTypeIndex);
+    if (
+      customTypeIndex >= customTypeCards.length ||
+      customTypeCards[customTypeIndex] !== front ||
+      customTypeAsked[customTypeIndex] !== frontSection
+    ) {
+      renderCustomType(); // the question on screen is gone (or nothing is left: the session ends)
+    } else {
+      els.customTypeProgress.textContent = `${customTypeDone} / ${customTypeTotal}`;
+      updateCustomWrapUpButton();
+    }
+  }
+
+  els.customWrapUpBtn.addEventListener("click", wrapUpCustomReview);
+
   function advanceCustomTypeCard() {
     window.clearTimeout(customTypeAutoAdvanceTimer);
     customTypeAutoAdvanceTimer = null;
+    const answeredState = customTermState.get(customTypeCards[customTypeIndex].front);
+    if (answeredState) answeredState.started = true; // for Wrap up
     // Each question counts once, by its first answer.
     const scoreKey = customQuestionKey();
     if (!customScore.attempted.has(scoreKey)) {
@@ -3213,6 +3275,7 @@
         theme: THEMES.includes(parsed.theme) ? parsed.theme : DEFAULT_THEME,
         lessonDeck: typeof parsed.lessonDeck === "string" ? parsed.lessonDeck : "n2-kanji",
         marathonDeck: typeof parsed.marathonDeck === "string" ? parsed.marathonDeck : "n2-kanji",
+        marathonIncludeRemoved: parsed.marathonIncludeRemoved === true,
       };
     } catch (err) {
       return null;
@@ -3446,8 +3509,8 @@
 
   let deckPickFor = "lesson"; // "lesson" | "marathon"
 
-  function deckPickEntries() {
-    const entries = [{ id: KANJI_DECK_ID, name: "N2漢字", count: visibleKanji().length }];
+  function deckPickEntries(includeRemoved = false) {
+    const entries = [{ id: KANJI_DECK_ID, name: "N2漢字", count: includeRemoved ? n2Kanji.length : visibleKanji().length }];
     customDecks.forEach((deck) => {
       entries.push({
         id: `custom:${deck.id}`,
@@ -3462,7 +3525,10 @@
     deckPickFor = forMode;
     const current = resolveDeckId(forMode === "lesson" ? settings.lessonDeck : settings.marathonDeck);
     els.deckPickTitle.textContent = forMode === "lesson" ? "レッスンのデッキ" : "すべて復習のデッキ";
-    els.deckPickList.innerHTML = deckPickEntries()
+    // すべて復習 can include the N2 kanji removed in 編集.
+    els.deckPickOptions.hidden = forMode === "lesson";
+    els.includeRemovedToggle.checked = settings.marathonIncludeRemoved;
+    els.deckPickList.innerHTML = deckPickEntries(forMode !== "lesson" && settings.marathonIncludeRemoved)
       .map((entry) => {
         const usable = entry.count > 0;
         return `
@@ -3491,8 +3557,15 @@
   // すべて復習: every question of every term in the deck, shuffled, each asked
   // once; a report card of the mistakes follows.
   function startAllReview() {
-    if (allKanji.length) beginLesson(shuffle(allKanji), "all");
+    const pool = isKanjiDeck() && settings.marathonIncludeRemoved ? n2Kanji : allKanji;
+    if (pool.length) beginLesson(shuffle(pool), "all");
   }
+
+  els.includeRemovedToggle.addEventListener("change", () => {
+    settings.marathonIncludeRemoved = els.includeRemovedToggle.checked;
+    saveSettings();
+    openDeckPicker(deckPickFor); // refresh the counts
+  });
 
   els.deckPickList.addEventListener("click", (event) => {
     const btn = event.target.closest("[data-deck]");
@@ -4291,6 +4364,7 @@
       mistakes: [],
       leechCounted: new Set(),
       attempted: new Set(),
+      completed: new Set(), // questions answered correctly at least once (the counter at the top)
     };
     // A kanji and its word are each graded once per session: wrong as soon as
     // any of their questions is missed, right after all of them are answered
@@ -5235,35 +5309,77 @@
     return saved ? saved.text.trim() : "";
   }
 
-  function toggleMnemonic(note, text) {
-    if (!note.hidden) {
-      note.hidden = true;
-      return;
+  // The note shows the mnemonic for what was asked; once everything about the
+  // card is revealed (F) it shows both the meaning's and the readings'.
+  function renderMnemonicNote(note, base, kind, both) {
+    const meaning = mnemonicText(base, "meaning");
+    const reading = mnemonicText(base, "reading");
+    const part = (label, text) =>
+      `<div class="mnemonic-part">${label ? `<div class="study-label">${label}</div>` : ""}<div class="mnemonic-text">${text ? escapeHtml(text) : "—"}</div></div>`;
+    let body;
+    let empty;
+    if (both) {
+      empty = !meaning && !reading;
+      body = empty
+        ? `<div class="mnemonic-text">メモはありません</div>`
+        : part("Meaning", meaning) + part("Readings", reading);
+    } else {
+      const text = mnemonicText(base, kind);
+      empty = !text;
+      body = `<div class="mnemonic-text">${text ? escapeHtml(text) : "メモはありません"}</div>`;
     }
-    note.innerHTML = `<div class="mnemonic-card"><div class="study-label">Mnemonic</div><div class="mnemonic-text">${text ? escapeHtml(text) : "メモはありません"}</div></div>`;
-    note.classList.toggle("empty", !text);
-    note.hidden = false;
+    note.innerHTML = `<div class="mnemonic-card"><div class="study-label">Mnemonic</div>${body}</div>`;
+    note.classList.toggle("empty", empty);
+  }
+
+  function typeMnemonicBase(item) {
+    return !item.sections && isWordType(currentQuestionType)
+      ? `${leechKey(item)}|word`
+      : !item.sections && isNounType(currentQuestionType)
+      ? `${leechKey(item)}|noun`
+      : leechKey(item);
+  }
+
+  function refreshTypeMnemonic() {
+    const item = queue[0];
+    if (item && !els.typeMnemonic.hidden) {
+      renderMnemonicNote(els.typeMnemonic, typeMnemonicBase(item), questionKind(item, currentQuestionType), typeInfoRevealed);
+    }
   }
 
   function showTypeMnemonic() {
     const item = queue[0];
     if (!item) return;
-    const base =
-      !item.sections && isWordType(currentQuestionType)
-        ? `${leechKey(item)}|word`
-        : !item.sections && isNounType(currentQuestionType)
-        ? `${leechKey(item)}|noun`
-        : leechKey(item);
-    toggleMnemonic(els.typeMnemonic, mnemonicText(base, questionKind(item, currentQuestionType)));
+    if (!els.typeMnemonic.hidden) {
+      els.typeMnemonic.hidden = true;
+      return;
+    }
+    els.typeMnemonic.hidden = false;
+    refreshTypeMnemonic();
+  }
+
+  function customMnemonicBase() {
+    return `${customTypeDeck.id}|${customTypeCards[customTypeIndex].front}`;
+  }
+
+  function refreshCustomTypeMnemonic() {
+    if (!customTypeCards[customTypeIndex] || els.customTypeMnemonic.hidden) return;
+    renderMnemonicNote(
+      els.customTypeMnemonic,
+      customMnemonicBase(),
+      kindOfLabel(customTypeCurrentSection.label),
+      customTypeInfoRevealed
+    );
   }
 
   function showCustomTypeMnemonic() {
-    const card = customTypeCards[customTypeIndex];
-    if (!card) return;
-    toggleMnemonic(
-      els.customTypeMnemonic,
-      mnemonicText(`${customTypeDeck.id}|${card.front}`, kindOfLabel(customTypeCurrentSection.label))
-    );
+    if (!customTypeCards[customTypeIndex]) return;
+    if (!els.customTypeMnemonic.hidden) {
+      els.customTypeMnemonic.hidden = true;
+      return;
+    }
+    els.customTypeMnemonic.hidden = false;
+    refreshCustomTypeMnemonic();
   }
 
   function revealTypeInfo() {
@@ -5272,6 +5388,7 @@
     typeInfoRevealed = !typeInfoRevealed;
     els.typeFeedback.classList.toggle("revealed", typeInfoRevealed);
     renderTypeInfo(item, currentQuestionType, typeInfoRevealed);
+    refreshTypeMnemonic(); // an open mnemonic follows: both notes once revealed
   }
 
   function revealCustomTypeInfo() {
@@ -5282,6 +5399,7 @@
     els.customTypeSections.innerHTML = sectionsToHtml(
       customTypeInfoRevealed ? card.sections : [customTypeCurrentSection]
     );
+    refreshCustomTypeMnemonic(); // an open mnemonic follows: both notes once revealed
   }
 
   // Re-fit the visible front when the window changes size.
@@ -5438,6 +5556,84 @@
     renderScore(els.typeScore, lessonSession.right, lessonSession.wrong, pending);
   }
 
+  // ---------- wrap up ----------
+  // In a review, 仕上げる (wrap up) drops the questions of every term (kanji, word or noun)
+  // that has not been started and keeps the rest of the ones that have, so the
+  // session ends once those are done. Unstarted terms are left untouched and
+  // stay due.
+
+  const WRAP_UP_KINDS = new Set(["review", "leech", "all"]);
+  const lessonUnitKey = (item, type) => `${item.num}:${groupOfType(type)}`;
+
+  // The counter at the top: questions done out of all of them. A question is
+  // done once it has been answered right, on a retry too (the session ends when
+  // all are), which is why it isn't the same number as the right answers in the
+  // score and summary, those being first answers only.
+  function typeSessionProgress() {
+    return `${lessonSession.kind === "all" ? lessonSession.seen : lessonSession.completed.size} / ${lessonSession.total}`;
+  }
+
+  function updateWrapUpButton() {
+    const on = mode === "lesson-type" && Boolean(lessonSession) && WRAP_UP_KINDS.has(lessonSession.kind);
+    els.wrapUpBtn.hidden = !on;
+    if (!on) return;
+    els.wrapUpBtn.disabled = Boolean(lessonSession.wrapping);
+    els.wrapUpBtn.textContent = lessonSession.wrapping ? "仕上げ中" : "仕上げる";
+  }
+
+  function wrapUpMessage(keep, dropped) {
+    return (
+      `この復習を仕上げますか？\n\n始めた用語の残り ${keep} 問に答えると、この復習は終わります。` +
+      (dropped ? `\nまだ始めていない ${dropped} 件は今回は行わず、そのまま次回に残ります。` : "")
+    );
+  }
+
+  function wrapUpReview() {
+    if (!lessonSession || lessonSession.wrapping || mode !== "lesson-type") return;
+    if (!WRAP_UP_KINDS.has(lessonSession.kind)) return;
+    // A question already answered but not yet moved on from counts as started.
+    const answeredPending = !typeAnswering && queue.length > 0;
+    const pendingKey = answeredPending ? lessonUnitKey(queue[0], currentQuestionType) : null;
+    const started = (item, type) => {
+      const key = lessonUnitKey(item, type);
+      const state = lessonTermState.get(key);
+      return key === pendingKey || Boolean(state && state.started);
+    };
+    let keep = 0;
+    const droppedUnits = new Set();
+    for (let i = answeredPending ? 1 : 0; i < queue.length; i++) {
+      if (started(queue[i], lessonQuestionTypes[i])) keep++;
+      else droppedUnits.add(lessonUnitKey(queue[i], lessonQuestionTypes[i]));
+    }
+    if (!window.confirm(wrapUpMessage(keep, droppedUnits.size))) return;
+
+    lessonSession.wrapping = true;
+    if (answeredPending) advanceTypeCard(); // finish the answer on screen first
+    if (!lessonSession) return; // that was the last question
+    const front = queue[0];
+    const frontType = lessonQuestionTypes[0];
+    for (let i = queue.length - 1; i >= 0; i--) {
+      if (!started(queue[i], lessonQuestionTypes[i])) {
+        queue.splice(i, 1);
+        lessonQuestionTypes.splice(i, 1);
+      }
+    }
+    const remaining = new Set();
+    queue.forEach((item, i) => {
+      const key = `${item.num}:${lessonQuestionTypes[i]}`;
+      if (!lessonSession.attempted.has(key)) remaining.add(key);
+    });
+    lessonSession.total = lessonSession.attempted.size + remaining.size;
+    if (queue.length === 0 || queue[0] !== front || lessonQuestionTypes[0] !== frontType) {
+      renderType(); // the question on screen is gone (or nothing is left: the session ends)
+    } else {
+      els.typeProgress.textContent = typeSessionProgress();
+      updateWrapUpButton();
+    }
+  }
+
+  els.wrapUpBtn.addEventListener("click", wrapUpReview);
+
   function renderType() {
     typeAnswering = true;
     els.typeCard.classList.remove("answer-wrong", "answer-right");
@@ -5483,10 +5679,11 @@
     fitFront(els.typeKanji, shown);
     els.typeProgress.textContent =
       mode === "lesson-type"
-        ? `${lessonSession.kind === "all" ? lessonSession.seen : lessonSession.right} / ${lessonSession.total}`
+        ? typeSessionProgress()
         : `${masteredCount} / ${totalCount} · 残り${queue.length}`;
     els.typeInput.focus();
     updateTypeScore(false);
+    updateWrapUpButton();
     if (mode === "type") saveState();
   }
 
@@ -5595,6 +5792,9 @@
       // The summary counts each question once, by its first answer: a question
       // missed and later answered right still counts as incorrect only.
       const questionKey = `${item.num}:${type}`;
+      const unitState = lessonTermState.get(`${item.num}:${groupOfType(type)}`);
+      if (unitState) unitState.started = true; // for Wrap up
+      if (pendingTypeCorrect) lessonSession.completed.add(questionKey);
       if (!lessonSession.attempted.has(questionKey)) {
         lessonSession.attempted.add(questionKey);
         lessonSession.seen++;
