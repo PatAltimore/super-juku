@@ -13,6 +13,7 @@
   const CUSTOM_ANSWERS_KEY = "kanjiFlashN2.customAnswers.v1";
   const STATS_KEY = "kanjiFlashN2.stats.v1";
   const LEECHES_KEY = "kanjiFlashN2.leeches.v1";
+  const NOUN_REMOVALS_KEY = "kanjiFlashN2.nounRemovals.v1";
   const KANJI_REMOVALS_KEY = "kanjiFlashN2.kanjiRemovals.v1";
   const N2_DECK = "n2-kanji";
   const LEECH_DECK = "leech";
@@ -287,6 +288,8 @@
   const leeches = loadJson(LEECHES_KEY, {}) || {};
   // N2 kanji removed in 編集: { num: { removed } }.
   const kanjiRemovals = loadJson(KANJI_REMOVALS_KEY, {}) || {};
+  // Nouns deleted by hand in a lesson: { num: { removed } }.
+  const nounRemovals = loadJson(NOUN_REMOVALS_KEY, {}) || {};
   const visibleKanji = () => (n2Deck || []).filter((k) => !(kanjiRemovals[k.num] && kanjiRemovals[k.num].removed));
 
   function kanjiQuestions(e) {
@@ -312,7 +315,7 @@
       add("wordReading", e.word, "単語の読み方", "purple", "reading", e.wordReading);
       add("wordMeaning", e.word, "Word meaning", "purple", "meaning", e.wordMeaning);
     }
-    if (e.noun) {
+    if (e.noun && !nounRemovals[e.num]?.removed) {
       add("nounReading", e.noun, "訓読み", "teal", "reading", e.nounReading);
       add("nounMeaning", e.noun, "Noun meaning", "teal", "meaning", e.nounMeaning);
     }

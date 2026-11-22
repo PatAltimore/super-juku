@@ -335,6 +335,7 @@
       customDecks: decks.decks,
       deletedDecks: decks.deleted,
       kanjiRemovals: mergeKanjiRemovals(local.kanjiRemovals, remote.kanjiRemovals),
+      nounRemovals: mergeKanjiRemovals(local.nounRemovals, remote.nounRemovals),
       leeches: mergeLeeches(local.leeches, remote.leeches),
       mnemonics: mergeMnemonics(local.mnemonics, remote.mnemonics),
     };

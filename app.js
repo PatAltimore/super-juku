@@ -53,6 +53,8 @@
     screenLessonStudy: document.getElementById("screen-lesson-study"),
     studyBackBtn: document.getElementById("studyBackBtn"),
     studyProgress: document.getElementById("studyProgress"),
+    studyDeleteBtn: document.getElementById("studyDeleteBtn"),
+    studyDeleteSpacer: document.getElementById("studyDeleteSpacer"),
     studyTerm: document.getElementById("studyTerm"),
     studyGloss: document.getElementById("studyGloss"),
     studyTabs: document.getElementById("studyTabs"),
@@ -85,6 +87,7 @@
     deckEditUndoText: document.getElementById("deckEditUndoText"),
     deckEditUndoBtn: document.getElementById("deckEditUndoBtn"),
     deckEditRestoreBtn: document.getElementById("deckEditRestoreBtn"),
+    deckEditRestoreNounsBtn: document.getElementById("deckEditRestoreNounsBtn"),
     lessonDeckBtn: document.getElementById("lessonDeckBtn"),
     lessonFilterBar: document.getElementById("lessonFilterBar"),
     lessonFilterBtn: document.getElementById("lessonFilterBtn"),
@@ -495,6 +498,36 @@
   function setKanjiRemoved(num, removed) {
     kanjiRemovals[num] = { at: Date.now(), removed };
     saveKanjiRemovals();
+  }
+
+  // Single-kanji nouns deleted by hand (in a lesson's study screen):
+  // { num: { at, removed } }. A removed noun is taken off its kanji
+  // (kept as `removedNoun`) so every mode skips it, and put back on restore.
+  const NOUN_REMOVALS_KEY = "kanjiFlashN2.nounRemovals.v1";
+  let nounRemovals = {};
+  const NOUN_FIELDS = ["noun", "nounReading", "nounMeaning"];
+
+  function saveNounRemovals() {
+    saveJson(NOUN_REMOVALS_KEY, nounRemovals);
+  }
+
+  function applyNounRemovals() {
+    n2Kanji.forEach((item) => {
+      const gone = Boolean(nounRemovals[item.num] && nounRemovals[item.num].removed);
+      if (gone && item.noun) {
+        item.removedNoun = Object.fromEntries(NOUN_FIELDS.map((f) => [f, item[f]]));
+        NOUN_FIELDS.forEach((f) => delete item[f]);
+      } else if (!gone && item.removedNoun) {
+        Object.assign(item, item.removedNoun);
+        delete item.removedNoun;
+      }
+    });
+  }
+
+  function setNounRemoved(num, removed) {
+    nounRemovals[num] = { at: Date.now(), removed };
+    saveNounRemovals();
+    applyNounRemovals();
   }
 
   // ---------- leeches ----------
@@ -1972,8 +2005,11 @@
     els.deckEditLegend.hidden = false;
     els.deckEditToolbar.hidden = false;
     els.deckEditToolbar.querySelectorAll("[data-action]").forEach((btn) => {
-      btn.hidden = btn.dataset.action !== "restore-kanji";
+      btn.hidden = btn.dataset.action !== "restore-kanji" && btn.dataset.action !== "restore-nouns";
     });
+    const removedNouns = n2Kanji.filter((k) => k.removedNoun).length;
+    els.deckEditRestoreNounsBtn.hidden = removedNouns === 0;
+    els.deckEditRestoreNounsBtn.textContent = `削除した名詞を戻す（${removedNouns}）`;
     els.deckEditRestoreBtn.disabled = removedCount === 0;
     els.deckEditRestoreBtn.textContent = removedCount ? `削除した漢字を戻す（${removedCount}）` : "削除した漢字はありません";
     els.deckEditTitle.textContent = "N2漢字";
@@ -2004,7 +2040,7 @@
     els.deckEditToolbar.hidden = !deck;
     if (deck) {
       els.deckEditToolbar.querySelectorAll("[data-action]").forEach((btn) => {
-        btn.hidden = btn.dataset.action === "restore-kanji";
+        btn.hidden = btn.dataset.action === "restore-kanji" || btn.dataset.action === "restore-nouns";
       });
     }
     if (!deck) {
@@ -2434,6 +2470,13 @@
 
   els.deckEditToolbar.addEventListener("click", (event) => {
     const btn = event.target.closest("[data-action]");
+    if (btn && btn.dataset.action === "restore-nouns" && editingDeckId === KANJI_DECK_ID) {
+      Object.keys(nounRemovals).forEach((num) => {
+        if (nounRemovals[num].removed) setNounRemoved(num, false);
+      });
+      renderDeckEdit();
+      return;
+    }
     if (btn && btn.dataset.action === "restore-kanji" && editingDeckId === KANJI_DECK_ID) {
       Object.keys(kanjiRemovals).forEach((num) => {
         if (kanjiRemovals[num].removed) setKanjiRemoved(num, false);
@@ -4175,6 +4218,9 @@
         : "reading"
     );
     els.studyProgress.textContent = `${entry.kind === "word" ? "単語 " : entry.kind === "noun" ? "名詞 " : ""}${study.index + 1} / ${study.entries.length}`;
+    // Only a noun can be deleted by hand here.
+    els.studyDeleteBtn.hidden = entry.kind !== "noun";
+    els.studyDeleteSpacer.hidden = entry.kind === "noun";
     els.studyTerm.textContent = termText(item);
     els.studyGloss.textContent = studyGloss(item);
     els.studyTabs.innerHTML = tabs
@@ -4335,6 +4381,23 @@
   els.studyPrevBtn.addEventListener("click", () => studyMove(-1));
   els.studyNextBtn.addEventListener("click", () => studyMove(1));
   els.studyContinueBtn.addEventListener("click", studyAdvance);
+
+  // 削除: take this noun out of the lesson and every other mode (it can be
+  // brought back from 編集 > N2漢字).
+  els.studyDeleteBtn.addEventListener("click", () => {
+    if (!study) return;
+    const entry = study.entries[study.index];
+    if (!entry || entry.kind !== "noun") return;
+    const noun = entry.view.kanji;
+    if (!window.confirm(`名詞「${noun}」を削除しますか？
+レッスン・復習などに出なくなります。（編集 > N2漢字から戻せます）`)) return;
+    setNounRemoved(entry.view.parent.num, true);
+    study.entries.splice(study.index, 1);
+    study.index = Math.min(study.index, study.entries.length - 1);
+    study.openWord = null;
+    study.tab = "meaning";
+    renderStudy();
+  });
   els.studyBackBtn.addEventListener("click", () => {
     study = null;
     lessonRun = null;
@@ -6386,6 +6449,7 @@
       customDecks,
       deletedDecks: loadJson(DECK_TOMBSTONES_KEY, {}),
       kanjiRemovals,
+      nounRemovals,
       leeches,
       mnemonics,
     };
@@ -6447,6 +6511,9 @@
     saveJson(DECK_TOMBSTONES_KEY, merged.deletedDecks);
     kanjiRemovals = merged.kanjiRemovals || {};
     saveKanjiRemovals();
+    nounRemovals = merged.nounRemovals || {};
+    saveNounRemovals();
+    applyNounRemovals();
     leeches = merged.leeches || {};
     saveLeeches();
     mnemonics = merged.mnemonics || {};
@@ -6666,6 +6733,7 @@
   migrateTodaysMisses();
   alignDueTimesTo6am();
   kanjiRemovals = loadJson(KANJI_REMOVALS_KEY, {}) || {};
+  nounRemovals = loadJson(NOUN_REMOVALS_KEY, {}) || {};
   leeches = loadJson(LEECHES_KEY, {}) || {};
   mnemonics = loadJson(MNEMONICS_KEY, {}) || {};
   applySettings();
@@ -6675,6 +6743,7 @@
     .then((res) => res.json())
     .then((data) => {
       n2Kanji = data;
+      applyNounRemovals();
       migrateWordSchedules();
       allKanji = visibleKanji();
       kanjiByNum = new Map(allKanji.map((item) => [item.num, item]));
