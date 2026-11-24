@@ -3598,3 +3598,9 @@ button.edit-row {
   border-left: 12px solid var(--deck-color);
 }
 .custom-deck-row .custom-deck-name { font-weight: 700; }
+
+/* The deck rows in 編集 carry the same left edge as the review lists. */
+.edit-deck-row {
+  --deck-color: #ffffff;
+  border-left: 12px solid var(--deck-color);
+}

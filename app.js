@@ -2077,14 +2077,14 @@
       els.deckEditTitle.textContent = "デッキを編集";
       els.deckEditList.innerHTML =
         `
-        <button class="edit-row" type="button" data-edit-deck="${KANJI_DECK_ID}">
+        <button class="edit-row edit-deck-row" type="button" data-edit-deck="${KANJI_DECK_ID}" style="--deck-color: ${deckEdgeColor(visibleKanji())}">
           <span class="edit-front">N2漢字</span>
           <span class="edit-sub">${visibleKanji().length}枚</span>
         </button>` +
         customDecks
           .map(
             (d) => `
-        <button class="edit-row" type="button" data-edit-deck="${escapeHtml(d.id)}">
+        <button class="edit-row edit-deck-row" type="button" data-edit-deck="${escapeHtml(d.id)}" style="--deck-color: ${deckEdgeColor(deckItems(d.id))}">
           <span class="edit-front">${escapeHtml(d.name)}</span>
           <span class="edit-sub">${d.cards.length}枚</span>
         </button>`
