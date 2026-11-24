@@ -3612,7 +3612,7 @@ button.edit-row {
   border-radius: 999px;
   border: 2px solid rgb(143, 205, 240);
   background: rgba(143, 205, 240, 0.14);
-  color: #e8f4fb;
+  color: var(--text);
   font: inherit;
   font-size: 0.95rem;
   font-weight: 700;
