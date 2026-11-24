@@ -23,6 +23,7 @@
     </header>
     <div class="home-menu">
       <div class="home-info">
+        <button class="info-stats" id="modeStatsBtn" type="button">統計</button>
         <div class="streak" id="streak" title="連続で学習した日数">
           <span class="streak-label">連続学習</span>
           <span class="streak-num" id="streakNum">0</span>
@@ -47,8 +48,8 @@
         <span class="mode-label">すべて復習</span>
       </button>
       <div class="home-small-row">
-        <button class="mode-btn mode-btn-small" id="modeStatsBtn" type="button">
-          <span class="mode-label">統計</span>
+        <button class="mode-btn mode-btn-small" id="modeFlashBtn" type="button">
+          <span class="mode-label">暗記カード</span>
         </button>
         <button class="mode-btn mode-btn-small" id="uploadCsvBtn" type="button">
           <span class="mode-label">デッキ追加</span>
@@ -114,6 +115,64 @@
       </label>
     </div>
     <div class="deck-pick-body" id="deckPickList"></div>
+  </section>
+
+  <!-- FLASHCARDS: deck list with a level picker per deck -->
+  <section class="screen screen-flash" id="screen-flash" hidden>
+    <header class="topbar">
+      <button class="icon-btn" data-back type="button" aria-label="ホームに戻る">←</button>
+      <span class="screen-title">暗記カード</span>
+      <span class="icon-btn-spacer"></span>
+    </header>
+    <div class="deck-pick-body" id="flashDeckList"></div>
+  </section>
+
+  <!-- FLASHCARDS: practice -->
+  <section class="screen screen-flash" id="screen-flash-play" hidden>
+    <header class="topbar">
+      <button class="icon-btn" id="flashPlayBack" type="button" aria-label="デッキ一覧に戻る">←</button>
+      <span class="screen-title" id="flashProgress">1 / 1</span>
+      <span class="flash-counts"><span class="flash-right">○ <b id="flashRight">0</b></span><span class="flash-wrong">× <b id="flashWrong">0</b></span></span>
+    </header>
+    <div class="flash-stage" id="flashStage">
+      <div class="flash-hint flash-hint-wrong">間違い</div>
+      <div class="flash-hint flash-hint-right">正解</div>
+      <div class="flash-drag" id="flashDrag">
+        <div class="flash-card" id="flashCard">
+          <div class="flash-face flash-front"><div class="flash-term" id="flashTerm"></div></div>
+          <div class="flash-face flash-back">
+            <div class="flash-label" id="flashLabel"></div>
+            <div class="flash-reading" id="flashReading"></div>
+            <div class="flash-meaning" id="flashMeaning"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="flash-keys"><span class="flash-keys-pc">← 間違い　　Space でめくる　　正解 →</span><span class="flash-keys-touch">タップでめくる　←左へスワイプ＝間違い　右へスワイプ＝正解→</span></div>
+    <div class="flash-buttons">
+      <button class="flash-btn flash-btn-wrong" id="flashWrongBtn" type="button" aria-label="間違い（←）">✕</button>
+      <button class="flash-btn flash-btn-flip" id="flashFlipBtn" type="button">めくる</button>
+      <button class="flash-btn flash-btn-right" id="flashRightBtn" type="button" aria-label="正解（→）">○</button>
+    </div>
+  </section>
+
+  <!-- FLASHCARDS: results -->
+  <section class="screen screen-flash" id="screen-flash-results" hidden>
+    <header class="topbar">
+      <button class="icon-btn" id="flashResultsBack" type="button" aria-label="デッキ一覧に戻る">←</button>
+      <span class="screen-title">結果</span>
+      <span class="icon-btn-spacer"></span>
+    </header>
+    <div class="flash-results">
+      <div class="flash-result-score" id="flashResultScore">0 / 0</div>
+      <div class="flash-result-line" id="flashResultLine"></div>
+      <div class="flash-result-buttons">
+        <button class="flash-btn" id="flashAgainBtn" type="button">もう一度</button>
+        <button class="flash-btn" id="flashMissesBtn" type="button">間違いだけ</button>
+        <button class="flash-btn" id="flashBackBtn" type="button">デッキ一覧</button>
+      </div>
+      <ul class="flash-miss-list" id="flashMissList"></ul>
+    </div>
   </section>
 
   <!-- ADD TERM (search JMdict) -->

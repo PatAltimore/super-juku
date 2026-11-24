@@ -3604,3 +3604,304 @@ button.edit-row {
   --deck-color: #ffffff;
   border-left: 12px solid var(--deck-color);
 }
+
+/* ---------- home: 統計 beside 連続学習 ---------- */
+.info-stats {
+  flex: 0 0 auto;
+  padding: 5px 16px;
+  border-radius: 999px;
+  border: 2px solid rgb(143, 205, 240);
+  background: rgba(143, 205, 240, 0.14);
+  color: #e8f4fb;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.info-stats:active { transform: scale(0.96); }
+
+#modeFlashBtn { --mode-color: #9a9a9a; }
+#modeFlashBtn .mode-label { line-height: 1.2; }
+
+/* ---------- flashcards: always a dark theme ---------- */
+.screen-flash {
+  --text: #eef1f6;
+  --text-dim: #98a2b3;
+  --surface: #1f2531;
+  --surface-2: #2a3140;
+  --border: #343c4d;
+  background: #141820;
+  color: var(--text);
+}
+.screen-flash .icon-btn { color: var(--text); }
+
+/* deck list: the same coloured-edge buttons, each opening a level picker */
+.flash-deck {
+  --deck-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+.flash-deck .deck-pick-item { width: 100%; --deck-color: inherit; }
+.flash-deck.open .deck-pick-item {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-color: var(--text-dim);
+  border-left-color: var(--deck-color);
+}
+.flash-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px 16px;
+  border: 1px solid var(--text-dim);
+  border-top: 0;
+  border-left: 12px solid var(--deck-color);
+  border-radius: 0 0 16px 16px;
+  background: var(--surface-2);
+}
+.flash-panel-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.flash-levels {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 8px;
+}
+.flash-level {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 6px;
+  border: 2px solid rgb(var(--status-rgb, 255, 255, 255));
+  border-radius: 12px;
+  background: rgba(var(--status-rgb, 255, 255, 255), 0.1);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.flash-level i {
+  font-style: normal;
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0.75;
+}
+.flash-level.on {
+  background: rgb(var(--status-rgb, 255, 255, 255));
+  color: #14181f;
+}
+.flash-start {
+  padding: 14px;
+  border: 0;
+  border-radius: 14px;
+  background: #f4f6fa;
+  color: #14181f;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #8b94a5;
+}
+.flash-start:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #8b94a5; }
+.flash-start:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
+
+/* practice */
+.flash-counts {
+  display: flex;
+  gap: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.flash-right { color: #5ad08a; }
+.flash-wrong { color: #ff6b6b; }
+
+.flash-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  perspective: 1200px;
+  overflow: hidden;
+}
+.flash-hint {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.1rem;
+  font-weight: 800;
+  opacity: 0;
+  transition: opacity 0.12s;
+  pointer-events: none;
+}
+.flash-hint-wrong { left: 14px; color: #ff6b6b; }
+.flash-hint-right { right: 14px; color: #5ad08a; }
+.flash-stage.lean-wrong .flash-hint-wrong,
+.flash-stage.lean-right .flash-hint-right { opacity: 1; }
+
+.flash-drag {
+  width: min(92%, 460px);
+  height: min(100%, 360px);
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  transition: transform 0.2s ease;
+}
+.flash-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.35s ease;
+}
+.flash-card.flipped { transform: rotateY(180deg); }
+
+.flash-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 20px;
+  border: 2px solid #3a4358;
+  border-radius: 22px;
+  background: linear-gradient(160deg, #262d3b, #1b212c);
+  box-shadow: 0 10px 28px -10px rgba(0, 0, 0, 0.8);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  text-align: center;
+}
+.flash-back { transform: rotateY(180deg); }
+
+.flash-term {
+  font-family: "Shippori Mincho", serif;
+  font-weight: 800;
+  font-size: clamp(4.5rem, 22vw, 7.5rem);
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+.flash-term.long { font-size: clamp(2.4rem, 12vw, 4rem); }
+
+.flash-reading,
+.flash-meaning {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-wrap: anywhere;
+}
+.flash-reading { font-size: clamp(1.5rem, 6vw, 2.1rem); font-weight: 700; color: #ffd27a; }
+.flash-meaning { font-size: clamp(1.15rem, 4.6vw, 1.6rem); color: var(--text); }
+.flash-reading:not(:empty) + .flash-meaning:not(:empty) {
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.flash-keys {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  padding: 4px 16px;
+}
+.flash-keys-touch { display: none; }
+@media (pointer: coarse) {
+  .flash-keys-pc { display: none; }
+  .flash-keys-touch { display: inline; }
+}
+
+.flash-buttons {
+  display: flex;
+  gap: 12px;
+  padding: 8px 16px calc(16px + var(--safe-bottom, 0px));
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+}
+.flash-btn {
+  flex: 1;
+  padding: 14px 8px;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.flash-btn:disabled { opacity: 0.4; cursor: default; }
+.flash-btn-wrong { color: #ff6b6b; border-color: #ff6b6b; font-size: 1.5rem; }
+.flash-btn-right { color: #5ad08a; border-color: #5ad08a; font-size: 1.5rem; }
+.flash-btn-flip { flex: 1.6; }
+
+/* results */
+.flash-results {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+  padding: 16px 20px 28px;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+.flash-result-score { font-size: 3.2rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.flash-result-line { color: var(--text-dim); }
+.flash-result-buttons { display: flex; gap: 10px; width: 100%; }
+.flash-miss-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.flash-miss-list li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.flash-miss-term { font-family: "Shippori Mincho", serif; font-weight: 800; font-size: 1.5rem; }
+.flash-miss-body { font-size: 0.9rem; color: var(--text-dim); }
+
+/* flashcards of the N2 kanji deck: colour-coded like the reviews, with only
+   the one answer being practised on the back */
+.flash-card { --tone: #3a4358; --tone-text: #ffd27a; }
+.flash-card[data-tone="pink"] { --tone: #e5189a; --tone-text: #ff7fcb; }
+.flash-card[data-tone="purple"] { --tone: #a02fe2; --tone-text: #cf9bff; }
+.flash-card[data-tone="teal"] { --tone: #0f9b8e; --tone-text: #4fe6d6; }
+.flash-card[data-tone] .flash-face { border: 4px solid var(--tone); }
+
+.flash-label {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--tone-text);
+}
+.flash-label:empty { display: none; }
+.flash-card[data-tone] .flash-meaning {
+  font-size: clamp(1.4rem, 6vw, 2rem);
+  font-weight: 600;
+}
+.flash-card[data-kind="reading"] .flash-meaning {
+  font-size: clamp(2rem, 9vw, 3.2rem);
+  font-weight: 700;
+}
+.flash-miss.tone-pink { border-left: 6px solid #e5189a; }
+.flash-miss.tone-purple { border-left: 6px solid #a02fe2; }
+.flash-miss.tone-teal { border-left: 6px solid #0f9b8e; }

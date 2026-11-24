@@ -312,6 +312,9 @@
     customStudy: els.screenCustomStudy,
     customType: els.screenCustomType,
     customComplete: els.screenCustomComplete,
+    flash: document.getElementById("screen-flash"),
+    flashPlay: document.getElementById("screen-flash-play"),
+    flashResults: document.getElementById("screen-flash-results"),
   };
 
   let allKanji = [];
@@ -5038,6 +5041,307 @@
     if (!event.target.closest("[data-action='review-now']")) return;
     const units = getReviewUnits();
     if (units.length) startReview(units);
+  });
+
+  // ---------- flashcards ----------
+  // Practice only: cards of a deck, chosen by review level, flipped and
+  // marked right (→ or a right swipe) or wrong (← or a left swipe). Nothing
+  // here touches the review schedule or statistics.
+
+  const FLASH_KEY = "kanjiFlashN2.flash.v1";
+  const FLASH_LEVELS = [
+    { id: "new", label: "未学習" },
+    { id: "learning", label: "学習中" },
+    { id: "r2", label: "復習2" },
+    { id: "r3", label: "復習3" },
+    { id: "r4", label: "復習4" },
+    { id: "r5", label: "復習5" },
+    { id: "r6", label: "復習6" },
+  ];
+  const flashPrefs = { levels: FLASH_LEVELS.map((l) => l.id), ...(loadJson(FLASH_KEY, {}) || {}) };
+  if (!Array.isArray(flashPrefs.levels)) flashPrefs.levels = FLASH_LEVELS.map((l) => l.id);
+  const saveFlashPrefs = () => saveJson(FLASH_KEY, flashPrefs);
+  let flashOpenDeck = null; // the deck whose level picker is open
+  let flashSession = null;
+  const flashEl = (id) => document.getElementById(id);
+
+  const unitStudied = (entry) => Boolean(entry && (entry.lastSeen || entry.right > 0 || entry.wrong > 0));
+
+  // Every card of a deck, each with the review level it is at.
+  // A deck with 単語 in its name is plain: one card per term with the reading
+  // above the meaning. Every other deck is colour-coded, with one card per
+  // question and only that answer on the back.
+  function flashCards(deckId) {
+    const cards = [];
+    const customDeck = deckId === KANJI_DECK_ID ? null : customDeckById(deckId.replace(/^custom:/, ""));
+    const plain = Boolean(customDeck && customDeck.name.includes("単語"));
+    deckItems(deckId).forEach((item) => {
+      if (item.deckId) {
+        const entry = srsOf(item);
+        const level = statusOfEntry(entry, Boolean(entry && entry.lastSeen));
+        if (plain) {
+          const reading = item.sections.filter((s) => kindOfLabel(s.label) === "reading").map((s) => s.value);
+          const rest = item.sections.filter((s) => kindOfLabel(s.label) !== "reading").map((s) => s.value);
+          cards.push({ front: item.front, reading, meaning: rest, level });
+          return;
+        }
+        // Readings are pink and meanings purple, as in the app.
+        item.sections.forEach((s) => {
+          if (!s.value) return;
+          const kind = kindOfLabel(s.label);
+          cards.push({
+            front: item.front,
+            tone: kind === "reading" ? "pink" : kind === "meaning" ? "purple" : "",
+            kind,
+            label: displayLabel(s.label, s.value),
+            reading: [],
+            meaning: [s.value],
+            level,
+          });
+        });
+        return;
+      }
+      // One card per question, as in the reviews, with only that answer on
+      // the back: pink for the kanji (音読み, Meaning), purple for its word,
+      // teal for its noun.
+      const level = (group) => {
+        const entry = srsOf(item, group);
+        return statusOfEntry(entry, unitStudied(entry));
+      };
+      const add = (front, tone, kind, label, answer, lvl) => {
+        if (answer) cards.push({ front, tone, kind, label, reading: [], meaning: [answer], level: lvl });
+      };
+      const kanjiLevel = statusOfEntry(srsOf(item), isItemStudied(item));
+      add(item.kanji, "pink", "reading", "音読み", item.onyomi, kanjiLevel);
+      add(item.kanji, "pink", "meaning", "Meaning", item.meaning, kanjiLevel);
+      if (item.word) {
+        add(item.word, "purple", "reading", "単語の読み方", item.wordReading, level("word"));
+        add(item.word, "purple", "meaning", "Word meaning", item.wordMeaning, level("word"));
+      }
+      if (item.noun) {
+        add(item.noun, "teal", "reading", "訓読み", item.nounReading, level("noun"));
+        add(item.noun, "teal", "meaning", "Noun meaning", item.nounMeaning, level("noun"));
+      }
+    });
+    return cards;
+  }
+
+  const flashChosen = (deckId) => flashCards(deckId).filter((c) => flashPrefs.levels.includes(c.level));
+
+  function renderFlashDecks() {
+    flashEl("flashDeckList").innerHTML = deckPickEntries()
+      .map((entry) => {
+        const open = entry.id === flashOpenDeck;
+        const color = deckEdgeColor(deckItems(entry.id));
+        let panel = "";
+        if (open) {
+          const cards = flashCards(entry.id);
+          const counts = {};
+          cards.forEach((c) => (counts[c.level] = (counts[c.level] || 0) + 1));
+          const chosen = cards.filter((c) => flashPrefs.levels.includes(c.level)).length;
+          panel = `
+        <div class="flash-panel">
+          <div class="flash-panel-label">練習する復習レベル</div>
+          <div class="flash-levels">${FLASH_LEVELS.map(
+            (l) =>
+              `<button class="flash-level status-${l.id}${flashPrefs.levels.includes(l.id) ? " on" : ""}" type="button" data-level="${l.id}">${l.label}<i>${counts[l.id] || 0}</i></button>`
+          ).join("")}</div>
+          <button class="flash-start" type="button" data-start="${escapeHtml(entry.id)}"${chosen ? "" : " disabled"}>${chosen ? `スタート（${chosen}枚）` : "出せるカードがありません"}</button>
+        </div>`;
+        }
+        return `
+      <div class="flash-deck${open ? " open" : ""}" style="--deck-color: ${color}">
+        <button class="deck-pick-item" type="button" data-flash-deck="${escapeHtml(entry.id)}">
+          <span class="deck-pick-name">${escapeHtml(entry.name)}</span>
+          <span class="deck-pick-meta">${entry.count}枚 ${open ? "▴" : "▾"}</span>
+        </button>${panel}
+      </div>`;
+      })
+      .join("");
+  }
+
+  flashEl("flashDeckList").addEventListener("click", (event) => {
+    const level = event.target.closest("[data-level]");
+    if (level) {
+      const id = level.dataset.level;
+      flashPrefs.levels = flashPrefs.levels.includes(id) ? flashPrefs.levels.filter((x) => x !== id) : [...flashPrefs.levels, id];
+      saveFlashPrefs();
+      renderFlashDecks();
+      return;
+    }
+    const start = event.target.closest("[data-start]");
+    if (start && !start.disabled) {
+      startFlash(shuffle(flashChosen(start.dataset.start)));
+      return;
+    }
+    const deck = event.target.closest("[data-flash-deck]");
+    if (deck) {
+      flashOpenDeck = flashOpenDeck === deck.dataset.flashDeck ? null : deck.dataset.flashDeck;
+      renderFlashDecks();
+    }
+  });
+
+  flashEl("modeFlashBtn").addEventListener("click", () => {
+    renderFlashDecks();
+    showScreen("flash");
+  });
+
+  // ----- practice -----
+
+  function startFlash(cards) {
+    if (!cards.length) return;
+    flashSession = { all: cards, cards, index: 0, right: 0, wrong: 0, misses: [], busy: false, flipped: false };
+    showScreen("flashPlay");
+    renderFlashCard();
+  }
+
+  function flashLines(list, el) {
+    el.innerHTML = list.filter(Boolean).map((t) => `<div>${escapeHtml(t)}</div>`).join("");
+  }
+
+  function renderFlashCard() {
+    const s = flashSession;
+    if (s.index >= s.cards.length) return finishFlash();
+    const card = s.cards[s.index];
+    s.flipped = false;
+    s.busy = false;
+    const drag = flashEl("flashDrag");
+    drag.style.transition = "none";
+    drag.style.transform = "";
+    drag.style.opacity = "";
+    flashEl("flashCard").classList.remove("flipped");
+    flashEl("flashCard").dataset.tone = card.tone || "";
+    flashEl("flashCard").dataset.kind = card.kind || "";
+    flashEl("flashLabel").textContent = card.label || "";
+    flashEl("flashTerm").textContent = card.front;
+    flashEl("flashTerm").classList.toggle("long", card.front.length > 4);
+    flashLines(card.reading, flashEl("flashReading"));
+    flashLines(card.meaning, flashEl("flashMeaning"));
+    flashEl("flashProgress").textContent = `${s.index + 1} / ${s.cards.length}`;
+    flashEl("flashRight").textContent = s.right;
+    flashEl("flashWrong").textContent = s.wrong;
+    flashStageHint(0);
+    window.requestAnimationFrame(() => (drag.style.transition = ""));
+  }
+
+  function flipFlash() {
+    if (!flashSession || flashSession.busy) return;
+    flashSession.flipped = !flashSession.flipped;
+    flashEl("flashCard").classList.toggle("flipped", flashSession.flipped);
+  }
+
+  // dx: how far the card is dragged; tints the matching side while dragging.
+  function flashStageHint(dx) {
+    const stage = flashEl("flashStage");
+    stage.classList.toggle("lean-right", dx > 40);
+    stage.classList.toggle("lean-wrong", dx < -40);
+  }
+
+  function answerFlash(right) {
+    const s = flashSession;
+    if (!s || s.busy) return;
+    s.busy = true;
+    const card = s.cards[s.index];
+    if (right) s.right++;
+    else {
+      s.wrong++;
+      s.misses.push(card);
+    }
+    const drag = flashEl("flashDrag");
+    drag.style.transition = "transform 0.22s ease-out, opacity 0.22s ease-out";
+    drag.style.transform = `translateX(${right ? 130 : -130}%) rotate(${right ? 18 : -18}deg)`;
+    drag.style.opacity = "0";
+    flashEl("flashRight").textContent = s.right;
+    flashEl("flashWrong").textContent = s.wrong;
+    window.setTimeout(() => {
+      if (flashSession !== s) return;
+      s.index++;
+      renderFlashCard();
+    }, 230);
+  }
+
+  function finishFlash() {
+    const s = flashSession;
+    showScreen("flashResults");
+    flashEl("flashResultScore").textContent = `${s.right} / ${s.cards.length}`;
+    flashEl("flashResultLine").textContent = `${s.cards.length ? Math.round((s.right / s.cards.length) * 100) : 0}%　正解 ${s.right}　間違い ${s.wrong}`;
+    flashEl("flashMissesBtn").disabled = !s.misses.length;
+    flashEl("flashMissList").innerHTML = s.misses
+      .map(
+        (c) =>
+          `<li class="flash-miss ${c.tone ? `tone-${c.tone}` : ""}"><span class="flash-miss-term">${escapeHtml(c.front)}</span><span class="flash-miss-body">${escapeHtml([c.label, ...c.reading, ...c.meaning].filter(Boolean).join("　"))}</span></li>`
+      )
+      .join("");
+  }
+
+  // Drag to answer, tap to flip.
+  (() => {
+    const drag = flashEl("flashDrag");
+    let start = null;
+    drag.addEventListener("pointerdown", (event) => {
+      if (!flashSession || flashSession.busy) return;
+      start = { x: event.clientX, dx: 0, moved: false };
+      drag.setPointerCapture(event.pointerId);
+      drag.style.transition = "none";
+    });
+    drag.addEventListener("pointermove", (event) => {
+      if (!start) return;
+      start.dx = event.clientX - start.x;
+      if (Math.abs(start.dx) > 8) start.moved = true;
+      if (!start.moved) return;
+      drag.style.transform = `translateX(${start.dx}px) rotate(${start.dx / 18}deg)`;
+      flashStageHint(start.dx);
+    });
+    const release = (event) => {
+      if (!start) return;
+      const { dx, moved } = start;
+      start = null;
+      drag.style.transition = "";
+      flashStageHint(0);
+      if (event.type === "pointercancel") {
+        drag.style.transform = "";
+        return;
+      }
+      const threshold = Math.min(110, drag.offsetWidth * 0.3);
+      if (moved && Math.abs(dx) >= threshold) answerFlash(dx > 0);
+      else {
+        drag.style.transform = "";
+        if (!moved) flipFlash();
+      }
+    };
+    drag.addEventListener("pointerup", release);
+    drag.addEventListener("pointercancel", release);
+  })();
+
+  flashEl("flashFlipBtn").addEventListener("click", flipFlash);
+  flashEl("flashWrongBtn").addEventListener("click", () => answerFlash(false));
+  flashEl("flashRightBtn").addEventListener("click", () => answerFlash(true));
+
+  document.addEventListener("keydown", (event) => {
+    if (!flashSession || screens.flashPlay.hidden || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.key === " " || event.code === "Space") {
+      event.preventDefault();
+      flipFlash();
+    } else if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      answerFlash(false);
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      answerFlash(true);
+    }
+  });
+
+  const leaveFlash = () => {
+    flashSession = null;
+    renderFlashDecks();
+    showScreen("flash");
+  };
+  flashEl("flashPlayBack").addEventListener("click", leaveFlash);
+  flashEl("flashResultsBack").addEventListener("click", leaveFlash);
+  flashEl("flashBackBtn").addEventListener("click", leaveFlash);
+  flashEl("flashAgainBtn").addEventListener("click", () => startFlash(shuffle(flashSession.all)));
+  flashEl("flashMissesBtn").addEventListener("click", () => {
+    if (flashSession.misses.length) startFlash(shuffle(flashSession.misses));
   });
 
   els.modeStatsBtn.addEventListener("click", () => {
