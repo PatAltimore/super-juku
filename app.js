@@ -1721,6 +1721,36 @@
 
   // One button per deck: tapping it starts that deck's review right away.
   // The bubble gets warmer for every 25 reviews waiting (cool blue up to red).
+  // The left edge of a deck button shows the review level most of the deck's
+  // terms are at, in the same colours as the rest of the app (white for terms
+  // not studied yet).
+  const STATUS_EDGE = {
+    new: "#ffffff",
+    learning: "rgb(232, 176, 75)",
+    r2: "rgb(176, 208, 70)",
+    r3: "rgb(76, 195, 138)",
+    r4: "rgb(240, 111, 168)",
+    r5: "rgb(167, 123, 240)",
+    r6: "rgb(92, 200, 240)",
+  };
+
+  function deckEdgeColor(items) {
+    const counts = {};
+    items.forEach((item) => {
+      const status = statusOfEntry(srsOf(item), isItemStudied(item));
+      counts[status] = (counts[status] || 0) + 1;
+    });
+    let best = "new";
+    let most = 0;
+    Object.keys(STATUS_EDGE).forEach((status) => {
+      if ((counts[status] || 0) > most) {
+        best = status;
+        most = counts[status];
+      }
+    });
+    return STATUS_EDGE[best];
+  }
+
   function deckReviewButton(name, meta, dueCount) {
     return `
           <button class="deck-review-btn deck-review-btn-chip" data-action="review" type="button"${dueCount ? "" : " disabled"}>
@@ -1745,21 +1775,21 @@
   function renderCustomDecksList() {
     els.customDecksEmpty.hidden = customDecks.length > 0;
     const n2Row = `
-      <div class="custom-deck-row" data-deck-id="${KANJI_DECK_ID}">
+      <div class="custom-deck-row" data-deck-id="${KANJI_DECK_ID}" style="--deck-color: ${deckEdgeColor(visibleKanji())}">
         <div class="custom-deck-header">${deckReviewButton("N2漢字", `${visibleKanji().length}枚`, unitQuestionCount(getReviewUnits(visibleKanji())))}
         </div>
       </div>`;
     const leechItems = getLeechItems();
     const leechCount = leechItems.length;
     const leechRow = `
-      <div class="custom-deck-row" data-deck-id="leech">
+      <div class="custom-deck-row" data-deck-id="leech" style="--deck-color: ${deckEdgeColor(leechItems)}">
         <div class="custom-deck-header">${deckReviewButton("リーチ", leechCount ? "苦手なカード（任意）" : "苦手なカードはありません", questionCount(leechItems))}
         </div>
       </div>`;
     els.customDecksList.innerHTML = n2Row + customDecks
       .map((deck) => {
         return `
-      <div class="custom-deck-row" data-deck-id="${escapeHtml(deck.id)}">
+      <div class="custom-deck-row" data-deck-id="${escapeHtml(deck.id)}" style="--deck-color: ${deckEdgeColor(deckItems(deck.id))}">
         <div class="custom-deck-header">${deckReviewButton(deck.name, `${deck.cards.length}枚`, customQuestionCount(getDueCustomCards(deck)))}
         </div>
       </div>`;
@@ -3602,7 +3632,7 @@
       .map((entry) => {
         const usable = entry.count > 0;
         return `
-      <button class="deck-pick-item${entry.id === current ? " selected" : ""}" type="button" data-deck="${escapeHtml(entry.id)}"${usable ? "" : " disabled"}>
+      <button class="deck-pick-item${entry.id === current ? " selected" : ""}" type="button" data-deck="${escapeHtml(entry.id)}" style="--deck-color: ${deckEdgeColor(deckItems(entry.id))}"${usable ? "" : " disabled"}>
         <span class="deck-pick-name">${escapeHtml(entry.name)}</span>
         <span class="deck-pick-meta">${usable ? `${entry.count}枚` : "出題できるカードがありません"}</span>
       </button>`;

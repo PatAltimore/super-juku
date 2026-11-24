@@ -3574,3 +3574,27 @@ button.edit-row {
 .mnemonic-part + .mnemonic-part {
   margin-top: 6px;
 }
+
+/* ---------- deck buttons (レッスン / すべて復習 deck lists and the 復習
+   list): the left edge (--deck-color, set by the app) shows the review level
+   most of the deck's terms are at. ---------- */
+.deck-pick-item,
+.custom-deck-row {
+  --deck-color: #ffffff;
+}
+
+.deck-pick-item {
+  border: 1px solid var(--border);
+  border-left: 12px solid var(--deck-color);
+}
+.deck-pick-item.selected {
+  border-color: var(--text-dim);
+  border-left-color: var(--deck-color);
+  background: var(--surface-2);
+}
+.deck-pick-item.selected .deck-pick-name::before { content: "✓ "; }
+
+.custom-deck-row {
+  border-left: 12px solid var(--deck-color);
+}
+.custom-deck-row .custom-deck-name { font-weight: 700; }
