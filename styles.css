@@ -2903,10 +2903,12 @@ button.edit-row {
 [data-theme="dark"] .screen.q-reading { --q-bg: #e5189a; }
 [data-theme="dark"] .screen.q-meaning { --q-bg: #a02fe2; }
 [data-theme="dark"] .screen.q-noun { --q-bg: #0f9b8e; }
+[data-theme="dark"] .screen.q-plain { --q-bg: #2b2b2b; }
 
 [data-theme="dark"] .screen:has(.type-card).q-reading,
 [data-theme="dark"] .screen:has(.type-card).q-meaning,
-[data-theme="dark"] .screen:has(.type-card).q-noun {
+[data-theme="dark"] .screen:has(.type-card).q-noun,
+[data-theme="dark"] .screen:has(.type-card).q-plain {
   background: var(--q-bg);
   transition: background-color 0.15s ease;
 }
@@ -2918,7 +2920,8 @@ button.edit-row {
 @media (min-width: 700px) and (min-height: 520px) {
   [data-theme="dark"] .screen:has(.type-card).q-reading,
   [data-theme="dark"] .screen:has(.type-card).q-meaning,
-  [data-theme="dark"] .screen:has(.type-card).q-noun {
+  [data-theme="dark"] .screen:has(.type-card).q-noun,
+  [data-theme="dark"] .screen:has(.type-card).q-plain {
     background: var(--bg);
   }
 
@@ -3010,6 +3013,7 @@ button.edit-row {
 .screen-study.q-reading { --q-bg: #e5189a; }
 .screen-study.q-meaning { --q-bg: #a02fe2; }
 .screen-study.q-noun { --q-bg: #0f9b8e; }
+.screen-study.q-plain { --q-bg: #2b2b2b; }
 
 .study-hero {
   flex: 0 0 auto;

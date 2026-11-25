@@ -3164,7 +3164,7 @@
     els.customTypeFeedback.hidden = true;
     els.customTypeSubmitBtn.textContent = "確認";
     els.customTypeBadge.textContent = displayLabel(customTypeCurrentSection.label, customTypeCurrentSection.value);
-    setQuestionTone(els.screenCustomType, kindOfLabel(customTypeCurrentSection.label));
+    setQuestionTone(els.screenCustomType, isWordDeck(customTypeDeck) ? "plain" : kindOfLabel(customTypeCurrentSection.label));
     const badgeClass = badgeClassForLabel(customTypeCurrentSection.label);
     els.customTypeBadge.className = "question-type-badge" + (badgeClass ? ` ${badgeClass}` : "");
     els.customTypeFront.textContent = card.front;
@@ -4311,7 +4311,9 @@
     // readings are pink and its meanings purple.
     setQuestionTone(
       els.screenLessonStudy,
-      item.sections
+      item.sections && isWordDeck(customDeckById(item.deckId))
+        ? "plain"
+        : item.sections
         ? study.tab === "readings"
           ? "reading"
           : "meaning"
@@ -5694,7 +5696,12 @@
     return null;
   }
 
+  // A deck with 単語 in its name isn't colour-coded: its lesson and review
+  // screens stay dark grey.
+  const isWordDeck = (deck) => Boolean(deck && deck.name.includes("単語"));
+
   function setQuestionTone(screen, kind) {
+    screen.classList.toggle("q-plain", kind === "plain");
     screen.classList.toggle("q-reading", kind === "reading");
     screen.classList.toggle("q-meaning", kind === "meaning");
     screen.classList.toggle("q-noun", kind === "noun");
@@ -5711,7 +5718,9 @@
   // teal for its noun (their readings and meanings). A custom deck's readings
   // are pink and its meanings purple.
   function questionTone(item, type) {
-    if (item.sections) return kindOfLabel(item.sections[sectionIndex(type)].label);
+    if (item.sections) {
+      return isWordDeck(customDeckById(item.deckId)) ? "plain" : kindOfLabel(item.sections[sectionIndex(type)].label);
+    }
     // the noun made of just the kanji (訓読み and Noun meaning) is teal
     const group = groupOfType(type);
     return group === "kanji" ? "reading" : group === "noun" ? "noun" : "meaning";
