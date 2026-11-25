@@ -3942,3 +3942,11 @@ button.edit-row {
   cursor: pointer;
 }
 .flash-history-btn:disabled { border-color: var(--border); color: var(--text-dim); cursor: default; }
+
+/* Three five-character buttons share the home screen's bottom row, so on a
+   phone the row needs tighter spacing and a smaller label to fit. */
+@media (max-width: 520px) {
+  .home-small-row { gap: 10px; }
+  .home-small-row .mode-btn-small { min-width: 0; padding-left: 2px; padding-right: 2px; }
+  .home-small-row .mode-btn-small .mode-label { font-size: clamp(0.8rem, 4vw, 1.3rem); }
+}

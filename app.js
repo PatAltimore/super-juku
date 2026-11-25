@@ -4090,11 +4090,12 @@
   }
 
   // ---------- lesson: study a batch of five, then quiz on it ----------
-  // The selected terms are taken five at a time. Each batch is first shown
+  // The selected terms are taken five at a time (ten for a vocabulary deck). Each batch is first shown
   // term by term (meaning, readings and example sentences on tabs), then asked
   // as the usual typed quiz; the next batch follows until all are done.
 
   const LESSON_BATCH_SIZE = 5;
+  const VOCAB_BATCH_SIZE = 10; // custom (vocabulary) decks
   const STUDY_TABS = [
     ["meaning", "Meaning"],
     ["readings", "Readings"],
@@ -4105,8 +4106,9 @@
   const exampleCache = new Map();
 
   function startLesson(cards) {
+    const size = cards[0] && cards[0].sections ? VOCAB_BATCH_SIZE : LESSON_BATCH_SIZE;
     const batches = [];
-    for (let i = 0; i < cards.length; i += LESSON_BATCH_SIZE) batches.push(cards.slice(i, i + LESSON_BATCH_SIZE));
+    for (let i = 0; i < cards.length; i += size) batches.push(cards.slice(i, i + size));
     lessonRun = { batches, index: 0, seen: 0, right: 0, wrong: 0 };
     startStudy();
   }
