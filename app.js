@@ -1482,8 +1482,67 @@
   // every row still round-trips correctly on export — a card's `sections`
   // only lists its non-empty cells. `answers` mirrors deck.answers' shape,
   // parsed out of any "(extra answers)" columns present.
+  // A CSV without a header row would lose its first card, whose reading and
+  // meaning (e.g. あう, "to meet") become the column names shown on every
+  // card. Real column names are never a kana word followed by an English one.
+  const KANA_TEXT = /^[ぁ-ゖァ-ヺー、。・,，\/\s~〜～()（）-]+$/;
+  const COLUMN_NAMES = /^(かな|ひらがな|カタカナ|ことば|たんご|front|back|word|term|kanji|expression|notes?|example|sentence|translation|romaji|tags?|type|pos|part of speech|jlpt|common|column \d+)$/i;
+
+  function isLostHeaderPair(first, second) {
+    const a = String(first || "").trim();
+    const b = String(second || "").trim();
+    return (
+      KANA_TEXT.test(a) &&
+      /[ぁ-ゖァ-ヺ]/.test(a) &&
+      !READING_LABEL_PATTERN.test(a) &&
+      !COLUMN_NAMES.test(a) &&
+      /[a-z]/i.test(b) &&
+      !/[ぁ-ヿ一-鿿]/.test(b) &&
+      !MEANING_LABEL_PATTERN.test(b) &&
+      !COLUMN_NAMES.test(b) &&
+      !b.endsWith(EXTRA_ANSWERS_SUFFIX)
+    );
+  }
+
+  // Decks already imported that way get their columns renamed back to Reading
+  // and Meaning (cards, and answers added under the old names, included).
+  function repairLostHeaders() {
+    let changed = false;
+    customDecks.forEach((deck) => {
+      const columns = deckColumns(deck);
+      const rename = {};
+      columns.forEach((label, i) => {
+        if (i + 1 < columns.length && isLostHeaderPair(label, columns[i + 1])) {
+          rename[label] = "Reading";
+          rename[columns[i + 1]] = "Meaning";
+        }
+      });
+      if (!Object.keys(rename).length) return;
+      const newName = (label) => (Object.prototype.hasOwnProperty.call(rename, label) ? rename[label] : label);
+      deck.columns = Array.from(new Set(columns.map(newName)));
+      deck.cards.forEach((card) => {
+        const seen = new Set();
+        card.sections = (card.sections || [])
+          .map((section) => ({ ...section, label: newName(section.label) }))
+          .filter((section) => !seen.has(section.label) && seen.add(section.label));
+      });
+      Object.values(deck.answers || {}).forEach((entry) => {
+        Object.keys(entry).forEach((label) => {
+          const to = newName(label);
+          if (to === label) return;
+          entry[to] = Array.from(new Set([...(entry[to] || []), ...entry[label]]));
+          delete entry[label];
+        });
+      });
+      deck.updatedAt = new Date().toISOString();
+      changed = true;
+    });
+    if (changed) saveCustomDecks();
+  }
+
   function buildCustomDeckCards(rows) {
     if (!rows.length) return { columns: [], cards: [], answers: {} };
+    if (isLostHeaderPair(rows[0][1], rows[0][2])) rows = [["Front", "Reading", "Meaning"], ...rows];
     const header = rows[0];
     const rawLabels = header.slice(1).map((h, idx) => (h || "").trim() || `Column ${idx + 2}`);
     const columns = [];
@@ -6917,6 +6976,7 @@
     saveLessonHistory();
     customDecks = merged.customDecks;
     saveCustomDecks();
+    repairLostHeaders();
     saveJson(DECK_TOMBSTONES_KEY, merged.deletedDecks);
     kanjiRemovals = merged.kanjiRemovals || {};
     saveKanjiRemovals();
@@ -7139,6 +7199,7 @@
   customAnswers = normalizeCustomAnswersShape(loadCustomAnswers());
   saveCustomAnswers();
   customDecks = loadCustomDecks();
+  repairLostHeaders();
   migrateTodaysMisses();
   alignDueTimesTo6am();
   kanjiRemovals = loadJson(KANJI_REMOVALS_KEY, {}) || {};
