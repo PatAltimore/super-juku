@@ -3950,3 +3950,11 @@ button.edit-row {
   .home-small-row .mode-btn-small { min-width: 0; padding-left: 2px; padding-right: 2px; }
   .home-small-row .mode-btn-small .mode-label { font-size: clamp(0.8rem, 4vw, 1.3rem); }
 }
+
+/* The coloured (pink / purple / teal) area of the lesson screens, study and
+   quiz, can be highlighted and copied; the rest of the app stays unselectable. */
+.screen-study .study-hero,
+.screen:has(.type-card) .stage {
+  -webkit-user-select: text;
+  user-select: text;
+}
