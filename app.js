@@ -144,6 +144,7 @@
     lessonResultWrong: document.getElementById("lessonResultWrong"),
     lessonResultAccuracy: document.getElementById("lessonResultAccuracy"),
     lessonResultsLessonsBtn: document.getElementById("lessonResultsLessonsBtn"),
+    lessonResultsHomeBtn: document.getElementById("lessonResultsHomeBtn"),
     lessonResultReport: document.getElementById("lessonResultReport"),
     // stats
     statsBody: document.getElementById("statsBody"),
@@ -275,6 +276,7 @@
     customCompleteStat: document.getElementById("customCompleteStat"),
     customStudyAgainBtn: document.getElementById("customStudyAgainBtn"),
     customBackToListBtn: document.getElementById("customBackToListBtn"),
+    customHomeBtn: document.getElementById("customHomeBtn"),
     customTypeCard: document.getElementById("customTypeCard"),
     customTypeProgress: document.getElementById("customTypeProgress"),
     customTypeBadge: document.getElementById("customTypeBadge"),
@@ -2883,6 +2885,7 @@
       els.customCompleteStat.textContent = `${shown}枚を復習しました`;
     }
     els.customStudyAgainBtn.textContent = mode === "quiz" ? "次のラウンド" : "もう一度学習";
+    els.customHomeBtn.hidden = mode !== "review";
     showScreen("customComplete");
   }
 
@@ -2901,6 +2904,13 @@
       startCustomDeckStudy(customCompleteDeck);
     }
   });
+
+  els.customHomeBtn.addEventListener("click", () => {
+    customCompleteDeck = null;
+    showScreen("home");
+  });
+
+  els.lessonResultsHomeBtn.addEventListener("click", () => showScreen("home"));
 
   els.customBackToListBtn.addEventListener("click", () => {
     customCompleteDeck = null;
@@ -4636,6 +4646,8 @@
     els.lessonResultReport.hidden = kind !== "all";
     if (kind === "all") els.lessonResultReport.innerHTML = reportCardHtml(lessonSession.mistakes);
     els.lessonResultsLessonsBtn.textContent = kind === "all" ? "ホームに戻る" : kind === "leech" ? "復習に戻る" : "レッスンに戻る";
+    // A finished review can also go straight home.
+    els.lessonResultsHomeBtn.hidden = !(kind === "review" || kind === "leech");
     els.lessonResultSeen.textContent = String(lessonSession.seen);
     els.lessonResultRight.textContent = String(lessonSession.right);
     els.lessonResultWrong.textContent = String(lessonSession.wrong);
@@ -5065,6 +5077,60 @@
   let flashSession = null;
   const flashEl = (id) => document.getElementById(id);
 
+  // ----- history -----
+  // The last sessions of each deck, with the cards that were missed, so they
+  // can be practised again: { deckId: [{ at, total, right, wrong, misses }] },
+  // newest first. A card is remembered by its front and question label.
+  const FLASH_HISTORY_KEY = "kanjiFlashN2.flashHistory.v1";
+  const FLASH_HISTORY_LIMIT = 10;
+  const flashHistory = loadJson(FLASH_HISTORY_KEY, {}) || {};
+  const flashCardKey = (card) => `${card.front}|${card.label || ""}`;
+
+  // Saves a session once, when it ends or is left after at least one answer.
+  function recordFlashSession(s) {
+    if (!s || s.saved || !s.deckId || s.right + s.wrong === 0) return;
+    s.saved = true;
+    const entry = {
+      at: Date.now(),
+      total: s.cards.length,
+      right: s.right,
+      wrong: s.wrong,
+      misses: s.misses.map(flashCardKey),
+    };
+    flashHistory[s.deckId] = [entry, ...(flashHistory[s.deckId] || [])].slice(0, FLASH_HISTORY_LIMIT);
+    saveJson(FLASH_HISTORY_KEY, flashHistory);
+  }
+
+  // The missed cards of a past session as they are now (ones since removed
+  // from the deck are left out).
+  function flashMissedCards(deckId, entry) {
+    const wanted = new Set(entry.misses);
+    return flashCards(deckId).filter((card) => wanted.delete(flashCardKey(card)));
+  }
+
+  function flashHistoryHtml(deckId) {
+    const entries = flashHistory[deckId] || [];
+    if (!entries.length) return "";
+    const rows = entries
+      .map((entry, index) => {
+        const when = new Date(entry.at);
+        const date = `${when.getMonth() + 1}/${when.getDate()} ${when.getHours()}:${String(when.getMinutes()).padStart(2, "0")}`;
+        const answered = entry.right + entry.wrong;
+        const cut = answered < entry.total ? `（${entry.total}枚中で中断）` : "";
+        const count = flashMissedCards(deckId, entry).length;
+        return `
+            <li>
+              <span class="flash-history-info"><b>${date}</b><span>正解 ${entry.right} / ${answered}${cut}</span></span>
+              <button class="flash-history-btn" type="button" data-history="${index}" data-history-deck="${escapeHtml(deckId)}"${count ? "" : " disabled"}>${count ? `間違い ${count}枚` : "間違いなし"}</button>
+            </li>`;
+      })
+      .join("");
+    return `
+          <div class="flash-panel-label">履歴</div>
+          <ul class="flash-history">${rows}
+          </ul>`;
+  }
+
   const unitStudied = (entry) => Boolean(entry && (entry.lastSeen || entry.right > 0 || entry.wrong > 0));
 
   // Every card of a deck, each with the review level it is at.
@@ -5146,7 +5212,7 @@
             (l) =>
               `<button class="flash-level status-${l.id}${flashPrefs.levels.includes(l.id) ? " on" : ""}" type="button" data-level="${l.id}">${l.label}<i>${counts[l.id] || 0}</i></button>`
           ).join("")}</div>
-          <button class="flash-start" type="button" data-start="${escapeHtml(entry.id)}"${chosen ? "" : " disabled"}>${chosen ? `スタート（${chosen}枚）` : "出せるカードがありません"}</button>
+          <button class="flash-start" type="button" data-start="${escapeHtml(entry.id)}"${chosen ? "" : " disabled"}>${chosen ? `スタート（${chosen}枚）` : "出せるカードがありません"}</button>${flashHistoryHtml(entry.id)}
         </div>`;
         }
         return `
@@ -5171,7 +5237,14 @@
     }
     const start = event.target.closest("[data-start]");
     if (start && !start.disabled) {
-      startFlash(shuffle(flashChosen(start.dataset.start)));
+      startFlash(shuffle(flashChosen(start.dataset.start)), start.dataset.start);
+      return;
+    }
+    const past = event.target.closest("[data-history]");
+    if (past && !past.disabled) {
+      const deckId = past.dataset.historyDeck;
+      const entry = (flashHistory[deckId] || [])[Number(past.dataset.history)];
+      if (entry) startFlash(shuffle(flashMissedCards(deckId, entry)), deckId);
       return;
     }
     const deck = event.target.closest("[data-flash-deck]");
@@ -5188,9 +5261,9 @@
 
   // ----- practice -----
 
-  function startFlash(cards) {
+  function startFlash(cards, deckId) {
     if (!cards.length) return;
-    flashSession = { all: cards, cards, index: 0, right: 0, wrong: 0, misses: [], busy: false, flipped: false };
+    flashSession = { deckId, all: cards, cards, index: 0, right: 0, wrong: 0, misses: [], busy: false, flipped: false };
     showScreen("flashPlay");
     renderFlashCard();
   }
@@ -5262,6 +5335,7 @@
 
   function finishFlash() {
     const s = flashSession;
+    recordFlashSession(s);
     showScreen("flashResults");
     flashEl("flashResultScore").textContent = `${s.right} / ${s.cards.length}`;
     flashEl("flashResultLine").textContent = `${s.cards.length ? Math.round((s.right / s.cards.length) * 100) : 0}%　正解 ${s.right}　間違い ${s.wrong}`;
@@ -5332,6 +5406,7 @@
   });
 
   const leaveFlash = () => {
+    recordFlashSession(flashSession);
     flashSession = null;
     renderFlashDecks();
     showScreen("flash");
@@ -5339,9 +5414,9 @@
   flashEl("flashPlayBack").addEventListener("click", leaveFlash);
   flashEl("flashResultsBack").addEventListener("click", leaveFlash);
   flashEl("flashBackBtn").addEventListener("click", leaveFlash);
-  flashEl("flashAgainBtn").addEventListener("click", () => startFlash(shuffle(flashSession.all)));
+  flashEl("flashAgainBtn").addEventListener("click", () => startFlash(shuffle(flashSession.all), flashSession.deckId));
   flashEl("flashMissesBtn").addEventListener("click", () => {
-    if (flashSession.misses.length) startFlash(shuffle(flashSession.misses));
+    if (flashSession.misses.length) startFlash(shuffle(flashSession.misses), flashSession.deckId);
   });
 
   els.modeStatsBtn.addEventListener("click", () => {

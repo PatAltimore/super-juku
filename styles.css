@@ -3905,3 +3905,40 @@ button.edit-row {
 .flash-miss.tone-pink { border-left: 6px solid #e5189a; }
 .flash-miss.tone-purple { border-left: 6px solid #a02fe2; }
 .flash-miss.tone-teal { border-left: 6px solid #0f9b8e; }
+
+/* flashcards: past sessions of a deck */
+.flash-history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.flash-history li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.flash-history-info { display: flex; flex-direction: column; gap: 2px; font-size: 0.8rem; color: var(--text-dim); }
+.flash-history-info b { font-size: 0.9rem; color: var(--text); }
+.flash-history-btn {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border: 2px solid #ff6b6b;
+  border-radius: 10px;
+  background: transparent;
+  color: #ff8a8a;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.flash-history-btn:disabled { border-color: var(--border); color: var(--text-dim); cursor: default; }
