@@ -1540,6 +1540,103 @@
     if (changed) saveCustomDecks();
   }
 
+  // ---------- kana-only terms in the N5-N3 vocabulary decks ----------
+  // In the N5, N4 and N3 単語 decks, a term written with any kanji above N2
+  // (N1 or on no JLPT list) is turned into its kana reading and loses its
+  // reading question, leaving only the meaning. The card keeps the old
+  // spelling in `original`; progress and notes move with it.
+  const KANA_DECK_NAME = /^N\s*[345].*単語/i;
+  const KANJI_CHAR = /[㐀-鿿豈-﫿]/g;
+  let knownKanji = null; // the N5-N2 kanji, once loaded
+
+  const hasHardKanji = (text) => (text.match(KANJI_CHAR) || []).some((ch) => !knownKanji.has(ch));
+
+  // The card as kana only, or null if it should be left as it is.
+  function kanaVersion(card) {
+    if (!card.front || !hasHardKanji(card.front)) return null;
+    const reading = (card.sections || []).find((s) => kindOfLabel(s.label) === "reading");
+    const rest = (card.sections || []).filter((s) => kindOfLabel(s.label) !== "reading");
+    if (!reading || !rest.length) return null;
+    const front = String(reading.value)
+      .split(/[、,，;；・\/／]/)[0]
+      .replace(/[(（][^)）]*[)）]/g, "")
+      .trim();
+    if (!/^[ぁ-ゖァ-ヺー〜～\s-]+$/.test(front)) return null;
+    return { ...card, front, sections: rest, original: card.front };
+  }
+
+  function convertHardKanjiTerms() {
+    if (!knownKanji) return;
+    let changed = false;
+    customDecks.forEach((deck) => {
+      if (!KANA_DECK_NAME.test(String(deck.name || "").normalize("NFKC").trim())) return;
+      const planned = deck.cards.map((card) => ({ card, kana: kanaVersion(card) }));
+      if (!planned.some((p) => p.kana)) return;
+      // Terms that would end up spelled the same as another stay in kanji.
+      const uses = new Map();
+      planned.forEach(({ card, kana }) => {
+        const front = kana ? kana.front : card.front;
+        uses.set(front, (uses.get(front) || 0) + 1);
+      });
+      const moved = [];
+      const cards = [];
+      planned.forEach(({ card, kana }) => {
+        // The same term brought back by a re-upload or another device.
+        if (kana && deck.cards.some((c) => c.original === card.front && c.front === kana.front)) {
+          moved.push([card.front, kana.front]);
+        } else if (kana && uses.get(kana.front) === 1) {
+          cards.push(kana);
+          moved.push([card.front, kana.front]);
+        } else {
+          cards.push(card);
+        }
+      });
+      if (!moved.length) return;
+      deck.cards = cards;
+      moved.forEach(([from, to]) => moveTermData(deck, from, to));
+      deck.updatedAt = new Date().toISOString();
+      changed = true;
+    });
+    if (!changed) return;
+    saveCustomDecks();
+    saveLeeches();
+    saveMnemonics();
+    saveJson(FLASH_HISTORY_KEY, flashHistory);
+  }
+
+  // Moves everything saved under a term's old spelling to its new one.
+  function moveTermData(deck, from, to) {
+    const readingLabels = (label) => kindOfLabel(label) === "reading";
+    if (deck.srs && deck.srs[from]) {
+      const mine = deck.srs[to];
+      if (!mine || String(deck.srs[from].lastSeen || "") > String(mine.lastSeen || "")) deck.srs[to] = deck.srs[from];
+      delete deck.srs[from];
+    }
+    if (deck.answers && deck.answers[from]) {
+      const entry = { ...(deck.answers[to] || {}) };
+      Object.entries(deck.answers[from]).forEach(([label, list]) => {
+        if (!readingLabels(label)) entry[label] = Array.from(new Set([...(entry[label] || []), ...list]));
+      });
+      deck.answers[to] = entry;
+      delete deck.answers[from];
+    }
+    const oldKey = `${deck.id}|${from}`;
+    const newKey = `${deck.id}|${to}`;
+    if (leeches[oldKey]) {
+      if (!leeches[newKey]) leeches[newKey] = leeches[oldKey];
+      delete leeches[oldKey];
+    }
+    Object.keys(mnemonics).forEach((key) => {
+      if (!key.startsWith(`${oldKey}|`)) return;
+      const moved = newKey + key.slice(oldKey.length);
+      if (!mnemonics[moved]) mnemonics[moved] = mnemonics[key];
+      delete mnemonics[key];
+    });
+    (flashHistory[`custom:${deck.id}`] || []).forEach((entry) => {
+      entry.misses = entry.misses.map((key) => (key.startsWith(`${from}|`) ? `${to}|` : key));
+    });
+  }
+
   function buildCustomDeckCards(rows) {
     if (!rows.length) return { columns: [], cards: [], answers: {} };
     if (isLostHeaderPair(rows[0][1], rows[0][2])) rows = [["Front", "Reading", "Meaning"], ...rows];
@@ -1753,6 +1850,7 @@
       customDecks.push(deck);
     }
     saveCustomDecks();
+    convertHardKanjiTerms();
     return deck;
   }
 
@@ -2694,6 +2792,7 @@
     deck.answers = mergeDeckAnswers(deck.answers, answers);
     deck.updatedAt = new Date().toISOString();
     saveCustomDecks();
+    convertHardKanjiTerms();
     return added.length;
   }
 
@@ -6998,6 +7097,7 @@
     saveLeeches();
     mnemonics = merged.mnemonics || {};
     saveMnemonics();
+    convertHardKanjiTerms();
     const group = loadSyncGroup();
     if (group) {
       group.members = merged.members;
@@ -7219,6 +7319,16 @@
   mnemonics = loadJson(MNEMONICS_KEY, {}) || {};
   applySettings();
   dailyMinutes = settings.defaultDailyMinutes;
+
+  fetch("data/jlpt-kanji.json")
+    .then((res) => res.json())
+    .then((data) => {
+      knownKanji = new Set(data.kanji);
+      convertHardKanjiTerms();
+    })
+    .catch(() => {
+      /* without the list the decks are left as they are */
+    });
 
   fetch("data/n2-kanji.json")
     .then((res) => res.json())

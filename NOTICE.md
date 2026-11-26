@@ -51,6 +51,14 @@ Words added to a custom deck with 用語を追加 are also JMdict entries, looke
 through the [Jotoba](https://jotoba.de) search API; the same copyright and licence apply
 to the readings and meanings saved to the deck.
 
+## JLPT N5-N3 kanji lists
+
+The kanji counted as N5 to N2 (`data/jlpt-kanji.json`, used to write harder
+terms of the N5-N3 vocabulary decks in kana) come from the N5, N4 and N3 lists
+of [Bluskyo/JLPT_Vocabulary](https://github.com/Bluskyo/JLPT_Vocabulary)
+(`data/kanji/parsedData/`), based on Jonathan Waller's lists at
+[tanos.co.uk/jlpt](https://www.tanos.co.uk/jlpt/), plus the N2 list above.
+
 ## JLPT vocabulary levels
 
 The JLPT level shown for words added with 用語を追加 (`data/jlpt-vocab.json`) comes from
