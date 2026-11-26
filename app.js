@@ -3330,6 +3330,7 @@
     els.customTypeCard.classList.remove("answer-wrong", "answer-right");
     lockAnswerInput(els.customTypeInput, false);
     bindKanaInput(els.customTypeInput, kanaModeFor(customTypeCurrentSection.value));
+    els.customTypeInput.placeholder = answerPlaceholder(customTypeCurrentSection.value);
     els.customTypeInput.value = "";
     els.customTypeFeedback.hidden = true;
     els.customTypeSubmitBtn.textContent = "確認";
@@ -5902,7 +5903,7 @@
     return {
       label: displayLabel(section.label, section.value),
       badgeClass: badgeClassForLabel(section.label),
-      placeholder: isKanaOrKanji(section.value) ? "答え" : "Answer",
+      placeholder: answerPlaceholder(section.value),
     };
   }
 
@@ -6186,6 +6187,12 @@
     // Hiragana, or a mix of the two scripts (either spelling is accepted).
     if (wanakana.isKana(letters)) return "toHiragana";
     return null;
+  }
+
+  // The grey text in the answer bar, in the script the answer is typed in:
+  // Japanese when it is kana (or other Japanese text), English otherwise.
+  function answerPlaceholder(value) {
+    return kanaModeFor(value) || !/[a-z]/i.test(value) ? "答え" : "Answer";
   }
 
   function bindKanaInput(input, mode) {
