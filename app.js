@@ -1196,11 +1196,12 @@
   }
 
   // Progress shown by colour. A correct answer moves a card up one box: the
-  // lesson takes it to box 1 and each review one higher, so box 3 means two
-  // reviews are done (lime), 4 three (green), 5 four (pink), 6 five (purple), 7
-  // six (light blue). Before that a studied card is "learning"; one never
+  // lesson takes it to box 1 and each review one higher, so box 2 means one
+  // review is done (yellow), 3 two (lime), 4 three (green), 5 four (pink), 6
+  // five (purple), 7 six (light blue). Before that a studied card is
+  // "learning"; one never
   // studied is "new".
-  const REVIEW_STATUS_BY_BOX = { 3: "r2", 4: "r3", 5: "r4", 6: "r5", 7: "r6" };
+  const REVIEW_STATUS_BY_BOX = { 2: "r1", 3: "r2", 4: "r3", 5: "r4", 6: "r5", 7: "r6" };
 
   function statusOfEntry(entry, studied) {
     if (!studied || !entry) return "new";
@@ -1949,6 +1950,7 @@
   const STATUS_EDGE = {
     new: "#ffffff",
     learning: "rgb(232, 176, 75)",
+    r1: "rgb(245, 224, 70)",
     r2: "rgb(176, 208, 70)",
     r3: "rgb(76, 195, 138)",
     r4: "rgb(240, 111, 168)",
@@ -5142,6 +5144,7 @@
   const STATUS_LABELS = [
     ["new", "未学習"],
     ["learning", "学習済み"],
+    ["r1", "復習1"],
     ["r2", "復習2"],
     ["r3", "復習3"],
     ["r4", "復習4"],
@@ -5298,6 +5301,7 @@
   const FLASH_LEVELS = [
     { id: "new", label: "未学習" },
     { id: "learning", label: "学習中" },
+    { id: "r1", label: "復習1" },
     { id: "r2", label: "復習2" },
     { id: "r3", label: "復習3" },
     { id: "r4", label: "復習4" },
@@ -5306,6 +5310,11 @@
   ];
   const flashPrefs = { levels: FLASH_LEVELS.map((l) => l.id), ...(loadJson(FLASH_KEY, {}) || {}) };
   if (!Array.isArray(flashPrefs.levels)) flashPrefs.levels = FLASH_LEVELS.map((l) => l.id);
+  // 復習1 was split off 学習中: keep it on for saved choices that had that on.
+  if (!flashPrefs.hasR1) {
+    if (flashPrefs.levels.includes("learning") && !flashPrefs.levels.includes("r1")) flashPrefs.levels.push("r1");
+    flashPrefs.hasR1 = true;
+  }
   const saveFlashPrefs = () => saveJson(FLASH_KEY, flashPrefs);
   let flashOpenDeck = null; // the deck whose level picker is open
   let flashSession = null;

@@ -87,22 +87,28 @@
   if (appSettings.fontScale) document.documentElement.style.setProperty("--font-scale", appSettings.fontScale);
 
   // Review levels a question can be drawn from (the app's progress colours):
-  // never studied, learning (box 1-2), then 復習2-6 (box 3-7).
+  // never studied, learning (box 0-1), then 復習1-6 (box 2-7).
   const LEVELS = [
     { id: "new", label: "未学習" },
     { id: "learning", label: "学習中" },
+    { id: "r1", label: "復習1" },
     { id: "r2", label: "復習2" },
     { id: "r3", label: "復習3" },
     { id: "r4", label: "復習4" },
     { id: "r5", label: "復習5" },
     { id: "r6", label: "復習6" },
   ];
-  const LEVEL_BY_BOX = { 3: "r2", 4: "r3", 5: "r4", 6: "r5", 7: "r6" };
+  const LEVEL_BY_BOX = { 2: "r1", 3: "r2", 4: "r3", 5: "r4", 6: "r5", 7: "r6" };
   const prefs = Object.assign(
     { deck: N2_DECK, type: "all", count: 20, speed: "normal", best: {}, levelFilter: false, levels: LEVELS.map((l) => l.id) },
     loadJson(GAME_KEY, {})
   );
   if (!Array.isArray(prefs.levels)) prefs.levels = LEVELS.map((l) => l.id);
+  // 復習1 was split off 学習中: keep it on for saved choices that had that on.
+  if (!prefs.hasR1) {
+    if (prefs.levels.includes("learning") && !prefs.levels.includes("r1")) prefs.levels.push("r1");
+    prefs.hasR1 = true;
+  }
   const statsPerCard = (loadJson(STATS_KEY, {}) || {}).perCard || {};
 
   function levelOf(entry, studied) {
