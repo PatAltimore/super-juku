@@ -1942,7 +1942,7 @@
   }
 
   // One button per deck: tapping it starts that deck's review right away.
-  // The bubble gets warmer for every 25 reviews waiting (cool blue up to red).
+  // The bubble gets warmer for every 100 reviews waiting (cool blue up to red).
   // The left edge of a deck button shows the review level most of the deck's
   // terms are at, in the same colours as the rest of the app (white for terms
   // not studied yet).
@@ -1980,7 +1980,7 @@
               <span class="custom-deck-name">${escapeHtml(name)}</span>
               <span class="custom-deck-meta">${escapeHtml(meta)}</span>
             </span>
-            <span class="mode-due${dueCount ? ` has-due due-tier-${Math.min(5, Math.floor(dueCount / 25))}` : ""}"><span class="mode-due-num">${dueCount}</span></span>
+            <span class="mode-due${dueCount ? ` has-due due-tier-${Math.min(5, Math.floor(dueCount / 100))}` : ""}"><span class="mode-due-num">${dueCount}</span></span>
           </button>`;
   }
 
