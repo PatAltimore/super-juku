@@ -1551,9 +1551,17 @@
 
   const hasHardKanji = (text) => (text.match(KANJI_CHAR) || []).some((ch) => !knownKanji.has(ch));
 
-  // The card as kana only, or null if it should be left as it is.
+  // The automatic rule: the card as kana only, or null if it should be left as
+  // it is (one switched back to kanji in 編集 stays that way).
   function kanaVersion(card) {
-    if (!card.front || !hasHardKanji(card.front)) return null;
+    if (card.keepKanji || !card.front || !hasHardKanji(card.front)) return null;
+    return kanaCard(card);
+  }
+
+  // Any card with kanji and a kana reading, written in kana with the reading
+  // set aside so it can be brought back; null if it can't be.
+  function kanaCard(card) {
+    if (!card.front || !card.front.match(KANJI_CHAR)) return null;
     const reading = (card.sections || []).find((s) => kindOfLabel(s.label) === "reading");
     const rest = (card.sections || []).filter((s) => kindOfLabel(s.label) !== "reading");
     if (!reading || !rest.length) return null;
@@ -1562,7 +1570,10 @@
       .replace(/[(（][^)）]*[)）]/g, "")
       .trim();
     if (!/^[ぁ-ゖァ-ヺー〜～\s-]+$/.test(front)) return null;
-    return { ...card, front, sections: rest, original: card.front };
+    const removedReading = (card.sections || []).filter((s) => kindOfLabel(s.label) === "reading");
+    const kana = { ...card, front, sections: rest, original: card.front, removedReading };
+    delete kana.keepKanji;
+    return kana;
   }
 
   function convertHardKanjiTerms() {
@@ -1597,11 +1608,54 @@
       deck.updatedAt = new Date().toISOString();
       changed = true;
     });
-    if (!changed) return;
+    if (changed) saveTermChanges();
+  }
+
+  function saveTermChanges() {
     saveCustomDecks();
     saveLeeches();
     saveMnemonics();
     saveJson(FLASH_HISTORY_KEY, flashHistory);
+  }
+
+  // 編集: switches one term between its kanji spelling and kana only. Returns
+  // a message if it can't.
+  function toggleTermKana(deck, index) {
+    const card = deck.cards[index];
+    if (!card) return "";
+    let next;
+    if (card.original) {
+      // Older conversions didn't keep the reading: the kana front is it.
+      const label = deckColumns(deck).find((c) => kindOfLabel(c) === "reading") || "Reading";
+      const reading = card.removedReading || [{ label, value: card.front }];
+      next = { ...card, front: card.original, sections: [...reading, ...card.sections], keepKanji: true };
+      delete next.original;
+      delete next.removedReading;
+      delete next.removedAnswers;
+    } else {
+      next = kanaCard(card);
+    }
+    if (!next) return "このカードは切り替えできません（読み方と意味が必要です）。";
+    if (deck.cards.some((other) => other !== card && other.front === next.front)) {
+      return `「${next.front}」のカードがすでにあるため、切り替えできません。`;
+    }
+    deck.cards[index] = next;
+    moveTermData(deck, card.front, next.front);
+    // Answers added to the reading come back with it.
+    if (card.original && card.removedAnswers) {
+      const entry = { ...((deck.answers || {})[next.front] || {}), ...card.removedAnswers };
+      deck.answers = { ...(deck.answers || {}), [next.front]: entry };
+    }
+    deck.updatedAt = new Date().toISOString();
+    saveTermChanges();
+    return "";
+  }
+
+  // The 漢字 / かな switch on a term's row in 編集, where it applies.
+  function kanaToggleHtml(card) {
+    const kana = Boolean(card.original);
+    if (!kana && !kanaCard(card)) return "";
+    return `<button class="edit-kana" data-action="toggle-kana" type="button" aria-pressed="${kana}" aria-label="${escapeHtml(card.front)}：漢字とかなを切り替え"><span class="${kana ? "" : "on"}">漢</span><span class="${kana ? "on" : ""}">あ</span></button>`;
   }
 
   // Moves everything saved under a term's old spelling to its new one.
@@ -1614,8 +1668,14 @@
     }
     if (deck.answers && deck.answers[from]) {
       const entry = { ...(deck.answers[to] || {}) };
+      const target = deck.cards.find((card) => card.front === to);
       Object.entries(deck.answers[from]).forEach(([label, list]) => {
-        if (!readingLabels(label)) entry[label] = Array.from(new Set([...(entry[label] || []), ...list]));
+        if (!readingLabels(label) || !target || !target.original) {
+          entry[label] = Array.from(new Set([...(entry[label] || []), ...list]));
+        } else {
+          // Set aside with the reading, for if the kanji comes back.
+          target.removedAnswers = { ...(target.removedAnswers || {}), [label]: list };
+        }
       });
       deck.answers[to] = entry;
       delete deck.answers[from];
@@ -2267,6 +2327,7 @@
             <span class="edit-sub">${escapeHtml(cardSummary(card))}</span>
             ${card.tags ? `<span class="edit-tags">${termTagsHtml(card.tags)}</span>` : ""}
           </span>
+          ${kanaToggleHtml(card)}
           ${editNoteButton(noteFieldsFor(deckCardItem(deck, card)))}
           ${editAnswersButton(answerSlotsFor(deckCardItem(deck, card), deck))}
           <button class="edit-delete" data-action="delete-card" type="button" aria-label="${escapeHtml(card.front)}を削除">✕</button>
@@ -2353,6 +2414,16 @@
         const card = deck && deck.cards[Number(row.dataset.index)];
         if (card) openNoteModal(card.front, noteFieldsFor(deckCardItem(deck, card)));
       }
+      return;
+    }
+    const kana = event.target.closest("[data-action='toggle-kana']");
+    if (kana) {
+      const deck = editingDeckId && customDeckById(editingDeckId);
+      if (!deck) return;
+      const message = toggleTermKana(deck, Number(kana.closest(".edit-row").dataset.index));
+      renderDeckEdit();
+      els.deckEditStatus.textContent = message;
+      els.deckEditStatus.hidden = !message;
       return;
     }
     const del = event.target.closest("[data-action='delete-card']");
