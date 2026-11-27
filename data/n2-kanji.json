@@ -555,7 +555,11 @@
     "onyomiRomaji": "ka",
     "kunyomi": "",
     "kunyomiRomaji": "",
-    "meaning": "chapter, lesson, section, department, division"
+    "meaning": "chapter, lesson, section, department, division",
+    "word": "課する",
+    "wordReading": "かする",
+    "wordMeaning": "to impose (a tax, fine, etc.), to levy, to assign (e.g. homework)",
+    "wordAdded": true
   },
   {
     "num": 33075,
@@ -1005,7 +1009,11 @@
     "meaning": "root, radical, head (pimple)",
     "noun": "根",
     "nounReading": "ね",
-    "nounMeaning": "root (of a plant), root (of a tooth / hair / etc.), center (of a pimple / etc.)"
+    "nounMeaning": "root (of a plant), root (of a tooth / hair / etc.), center (of a pimple / etc.)",
+    "word": "根ざす",
+    "wordReading": "ねざす",
+    "wordMeaning": "to come from, to have roots in",
+    "wordAdded": true
   },
   {
     "num": 36009,
@@ -1164,7 +1172,11 @@
     "onyomiRomaji": "kin",
     "kunyomi": "",
     "kunyomiRomaji": "",
-    "meaning": "prohibition, ban, forbid"
+    "meaning": "prohibition, ban, forbid",
+    "word": "禁じる",
+    "wordReading": "きんじる",
+    "wordMeaning": "to forbid, to ban, to prohibit",
+    "wordAdded": true
   },
   {
     "num": 21360,
@@ -1536,7 +1548,11 @@
     "onyomiRomaji": "hou, bu",
     "kunyomi": "ゆた(か)、 とよ",
     "kunyomiRomaji": "yuta(ka), toyo",
-    "meaning": "bountiful, excellent, rich"
+    "meaning": "bountiful, excellent, rich",
+    "word": "豊か",
+    "wordReading": "ゆたか",
+    "wordMeaning": "abundant, plentiful, rich",
+    "wordAdded": true
   },
   {
     "num": 21402,
@@ -1593,7 +1609,11 @@
     "onyomiRomaji": "ryaku",
     "kunyomi": "ほぼ、 はぶ(く)、 おか(す)、 おさ(める)、 はかりごと、 はか(る)",
     "kunyomiRomaji": "hobo, habu(ku), oka(su), osa(meru), hakarigoto, haka(ru)",
-    "meaning": "abbreviation, omission, outline, shorten, capture"
+    "meaning": "abbreviation, omission, outline, shorten, capture",
+    "word": "略す",
+    "wordReading": "りゃくす",
+    "wordMeaning": "to abbreviate, to abridge, to omit",
+    "wordAdded": true
   },
   {
     "num": 25215,
@@ -2766,7 +2786,11 @@
     "onyomiRomaji": "fuu, hou",
     "kunyomi": "",
     "kunyomiRomaji": "",
-    "meaning": "seal, closing"
+    "meaning": "seal, closing",
+    "word": "封じる",
+    "wordReading": "ふうじる",
+    "wordMeaning": "to seal (e.g. a letter), to prevent, to block",
+    "wordAdded": true
   },
   {
     "num": 33016,
@@ -3396,7 +3420,11 @@
     "meaning": "tears, sympathy",
     "noun": "涙",
     "nounReading": "なみだ",
-    "nounMeaning": "tear, tears, lachrymal secretion"
+    "nounMeaning": "tear, tears, lachrymal secretion",
+    "word": "涙ぐましい",
+    "wordReading": "なみだぐましい",
+    "wordMeaning": "touching, moving",
+    "wordAdded": true
   },
   {
     "num": 21305,

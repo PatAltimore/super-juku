@@ -62,9 +62,27 @@ function candidates(kunyomi) {
     .map((m) => ({ stem: m[1], okurigana: m[2] }));
 }
 
+// Words the rule above misses (no okurigana in the kunyomi, or a na-adjective),
+// added by hand. `wordAdded` keeps them out of the schedule carried over from
+// the kanji.
+const EXTRA = {
+  "課": ["課する", "かする", "to impose (a tax, fine, etc.), to levy, to assign (e.g. homework)"],
+  "禁": ["禁じる", "きんじる", "to forbid, to ban, to prohibit"],
+  "根": ["根ざす", "ねざす", "to come from, to have roots in"],
+  "豊": ["豊か", "ゆたか", "abundant, plentiful, rich"],
+  "略": ["略す", "りゃくす", "to abbreviate, to abridge, to omit"],
+  "涙": ["涙ぐましい", "なみだぐましい", "touching, moving"],
+  "封": ["封じる", "ふうじる", "to seal (e.g. a letter), to prevent, to block"],
+};
+
 let found = 0;
 const out = kanjiList.map((item) => {
-  const { word, wordReading, wordMeaning, ...rest } = item;
+  const { word, wordReading, wordMeaning, wordAdded, ...rest } = item;
+  const extra = EXTRA[item.kanji];
+  if (extra) {
+    found++;
+    return { ...rest, word: extra[0], wordReading: extra[1], wordMeaning: extra[2], wordAdded: true };
+  }
   for (const { stem, okurigana } of candidates(item.kunyomi)) {
     const w = item.kanji + okurigana;
     const r = stem + okurigana;

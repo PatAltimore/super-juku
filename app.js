@@ -4134,7 +4134,8 @@
     let changed = false;
     n2Kanji.forEach((item) => {
       const entry = stats.perCard[String(item.num)];
-      if (!item.word || !entry || !entry.lastSeen || stats.perCard[`w${item.num}`]) return;
+      // A word added later (wordAdded) starts unstudied, to be taken in レッスン.
+      if (!item.word || item.wordAdded || !entry || !entry.lastSeen || stats.perCard[`w${item.num}`]) return;
       stats.perCard[`w${item.num}`] = {
         right: 0,
         wrong: 0,
