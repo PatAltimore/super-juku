@@ -4074,3 +4074,43 @@ button.edit-row {
 .leech-btn-num { font-size: 1.4rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
 
 .flash-level.flash-level-leech { --status-rgb: 224, 74, 96; }
+
+/* 編集: the legend as a row of tiles, each in its level's colour with the
+   number of terms there. */
+#deckEditLegend:not([hidden]) {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 6px;
+}
+#deckEditLegend .legend-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 7px 2px 6px;
+  border: 1.5px solid rgba(var(--status-rgb, 154, 160, 170), 0.75);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(var(--status-rgb, 154, 160, 170), 0.24), rgba(var(--status-rgb, 154, 160, 170), 0.06));
+  color: var(--text-dim);
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+#deckEditLegend .status-dot { display: none; }
+#deckEditLegend .legend-count {
+  order: -1;
+  color: var(--text);
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+#deckEditLegend .legend-item.is-empty { opacity: 0.45; }
+
+/* On a phone: the legend in two even rows, and the deck toolbar wrapping into
+   a grid so its labels stay on one line. */
+@media (max-width: 520px) {
+  #deckEditLegend:not([hidden]) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .deck-edit-toolbar:not([hidden]) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .deck-edit-toolbar button { white-space: nowrap; padding-left: 6px; padding-right: 6px; }
+}

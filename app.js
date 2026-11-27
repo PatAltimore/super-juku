@@ -2380,6 +2380,26 @@
         </div>`;
   }
 
+  // Under each colour of the legend, how many of the terms listed are at that
+  // level.
+  function updateLegendCounts() {
+    els.deckEditLegend.querySelectorAll(".legend-item").forEach((item) => {
+      const dot = item.querySelector(".status-dot");
+      const status = Array.from(dot.classList).find((name) => name.startsWith("status-") && name !== "status-dot");
+      let count = item.querySelector(".legend-count");
+      if (!count) {
+        count = document.createElement("b");
+        count.className = "legend-count";
+        item.appendChild(count);
+      }
+      const total = els.deckEditList.querySelectorAll(`.edit-row.${status}`).length;
+      count.textContent = total;
+      // The tile takes the level's colour, and fades when nothing is there.
+      item.classList.add(status);
+      item.classList.toggle("is-empty", total === 0);
+    });
+  }
+
   function renderKanjiEdit() {
     const view = kanjiEditView;
     const removedCount = n2Kanji.length - visibleKanji().length;
@@ -2402,6 +2422,7 @@
     els.deckEditRestoreBtn.textContent = removedCount ? `削除した漢字を戻す（${removedCount}）` : "削除した漢字はありません";
     els.deckEditTitle.textContent = "N2漢字";
     els.deckEditList.innerHTML = terms.map(kanjiEditRow).join("");
+    updateLegendCounts();
   }
 
   els.deckEditViewSeg.addEventListener("click", (event) => {
@@ -2469,6 +2490,7 @@
           })
           .join("")
       : `<p class="stats-footnote">このデッキにはカードがありません。</p>`;
+    updateLegendCounts();
   }
 
   function openDeckEdit() {
