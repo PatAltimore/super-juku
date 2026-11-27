@@ -88,6 +88,7 @@
     deckEditUndoBtn: document.getElementById("deckEditUndoBtn"),
     deckEditRestoreBtn: document.getElementById("deckEditRestoreBtn"),
     deckEditRestoreNounsBtn: document.getElementById("deckEditRestoreNounsBtn"),
+    deckEditViewSeg: document.getElementById("deckEditViewSeg"),
     lessonDeckBtn: document.getElementById("lessonDeckBtn"),
     lessonFilterBar: document.getElementById("lessonFilterBar"),
     lessonFilterBtn: document.getElementById("lessonFilterBtn"),
@@ -2254,33 +2255,85 @@
     if (event.key === "Escape" && !els.noteModal.hidden) closeNoteModal();
   });
 
+  // The N2漢字 editor shows one kind of term at a time: the kanji, their
+  // verbs and adjectives, or their nouns.
+  let kanjiEditView = "kanji"; // "kanji" | "word" | "noun"
+  const ANSWER_SLOTS_BY_VIEW = {
+    kanji: ["Meaning", "音読み"],
+    word: ["単語の読み方", "Word meaning"],
+    noun: ["訓読み", "Noun meaning"],
+  };
+
+  // A term's mnemonic fields and added answers for the view on screen.
+  const viewNoteFields = (item) =>
+    noteFieldsFor(item).filter((f) => {
+      const part = f.key.includes("|word|") ? "word" : f.key.includes("|noun|") ? "noun" : "kanji";
+      return part === kanjiEditView;
+    });
+  const viewAnswerSlots = (item) =>
+    answerSlotsFor(item).filter((slot) => ANSWER_SLOTS_BY_VIEW[kanjiEditView].includes(slot.label));
+  const viewTerm = (item) => (kanjiEditView === "kanji" ? item.kanji : item[kanjiEditView]);
+
+  function kanjiEditRow(item) {
+    const view = kanjiEditView;
+    const term = viewTerm(item);
+    let status;
+    let summary;
+    if (view === "kanji") {
+      status = statusOfEntry(srsOf(item), isItemStudied(item));
+      summary = [item.onyomi || item.kunyomi, item.meaning];
+    } else {
+      const entry = srsOf(item, view);
+      status = statusOfEntry(entry, Boolean(entry && (entry.lastSeen || entry.right > 0 || entry.wrong > 0)));
+      summary = [item[`${view}Reading`], item[`${view}Meaning`]];
+    }
+    // Verbs and adjectives belong to their kanji and can't be deleted alone.
+    const remove =
+      view === "word"
+        ? ""
+        : `<button class="edit-delete" data-action="delete-card" type="button" aria-label="${escapeHtml(term)}を削除">✕</button>`;
+    return `
+        <div class="edit-row status-${status}" data-num="${item.num}">
+          <span class="edit-front">${escapeHtml(term)}</span>
+          <span class="edit-sub">${escapeHtml(summary.filter(Boolean).join(" · "))}</span>
+          ${editNoteButton(viewNoteFields(item))}
+          ${editAnswersButton(viewAnswerSlots(item))}
+          ${remove}
+        </div>`;
+  }
+
   function renderKanjiEdit() {
+    const view = kanjiEditView;
     const removedCount = n2Kanji.length - visibleKanji().length;
     els.deckEditLegend.hidden = false;
-    els.deckEditToolbar.hidden = false;
+    els.deckEditToolbar.hidden = view === "word";
     els.deckEditToolbar.querySelectorAll("[data-action]").forEach((btn) => {
-      btn.hidden = btn.dataset.action !== "restore-kanji" && btn.dataset.action !== "restore-nouns";
+      btn.hidden = btn.dataset.action !== (view === "noun" ? "restore-nouns" : "restore-kanji");
     });
     const removedNouns = n2Kanji.filter((k) => k.removedNoun).length;
-    els.deckEditRestoreNounsBtn.hidden = removedNouns === 0;
+    els.deckEditViewSeg.hidden = false;
+    els.deckEditViewSeg.querySelectorAll("button").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.view === view);
+      btn.setAttribute("aria-pressed", String(btn.dataset.view === view));
+    });
+    if (view !== "noun" || removedNouns === 0) els.deckEditRestoreNounsBtn.hidden = true;
+    if (view === "noun" && removedNouns === 0) els.deckEditToolbar.hidden = true;
     els.deckEditRestoreNounsBtn.textContent = `削除した名詞を戻す（${removedNouns}）`;
+    const terms = visibleKanji().filter((item) => view === "kanji" || item[view]);
     els.deckEditRestoreBtn.disabled = removedCount === 0;
     els.deckEditRestoreBtn.textContent = removedCount ? `削除した漢字を戻す（${removedCount}）` : "削除した漢字はありません";
     els.deckEditTitle.textContent = "N2漢字";
-    els.deckEditList.innerHTML = visibleKanji()
-      .map((item) => {
-        const status = statusOfEntry(srsOf(item), isItemStudied(item));
-        return `
-        <div class="edit-row status-${status}" data-num="${item.num}">
-          <span class="edit-front">${escapeHtml(item.kanji)}</span>
-          <span class="edit-sub">${escapeHtml([item.onyomi || item.kunyomi, item.meaning].filter(Boolean).join(" · "))}</span>
-          ${editNoteButton(noteFieldsFor(item))}
-          ${editAnswersButton(answerSlotsFor(item))}
-          <button class="edit-delete" data-action="delete-card" type="button" aria-label="${escapeHtml(item.kanji)}を削除">✕</button>
-        </div>`;
-      })
-      .join("");
+    els.deckEditList.innerHTML = terms.map(kanjiEditRow).join("");
   }
+
+  els.deckEditViewSeg.addEventListener("click", (event) => {
+    const btn = event.target.closest("[data-view]");
+    if (!btn) return;
+    kanjiEditView = btn.dataset.view;
+    hideEditUndo();
+    renderDeckEdit();
+    els.deckEditList.scrollTop = 0;
+  });
 
   function renderDeckEdit() {
     els.deckEditNewBtn.hidden = Boolean(editingDeckId);
@@ -2290,6 +2343,7 @@
     }
     const deck = editingDeckId ? customDeckById(editingDeckId) : null;
     if (editingDeckId && !deck) editingDeckId = null;
+    els.deckEditViewSeg.hidden = true;
     els.deckEditLegend.hidden = !deck;
     els.deckEditToolbar.hidden = !deck;
     if (deck) {
@@ -2397,7 +2451,7 @@
       const row = answers.closest(".edit-row");
       if (editingDeckId === KANJI_DECK_ID) {
         const item = n2Kanji.find((k) => k.num === Number(row.dataset.num));
-        if (item) openAnswersModal(item.kanji, answerSlotsFor(item));
+        if (item) openAnswersModal(viewTerm(item), viewAnswerSlots(item));
       } else {
         const deck = editingDeckId && customDeckById(editingDeckId);
         const card = deck && deck.cards[Number(row.dataset.index)];
@@ -2410,7 +2464,7 @@
       const row = note.closest(".edit-row");
       if (editingDeckId === KANJI_DECK_ID) {
         const item = n2Kanji.find((k) => k.num === Number(row.dataset.num));
-        if (item) openNoteModal(item.kanji, noteFieldsFor(item));
+        if (item) openNoteModal(viewTerm(item), viewNoteFields(item));
       } else {
         const deck = editingDeckId && customDeckById(editingDeckId);
         const card = deck && deck.cards[Number(row.dataset.index)];
@@ -2433,9 +2487,12 @@
       const num = Number(del.closest(".edit-row").dataset.num);
       const item = n2Kanji.find((k) => k.num === num);
       if (!item) return;
-      setKanjiRemoved(num, true);
-      lastDeletedCard = { kanjiNum: num };
-      els.deckEditUndoText.textContent = `「${item.kanji}」を削除しました`;
+      const noun = kanjiEditView === "noun";
+      const term = viewTerm(item);
+      if (noun) setNounRemoved(num, true);
+      else setKanjiRemoved(num, true);
+      lastDeletedCard = noun ? { nounNum: num } : { kanjiNum: num };
+      els.deckEditUndoText.textContent = `「${term}」を削除しました`;
       els.deckEditUndo.hidden = false;
       window.clearTimeout(undoTimer);
       undoTimer = window.setTimeout(hideEditUndo, 8000);
@@ -2449,6 +2506,12 @@
 
   els.deckEditUndoBtn.addEventListener("click", () => {
     const last = lastDeletedCard;
+    if (last && last.nounNum !== undefined) {
+      setNounRemoved(last.nounNum, false);
+      hideEditUndo();
+      renderDeckEdit();
+      return;
+    }
     if (last && last.kanjiNum !== undefined) {
       setKanjiRemoved(last.kanjiNum, false);
       hideEditUndo();

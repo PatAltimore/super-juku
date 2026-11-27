@@ -3990,3 +3990,28 @@ button.edit-row {
   .edit-row[data-index] { gap: 8px; }
   .edit-kana span { padding: 5px 5px; }
 }
+
+/* N2漢字 editor: 漢字 / 動詞・形容詞 / 名詞 */
+.edit-view-seg {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.edit-view-seg button {
+  flex: 1;
+  padding: 9px 4px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.edit-view-seg button.active { background: var(--gold); color: #1c1c1c; }
