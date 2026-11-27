@@ -580,13 +580,16 @@
   }
 
   // The current leeches that still exist in their decks, as lesson items.
-  function getLeechItems() {
+  // One deck's leeches: the N2 deck's or a custom deck's.
+  function getLeechItems(deckId) {
+    const wanted = deckId === KANJI_DECK_ID ? "n2" : deckId;
     const items = [];
     const customItems = new Map();
     Object.keys(leeches).forEach((key) => {
       if (!leeches[key].leech) return;
       const sep = key.indexOf("|");
       const owner = key.slice(0, sep);
+      if (owner !== wanted) return;
       const id = key.slice(sep + 1);
       let item;
       if (owner === "n2") {
@@ -638,6 +641,8 @@
         front: card.front,
         deckId: deck.id,
         sections: card.sections,
+        original: card.original,
+        removedReading: card.removedReading,
         tags: card.tags || null,
         facets: tagFacets(card.tags),
       }));
@@ -1997,29 +2002,37 @@
     return cards.reduce((n, card) => n + card.sections.length, 0);
   }
 
+  // Each deck has its own リーチ review, started from the button on its row. The
+  // number on it is the questions waiting there.
+  function deckReviewRow(id, name, meta, items, dueCount) {
+    const waiting = questionCount(getLeechItems(id));
+    return `
+      <div class="custom-deck-row" data-deck-id="${escapeHtml(id)}" style="--deck-color: ${deckEdgeColor(items)}">
+        <div class="custom-deck-header">${deckReviewButton(name, meta, dueCount)}
+          <button class="leech-btn" data-action="leech" type="button" aria-label="${escapeHtml(name)}のリーチ復習（${waiting}問）"${waiting ? "" : " disabled"}>
+            <span class="leech-btn-label">リーチ</span>
+            <span class="leech-btn-num">${waiting}</span>
+          </button>
+        </div>
+      </div>`;
+  }
+
   function renderCustomDecksList() {
     els.customDecksEmpty.hidden = customDecks.length > 0;
-    const n2Row = `
-      <div class="custom-deck-row" data-deck-id="${KANJI_DECK_ID}" style="--deck-color: ${deckEdgeColor(visibleKanji())}">
-        <div class="custom-deck-header">${deckReviewButton("N2漢字", `${visibleKanji().length}枚`, unitQuestionCount(getReviewUnits(visibleKanji())))}
-        </div>
-      </div>`;
-    const leechItems = getLeechItems();
-    const leechCount = leechItems.length;
-    const leechRow = `
-      <div class="custom-deck-row" data-deck-id="leech" style="--deck-color: ${deckEdgeColor(leechItems)}">
-        <div class="custom-deck-header">${deckReviewButton("リーチ", leechCount ? "苦手なカード（任意）" : "苦手なカードはありません", questionCount(leechItems))}
-        </div>
-      </div>`;
-    els.customDecksList.innerHTML = n2Row + customDecks
-      .map((deck) => {
-        return `
-      <div class="custom-deck-row" data-deck-id="${escapeHtml(deck.id)}" style="--deck-color: ${deckEdgeColor(deckItems(deck.id))}">
-        <div class="custom-deck-header">${deckReviewButton(deck.name, `${deck.cards.length}枚`, customQuestionCount(getDueCustomCards(deck)))}
-        </div>
-      </div>`;
-      })
-      .join("") + leechRow;
+    const n2Row = deckReviewRow(
+      KANJI_DECK_ID,
+      "N2漢字",
+      `${visibleKanji().length}枚`,
+      visibleKanji(),
+      unitQuestionCount(getReviewUnits(visibleKanji()))
+    );
+    els.customDecksList.innerHTML =
+      n2Row +
+      customDecks
+        .map((deck) =>
+          deckReviewRow(deck.id, deck.name, `${deck.cards.length}枚`, deckItems(deck.id), customQuestionCount(getDueCustomCards(deck)))
+        )
+        .join("");
   }
 
   els.customDecksList.addEventListener("click", (event) => {
@@ -2027,8 +2040,9 @@
     if (!actionBtn) return;
     const row = actionBtn.closest(".custom-deck-row");
     const deckId = row && row.dataset.deckId;
-    if (deckId === "leech") {
-      const items = getLeechItems();
+    if (actionBtn.dataset.action === "leech") {
+      if (deckId === KANJI_DECK_ID) activateDeck(KANJI_DECK_ID);
+      const items = getLeechItems(deckId);
       if (items.length) beginLesson(items, "leech");
       return;
     }
@@ -4453,14 +4467,49 @@
     return item.sections.filter((s) => kindOfLabel(s.label) === "reading").map((s) => [s.label, s.value]);
   }
 
+  // ---------- verb and politeness labels ----------
+  // data/word-forms.json (from JMdict) says which words are transitive or
+  // intransitive verbs, or polite, humble or honorific.
+  let wordForms = {};
+  const FORM_LABELS = {
+    t: "他動詞 transitive",
+    i: "自動詞 intransitive",
+    p: "丁寧語 polite",
+    h: "謙譲語 humble",
+    o: "尊敬語 honorific",
+  };
+
+  // `reading` may list several; the first one the data knows is used.
+  function formTagsHtml(written, reading) {
+    const readings = String(reading || written || "")
+      .split(/[、,，;；・\/／]/)
+      .map((r) => r.replace(/[(（][^)）]*[)）]/g, "").trim())
+      .filter(Boolean);
+    const found = readings.map((r) => wordForms[`${written}|${r}`]).find(Boolean);
+    if (!found) return "";
+    return `<div class="form-tags">${Array.from(found)
+      .map((letter) => `<span class="form-tag form-tag-${letter}">${FORM_LABELS[letter]}</span>`)
+      .join("")}</div>`;
+  }
+
+  // For a custom deck's card, including one switched to kana only.
+  function cardFormTagsHtml(card) {
+    const reading = [...(card.removedReading || []), ...(card.sections || [])].find((s) => kindOfLabel(s.label) === "reading");
+    return formTagsHtml(card.original || card.front, reading ? reading.value : card.front);
+  }
+
+  // Each part is [label, value, labels shown under the value].
   function studyMeaningParts(item) {
+    if (item.wordEntry) return [["Meaning", item.meaning || "—", formTagsHtml(item.kanji, item.wordReading)]];
     if (!item.sections) {
       const parts = [["Meaning", item.meaning || "—"]];
-      if (item.word) parts.push(["単語", `${item.word}: ${item.wordMeaning}`]);
+      if (item.word) parts.push(["単語", `${item.word}: ${item.wordMeaning}`, formTagsHtml(item.word, item.wordReading)]);
       return parts;
     }
     const rest = item.sections.filter((s) => kindOfLabel(s.label) !== "reading");
-    return (rest.length ? rest : item.sections).map((s) => [displayLabel(s.label, s.value), s.value]);
+    const parts = (rest.length ? rest : item.sections).map((s) => [displayLabel(s.label, s.value), s.value]);
+    if (parts.length) parts[0] = [...parts[0], cardFormTagsHtml(item)];
+    return parts;
   }
 
   function studyTabsFor(item) {
@@ -4569,8 +4618,8 @@
   }
 
   function studyPanelHtml(item, tab) {
-    const block = ([label, value]) =>
-      `<div class="study-block"><div class="study-label">${escapeHtml(label)}</div><div class="study-value">${escapeHtml(value)}</div></div>`;
+    const block = ([label, value, tags]) =>
+      `<div class="study-block"><div class="study-label">${escapeHtml(label)}</div><div class="study-value">${escapeHtml(value)}</div>${tags || ""}</div>`;
     if (tab === "meaning") return `<div class="study-blocks">${studyMeaningParts(item).map(block).join("")}</div>${mnemonicFieldHtml(item, tab)}`;
     if (tab === "readings") return `<div class="study-blocks study-blocks-row">${studyReadingParts(item).map(block).join("")}</div>${mnemonicFieldHtml(item, tab)}`;
     if (item.wordEntry) return exampleSentencesHtml(item.front);
@@ -5516,13 +5565,15 @@
     const customDeck = deckId === KANJI_DECK_ID ? null : customDeckById(deckId.replace(/^custom:/, ""));
     const plain = Boolean(customDeck && customDeck.name.includes("単語"));
     deckItems(deckId).forEach((item) => {
+      // A leech is a whole term, so every card of it counts.
+      const leech = Boolean((leeches[leechKey(item)] || {}).leech);
       if (item.deckId) {
         const entry = srsOf(item);
         const level = statusOfEntry(entry, Boolean(entry && entry.lastSeen));
         if (plain) {
           const reading = item.sections.filter((s) => kindOfLabel(s.label) === "reading").map((s) => s.value);
           const rest = item.sections.filter((s) => kindOfLabel(s.label) !== "reading").map((s) => s.value);
-          cards.push({ front: item.front, reading, meaning: rest, level });
+          cards.push({ front: item.front, reading, meaning: rest, level, leech });
           return;
         }
         // Readings are pink and meanings purple, as in the app.
@@ -5537,6 +5588,7 @@
             reading: [],
             meaning: [s.value],
             level,
+            leech,
           });
         });
         return;
@@ -5549,7 +5601,7 @@
         return statusOfEntry(entry, unitStudied(entry));
       };
       const add = (front, tone, kind, label, answer, lvl) => {
-        if (answer) cards.push({ front, tone, kind, label, reading: [], meaning: [answer], level: lvl });
+        if (answer) cards.push({ front, tone, kind, label, reading: [], meaning: [answer], level: lvl, leech });
       };
       const kanjiLevel = statusOfEntry(srsOf(item), isItemStudied(item));
       add(item.kanji, "pink", "reading", "音読み", item.onyomi, kanjiLevel);
@@ -5566,7 +5618,8 @@
     return cards;
   }
 
-  const flashChosen = (deckId) => flashCards(deckId).filter((c) => flashPrefs.levels.includes(c.level));
+  const flashWanted = (card) => flashPrefs.levels.includes(card.level) || (flashPrefs.leech && card.leech);
+  const flashChosen = (deckId) => flashCards(deckId).filter(flashWanted);
 
   function renderFlashDecks() {
     flashEl("flashDeckList").innerHTML = deckPickEntries()
@@ -5578,14 +5631,15 @@
           const cards = flashCards(entry.id);
           const counts = {};
           cards.forEach((c) => (counts[c.level] = (counts[c.level] || 0) + 1));
-          const chosen = cards.filter((c) => flashPrefs.levels.includes(c.level)).length;
+          const chosen = cards.filter(flashWanted).length;
+          const leechCards = cards.filter((c) => c.leech).length;
           panel = `
         <div class="flash-panel">
           <div class="flash-panel-label">練習する復習レベル</div>
           <div class="flash-levels">${FLASH_LEVELS.map(
             (l) =>
               `<button class="flash-level status-${l.id}${flashPrefs.levels.includes(l.id) ? " on" : ""}" type="button" data-level="${l.id}">${l.label}<i>${counts[l.id] || 0}</i></button>`
-          ).join("")}</div>
+          ).join("")}<button class="flash-level flash-level-leech${flashPrefs.leech ? " on" : ""}" type="button" data-leech aria-pressed="${Boolean(flashPrefs.leech)}">リーチ<i>${leechCards}</i></button></div>
           <button class="flash-start" type="button" data-start="${escapeHtml(entry.id)}"${chosen ? "" : " disabled"}>${chosen ? `スタート（${chosen}枚）` : "出せるカードがありません"}</button>${flashHistoryHtml(entry.id)}
         </div>`;
         }
@@ -5601,6 +5655,12 @@
   }
 
   flashEl("flashDeckList").addEventListener("click", (event) => {
+    if (event.target.closest("[data-leech]")) {
+      flashPrefs.leech = !flashPrefs.leech;
+      saveFlashPrefs();
+      renderFlashDecks();
+      return;
+    }
     const level = event.target.closest("[data-level]");
     if (level) {
       const id = level.dataset.level;
@@ -6168,6 +6228,7 @@
   function renderTypeInfo(item, type, full) {
     if (item.sections) {
       els.typeSections.innerHTML = sectionsToHtml(full ? item.sections : [item.sections[sectionIndex(type)]]);
+      if (full) els.typeSections.insertAdjacentHTML("afterbegin", cardFormTagsHtml(item));
       return;
     }
     els.typeOnyomi.textContent = item.onyomi || "—";
@@ -6180,6 +6241,9 @@
     if (item.word) els.typeWord.textContent = `${item.word}（${item.wordReading}）${item.wordMeaning}`;
     els.typeNounBlock.hidden = !item.noun || (!full && !isNounType(type));
     if (item.noun) els.typeNoun.textContent = `${item.noun}（${item.nounReading}）${item.nounMeaning}`;
+    // F also says whether the word is transitive or intransitive, polite, ...
+    if (full && item.word) els.typeWord.insertAdjacentHTML("beforeend", formTagsHtml(item.word, item.wordReading));
+    if (full && item.noun) els.typeNoun.insertAdjacentHTML("beforeend", formTagsHtml(item.noun, item.nounReading));
   }
 
   // F shows everything about the card after a miss, and F again hides it.
@@ -6280,6 +6344,7 @@
     els.customTypeSections.innerHTML = sectionsToHtml(
       customTypeInfoRevealed ? card.sections : [customTypeCurrentSection]
     );
+    if (customTypeInfoRevealed) els.customTypeSections.insertAdjacentHTML("afterbegin", cardFormTagsHtml(card));
     refreshCustomTypeMnemonic(); // an open mnemonic follows: both notes once revealed
   }
 
@@ -7537,6 +7602,15 @@
   mnemonics = loadJson(MNEMONICS_KEY, {}) || {};
   applySettings();
   dailyMinutes = settings.defaultDailyMinutes;
+
+  fetch("data/word-forms.json")
+    .then((res) => res.json())
+    .then((data) => {
+      wordForms = data;
+    })
+    .catch(() => {
+      /* the labels are left off without it */
+    });
 
   fetch("data/jlpt-kanji.json")
     .then((res) => res.json())

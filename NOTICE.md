@@ -51,6 +51,15 @@ Words added to a custom deck with 用語を追加 are also JMdict entries, looke
 through the [Jotoba](https://jotoba.de) search API; the same copyright and licence apply
 to the readings and meanings saved to the deck.
 
+## Verb and politeness labels
+
+`data/word-forms.json` (transitive, intransitive, polite, humble and honorific
+labels) is built from [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html) by
+the Electronic Dictionary Research and Development Group, through
+[jmdict-simplified](https://github.com/scriptin/jmdict-simplified), and is used
+under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Built by
+`tools/build-word-forms.py`.
+
 ## JLPT N5-N3 kanji lists
 
 The kanji counted as N5 to N2 (`data/jlpt-kanji.json`, used to write harder
