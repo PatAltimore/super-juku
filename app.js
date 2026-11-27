@@ -89,6 +89,8 @@
     deckEditRestoreBtn: document.getElementById("deckEditRestoreBtn"),
     deckEditRestoreNounsBtn: document.getElementById("deckEditRestoreNounsBtn"),
     deckEditViewSeg: document.getElementById("deckEditViewSeg"),
+    deckEditAllKanaBtn: document.getElementById("deckEditAllKanaBtn"),
+    deckEditAllKanjiBtn: document.getElementById("deckEditAllKanjiBtn"),
     lessonDeckBtn: document.getElementById("lessonDeckBtn"),
     lessonFilterBar: document.getElementById("lessonFilterBar"),
     lessonFilterBtn: document.getElementById("lessonFilterBtn"),
@@ -1627,7 +1629,7 @@
 
   // 編集: switches one term between its kanji spelling and kana only. Returns
   // a message if it can't.
-  function toggleTermKana(deck, index) {
+  function toggleTermKana(deck, index, save = true) {
     const card = deck.cards[index];
     if (!card) return "";
     let next;
@@ -1654,8 +1656,28 @@
       deck.answers = { ...(deck.answers || {}), [next.front]: entry };
     }
     deck.updatedAt = new Date().toISOString();
-    saveTermChanges();
+    if (save) saveTermChanges();
     return "";
+  }
+
+  // How many of a deck's terms can switch to kana, or back to kanji.
+  const kanaSwitchable = (deck, toKana) =>
+    deck.cards.filter((card) => (toKana ? !card.original && kanaCard(card) : card.original)).length;
+
+  // 編集: switches every term that can to kana, or every one back to kanji.
+  // Returns what happened, for the status line.
+  function switchAllKana(deck, toKana) {
+    let done = 0;
+    let skipped = 0;
+    for (let i = 0; i < deck.cards.length; i++) {
+      const card = deck.cards[i];
+      if (toKana ? card.original || !kanaCard(card) : !card.original) continue;
+      if (toggleTermKana(deck, i, false)) skipped++;
+      else done++;
+    }
+    if (done) saveTermChanges();
+    const result = `${done}件を${toKana ? "かな" : "漢字"}にしました。`;
+    return skipped ? `${result}同じ表記のカードがある${skipped}件はそのままです。` : result;
   }
 
   // The 漢字 / かな switch on a term's row in 編集, where it applies.
@@ -2364,6 +2386,8 @@
       els.deckEditToolbar.querySelectorAll("[data-action]").forEach((btn) => {
         btn.hidden = btn.dataset.action === "restore-kanji" || btn.dataset.action === "restore-nouns";
       });
+      els.deckEditAllKanaBtn.disabled = kanaSwitchable(deck, true) === 0;
+      els.deckEditAllKanjiBtn.disabled = kanaSwitchable(deck, false) === 0;
     }
     if (!deck) {
       els.deckEditTitle.textContent = "デッキを編集";
@@ -2830,7 +2854,16 @@
     const deck = btn && editingDeckId && customDeckById(editingDeckId);
     if (!deck) return;
     const action = btn.dataset.action;
-    if (action === "add-term") {
+    if (action === "all-kana" || action === "all-kanji") {
+      const toKana = action === "all-kana";
+      const count = kanaSwitchable(deck, toKana);
+      const question = `「${deck.name}」の${count}件を${toKana ? "かな表記（意味のみ出題）" : "漢字表記"}にしますか？`;
+      if (!count || !window.confirm(question)) return;
+      const message = switchAllKana(deck, toKana);
+      renderDeckEdit();
+      els.deckEditStatus.textContent = message;
+      els.deckEditStatus.hidden = false;
+    } else if (action === "add-term") {
       openTermSearch();
     } else if (action === "fetch-tags") {
       fetchDeckLabels(deck);
