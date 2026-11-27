@@ -1567,20 +1567,48 @@
     return kanaCard(card);
   }
 
+  // The kana spelling in a reading cell: its first reading, without notes in
+  // brackets or pitch-accent numbers. "" if that isn't kana.
+  function kanaSpelling(value) {
+    const first = String(value || "")
+      .replace(/[(（\[［【][^)）\]］】]*[)）\]］】]/g, "")
+      .split(/[、,，;；・\/／\n]/)[0]
+      .replace(/[0-9０-９⓪①-⑨.。\s]+$/g, "")
+      .trim();
+    return /^[ぁ-ゖァ-ヺー〜～\s-]+$/.test(first) ? first : "";
+  }
+
+  // The section(s) holding a card's reading: those labelled as readings, or
+  // failing that the first one that is written entirely in kana.
+  function readingSections(card) {
+    const sections = card.sections || [];
+    const labelled = sections.filter((s) => kindOfLabel(s.label) === "reading");
+    if (labelled.length) return labelled;
+    const kana = sections.find((s) => kindOfLabel(s.label) !== "meaning" && kanaSpelling(s.value));
+    return kana ? [kana] : [];
+  }
+
+  // Why a card with its kanji spelling can't be written in kana, or "" if it can.
+  function kanaBlocker(card) {
+    if (!card.front || !card.front.match(KANJI_CHAR)) return "漢字がない";
+    const reading = readingSections(card);
+    if (!reading.length || !kanaSpelling(reading[0].value)) return "かなの読み方がない";
+    if (reading.length === (card.sections || []).length) return "意味がない";
+    return "";
+  }
+
   // Any card with kanji and a kana reading, written in kana with the reading
   // set aside so it can be brought back; null if it can't be.
   function kanaCard(card) {
-    if (!card.front || !card.front.match(KANJI_CHAR)) return null;
-    const reading = (card.sections || []).find((s) => kindOfLabel(s.label) === "reading");
-    const rest = (card.sections || []).filter((s) => kindOfLabel(s.label) !== "reading");
-    if (!reading || !rest.length) return null;
-    const front = String(reading.value)
-      .split(/[、,，;；・\/／]/)[0]
-      .replace(/[(（][^)）]*[)）]/g, "")
-      .trim();
-    if (!/^[ぁ-ゖァ-ヺー〜～\s-]+$/.test(front)) return null;
-    const removedReading = (card.sections || []).filter((s) => kindOfLabel(s.label) === "reading");
-    const kana = { ...card, front, sections: rest, original: card.front, removedReading };
+    if (kanaBlocker(card)) return null;
+    const removedReading = readingSections(card);
+    const kana = {
+      ...card,
+      front: kanaSpelling(removedReading[0].value),
+      sections: card.sections.filter((s) => !removedReading.includes(s)),
+      original: card.front,
+      removedReading,
+    };
     delete kana.keepKanji;
     return kana;
   }
@@ -1658,6 +1686,20 @@
     deck.updatedAt = new Date().toISOString();
     if (save) saveTermChanges();
     return "";
+  }
+
+  // Says why there is nothing to switch.
+  function nothingToSwitch(deck, toKana) {
+    if (!toKana) return "かな表記に切り替えたカードがないため、漢字に戻すものはありません。";
+    const counts = {};
+    deck.cards.forEach((card) => {
+      const why = card.original ? "すでにかな表記" : kanaBlocker(card);
+      if (why) counts[why] = (counts[why] || 0) + 1;
+    });
+    const detail = Object.entries(counts)
+      .map(([why, n]) => `${why} ${n}件`)
+      .join("、");
+    return `かなにできるカードはありません（${detail || "カードがありません"}）。`;
   }
 
   // How many of a deck's terms can switch to kana, or back to kanji.
@@ -2386,8 +2428,6 @@
       els.deckEditToolbar.querySelectorAll("[data-action]").forEach((btn) => {
         btn.hidden = btn.dataset.action === "restore-kanji" || btn.dataset.action === "restore-nouns";
       });
-      els.deckEditAllKanaBtn.disabled = kanaSwitchable(deck, true) === 0;
-      els.deckEditAllKanjiBtn.disabled = kanaSwitchable(deck, false) === 0;
     }
     if (!deck) {
       els.deckEditTitle.textContent = "デッキを編集";
@@ -2858,8 +2898,9 @@
       const toKana = action === "all-kana";
       const count = kanaSwitchable(deck, toKana);
       const question = `「${deck.name}」の${count}件を${toKana ? "かな表記（意味のみ出題）" : "漢字表記"}にしますか？`;
-      if (!count || !window.confirm(question)) return;
-      const message = switchAllKana(deck, toKana);
+      // With nothing to change, say why instead of doing nothing.
+      if (count && !window.confirm(question)) return;
+      const message = count ? switchAllKana(deck, toKana) : nothingToSwitch(deck, toKana);
       renderDeckEdit();
       els.deckEditStatus.textContent = message;
       els.deckEditStatus.hidden = false;
