@@ -4057,6 +4057,27 @@
     return todaysNums().map((num) => kanjiByNum.get(num));
   }
 
+  // A kanji whose lesson is done can still have a verb, adjective or noun
+  // that was never studied (one added to the data later, say). Those are
+  // offered on their own, as "word:<num>" / "noun:<num>".
+  const lessonPartPicks = new Set();
+
+  function pendingParts() {
+    const out = [];
+    allKanji.forEach((item) => {
+      if (item.sections || lessonPending(item)) return;
+      ["word", "noun"].forEach((part) => {
+        if (!item[part]) return;
+        const entry = srsOf(item, part);
+        if (entry && (entry.lastSeen || entry.right > 0 || entry.wrong > 0)) return;
+        out.push({ item, part, key: `${part}:${item.num}` });
+      });
+    });
+    return out;
+  }
+
+  const pickedParts = () => pendingParts().filter((unit) => lessonPartPicks.has(unit.key));
+
   // Sets one term's selection (rather than toggling it) and returns the state.
   function setLessonSelected(num, on) {
     const today = ensureTodaysLesson();
@@ -4139,8 +4160,9 @@
   }
 
   function updateLessonSelection() {
-    const count = todaysNums().length;
-    els.startLessonBtn.textContent = count ? `レッスンを始める（${count}${deckUnit()}）` : "学習する項目を選択";
+    const parts = pickedParts().length;
+    const count = todaysNums().length + parts;
+    els.startLessonBtn.textContent = count ? `レッスンを始める（${count}${parts ? "件" : deckUnit()}）` : "学習する項目を選択";
     els.startLessonBtn.disabled = count === 0;
     els.clearSelectionBtn.disabled = count === 0;
   }
@@ -4221,7 +4243,10 @@
         `<button class="secondary-btn filter-clear" type="button" data-action="clear-filters"${activeCount ? "" : " disabled"}>絞り込みを解除</button>`;
     }
 
-    els.lessonSubtitle.textContent = !pending.length
+    // Words and nouns left over from kanji already learned, listed after the
+    // kanji.
+    const leftovers = activeCount ? [] : pendingParts();
+    els.lessonSubtitle.textContent = !pending.length && !leftovers.length
       ? `すべての${deckNoun()}のレッスンが完了しました。復習で定着させましょう。`
       : activeCount
       ? `${visible.length}件を表示中（全${pending.length}件）。タップして選択してください。`
@@ -4243,6 +4268,22 @@
       : pending.length
       ? `<p class="filter-empty">条件に合う項目がありません。</p>`
       : "";
+    if (leftovers.length) {
+      els.termChart.insertAdjacentHTML(
+        "beforeend",
+        `<div class="chart-heading">未学習の単語・名詞（学習済みの漢字）</div>` +
+          leftovers
+            .map(
+              ({ item, part, key }) =>
+                `<button class="term-tile term-tile-${part}${lessonPartPicks.has(key) ? " selected" : ""}" type="button" data-num="${key}">
+          <span class="term-reading">${escapeHtml(item[`${part}Reading`] || "")}</span>
+          <span class="term-word">${escapeHtml(item[part])}</span>
+          <span class="term-meaning">${escapeHtml(item[`${part}Meaning`] || "")}</span>
+        </button>`
+            )
+            .join("")
+      );
+    }
     // Long words shrink to one line once the screen is visible.
     window.requestAnimationFrame(() => {
       els.termChart.querySelectorAll(".term-word").forEach((el) => fitFront(el, el.textContent));
@@ -4341,10 +4382,16 @@
   let study = null; // { batch, index, tab }
   const exampleCache = new Map();
 
-  function startLesson(cards) {
+  // `units`: words and nouns picked on their own ({ item, part }), studied in
+  // batches after the full terms.
+  function startLesson(cards, units = []) {
     const size = cards[0] && cards[0].sections ? VOCAB_BATCH_SIZE : LESSON_BATCH_SIZE;
     const batches = [];
-    for (let i = 0; i < cards.length; i += size) batches.push(cards.slice(i, i + size));
+    for (let i = 0; i < cards.length; i += size) batches.push({ cards: cards.slice(i, i + size), units: null });
+    for (let i = 0; i < units.length; i += LESSON_BATCH_SIZE) {
+      const some = units.slice(i, i + LESSON_BATCH_SIZE);
+      batches.push({ cards: Array.from(new Set(some.map((unit) => unit.item))), units: some });
+    }
     lessonRun = { batches, index: 0, seen: 0, right: 0, wrong: 0 };
     startStudy();
   }
@@ -4352,11 +4399,12 @@
   function startStudy() {
     // The five kanji come first, then the word (verb or adjective) that goes
     // with each of them, shown the same way as separate entries.
-    const batch = lessonRun.batches[lessonRun.index];
+    const { cards: batch, units } = lessonRun.batches[lessonRun.index];
+    const has = (item, part) => !units || units.some((unit) => unit.item === item && unit.part === part);
     const entries = [
-      ...batch.map((item) => ({ view: item })),
+      ...(units ? [] : batch.map((item) => ({ view: item }))),
       ...batch
-        .filter((item) => item.word)
+        .filter((item) => item.word && has(item, "word"))
         .map((item) => ({
           kind: "word",
           view: {
@@ -4371,7 +4419,7 @@
         })),
       // the noun made of just the kanji, read as a kunyomi
       ...batch
-        .filter((item) => item.noun)
+        .filter((item) => item.noun && has(item, "noun"))
         .map((item) => ({
           kind: "noun",
           view: {
@@ -4385,7 +4433,7 @@
           },
         })),
     ];
-    study = { batch, entries, index: 0, tab: "meaning", openWord: null };
+    study = { batch, units, entries, index: 0, tab: "meaning", openWord: null };
     showScreen("lessonStudy");
     renderStudy();
   }
@@ -4648,9 +4696,9 @@
       studyMove(1);
       return;
     }
-    const batch = study.batch;
+    const { batch, units } = study;
     study = null;
-    beginLesson(batch, "lesson");
+    beginLesson(batch, "lesson", units);
   }
 
   function studyShiftTab(step) {
@@ -4735,6 +4783,19 @@
 レッスン・復習などに出なくなります。（編集 > N2漢字から戻せます）`)) return;
     setNounRemoved(entry.view.parent.num, true);
     study.entries.splice(study.index, 1);
+    if (!study.entries.length) {
+      // The batch held only deleted nouns: go on to the next, if any.
+      study = null;
+      if (lessonRun && lessonRun.index + 1 < lessonRun.batches.length) {
+        lessonRun.index++;
+        startStudy();
+      } else {
+        lessonRun = null;
+        renderLessons();
+        showScreen("lessons");
+      }
+      return;
+    }
     study.index = Math.min(study.index, study.entries.length - 1);
     study.openWord = null;
     study.tab = "meaning";
@@ -4966,11 +5027,14 @@
   // Starts a lesson on the terms selected on the chart.
   els.startLessonBtn.addEventListener("click", () => {
     const cards = todaysLessonCards();
-    if (cards.length) startLesson(cards);
+    const units = pickedParts().map(({ item, part }) => ({ item, part }));
+    lessonPartPicks.clear();
+    if (cards.length || units.length) startLesson(cards, units);
   });
   els.clearSelectionBtn.addEventListener("click", () => {
     const today = ensureTodaysLesson();
     today.nums = today.nums.filter((n) => !kanjiByNum.has(n));
+    lessonPartPicks.clear();
     saveLessonHistory();
     els.termChart.querySelectorAll(".term-tile.selected").forEach((tile) => tile.classList.remove("selected"));
     updateLessonSelection();
@@ -4983,7 +5047,10 @@
   let lessonDragSuppressClick = false;
 
   function setTileSelected(tile, on) {
-    setLessonSelected(Number(tile.dataset.num), on);
+    const key = tile.dataset.num;
+    if (!key.includes(":")) setLessonSelected(Number(key), on);
+    else if (on) lessonPartPicks.add(key);
+    else lessonPartPicks.delete(key);
     tile.classList.toggle("selected", on);
   }
 

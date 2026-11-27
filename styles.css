@@ -4015,3 +4015,14 @@ button.edit-row {
   cursor: pointer;
 }
 .edit-view-seg button.active { background: var(--gold); color: #1c1c1c; }
+
+/* レッスン: words and nouns left over from learned kanji */
+.chart-heading {
+  grid-column: 1 / -1;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.term-tile.term-tile-word:not(.selected) { border-color: #a02fe2; }
+.term-tile.term-tile-noun:not(.selected) { border-color: #0f9b8e; }
