@@ -4496,6 +4496,9 @@
   // `units`: words and nouns picked on their own ({ item, part }), studied in
   // batches after the full terms.
   function startLesson(cards, units = []) {
+    // The picked terms are studied in random order, not the order listed.
+    cards = shuffle(cards);
+    units = shuffle(units);
     const size = cards[0] && cards[0].sections ? VOCAB_BATCH_SIZE : LESSON_BATCH_SIZE;
     const batches = [];
     for (let i = 0; i < cards.length; i += size) batches.push({ cards: cards.slice(i, i + size), units: null });
